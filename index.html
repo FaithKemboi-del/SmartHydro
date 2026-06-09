@@ -229,6 +229,29 @@
             <p class="model-note" id="classification-note">
               System classified condition as NORMAL with 92% confidence.
             </p>
+            <div class="ml-analysis-card" id="ml-analysis-card">
+              <div class="ml-analysis-inner">
+                <div class="ml-analysis-face ml-analysis-front">
+                  <span class="eyebrow">Next-day forecast</span>
+                  <h3>Analyze</h3>
+                  <p>Click to review recent records and predict tomorrow's hydroponic condition.</p>
+                  <button class="button button-primary" type="button" id="ml-analyze">
+                    Analyze
+                  </button>
+                </div>
+                <div class="ml-analysis-face ml-analysis-back">
+                  <span class="eyebrow">Prediction Result</span>
+                  <h3>Tomorrow's system forecast</h3>
+                  <p id="next-day-prediction">
+                    Based on the past few days and incoming records, I predict tomorrow's water,
+                    pH, EC, and temperature will remain within healthy ranges.
+                  </p>
+                  <p class="model-note" id="next-day-remedy">
+                    Recommendation: continue monitoring and keep nutrient solution balanced before tomorrow.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -245,18 +268,22 @@
 
         <div class="analysis-layout">
           <form class="analysis-form" id="analysis-form">
-            <label for="sensor-input">Simulation input</label>
-            <textarea
-              id="sensor-input"
-              rows="5"
-              placeholder="Enter or simulate sensor readings... Example: pH 5.4, water 35%, temperature 31C, EC 0.9"
-            ></textarea>
-            <div class="form-actions">
-              <button class="button button-primary" type="submit">Run AI Analysis</button>
-              <button class="button button-ghost" type="button" id="simulate-warning">
-                Simulate Warning
-              </button>
+            <span class="eyebrow">Random test</span>
+            <h3>Simulate condition</h3>
+            <p>
+              Click once to generate random sensor values. Some values are in the optimal range,
+              while others can trigger warnings so you can test the system yourself.
+            </p>
+            <p class="range-note">
+              Optimal examples: pH 5.8-6.5, water 65-90%, temperature 21-27°C, EC 1.4-2.3.
+              Warning examples use lower or higher values outside those ranges.
+            </p>
+            <div class="simulated-values" id="simulated-values" aria-live="polite">
+              pH 6.3 • Water 78% • Temperature 24.6°C • EC 1.8
             </div>
+            <button class="button button-primary" type="button" id="simulate-condition">
+              Simulate Condition
+            </button>
           </form>
 
           <article class="analysis-result" aria-live="polite">

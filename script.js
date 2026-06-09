@@ -1,6 +1,7 @@
 const form = document.querySelector("#analysis-form");
-const sensorInput = document.querySelector("#sensor-input");
-const simulateWarningButton = document.querySelector("#simulate-warning");
+const simulateConditionButton = document.querySelector("#simulate-condition");
+const mlAnalyzeButton = document.querySelector("#ml-analyze");
+const mlAnalysisCard = document.querySelector("#ml-analysis-card");
 
 const elements = {
   overallHealth: document.querySelector("#overall-health"),
@@ -28,6 +29,9 @@ const elements = {
   analysisText: document.querySelector("#analysis-text"),
   recommendations: document.querySelector("#recommendations"),
   analysisWarning: document.querySelector("#analysis-warning"),
+  simulatedValues: document.querySelector("#simulated-values"),
+  nextDayPrediction: document.querySelector("#next-day-prediction"),
+  nextDayRemedy: document.querySelector("#next-day-remedy"),
 };
 
 const metricCards = {
@@ -44,24 +48,68 @@ const defaultReadings = {
   nutrient: 1.8,
 };
 
+let currentReadings = { ...defaultReadings };
+
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
-function extractReading(text, names, fallback) {
-  const escapedNames = names.map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
-  const regex = new RegExp(`(?:${escapedNames})\\s*[:=]?\\s*(-?\\d+(?:\\.\\d+)?)`, "i");
-  const match = text.match(regex);
-  return match ? Number(match[1]) : fallback;
+function randomBetween(min, max, decimals = 1) {
+  const value = Math.random() * (max - min) + min;
+  return Number(value.toFixed(decimals));
 }
 
-function parseReadings(text) {
+function choose(options) {
+  return options[Math.floor(Math.random() * options.length)];
+}
+
+function optimalReading() {
   return {
-    ph: extractReading(text, ["ph", "pH"], defaultReadings.ph),
-    water: extractReading(text, ["water", "water level", "level"], defaultReadings.water),
-    temperature: extractReading(text, ["temperature", "temp", "c"], defaultReadings.temperature),
-    nutrient: extractReading(text, ["ec", "nutrient", "nutrients"], defaultReadings.nutrient),
+    ph: randomBetween(5.8, 6.5),
+    water: randomBetween(65, 90, 0),
+    temperature: randomBetween(21, 27),
+    nutrient: randomBetween(1.4, 2.3),
   };
+}
+
+function warningValue(metric) {
+  const warningRanges = {
+    ph: [
+      [5.2, 5.7],
+      [6.6, 7.1],
+    ],
+    water: [
+      [35, 59, 0],
+      [91, 98, 0],
+    ],
+    temperature: [
+      [16, 19.5],
+      [28.5, 32],
+    ],
+    nutrient: [
+      [0.7, 1.3],
+      [2.5, 3.0],
+    ],
+  };
+  const range = choose(warningRanges[metric]);
+  return randomBetween(range[0], range[1], range[2] ?? 1);
+}
+
+function simulatedReading() {
+  const readings = optimalReading();
+
+  if (Math.random() < 0.58) {
+    return readings;
+  }
+
+  const metrics = ["ph", "water", "temperature", "nutrient"].sort(() => Math.random() - 0.5);
+  const warningCount = Math.random() < 0.7 ? 1 : 2;
+
+  metrics.slice(0, warningCount).forEach((metric) => {
+    readings[metric] = warningValue(metric);
+  });
+
+  return readings;
 }
 
 function classifyMetric(metric, value) {
@@ -223,7 +271,40 @@ function patternText(readings, state) {
   return "Detected pattern explanation: Sensor readings show a consistent nutrient and water profile with no abnormal decline.";
 }
 
+function readingSummary(readings) {
+  return `pH ${readings.ph.toFixed(1)} • Water ${Math.round(readings.water)}% • Temperature ${readings.temperature.toFixed(1)}°C • EC ${readings.nutrient.toFixed(1)}`;
+}
+
+function forecastValue(value, minChange, maxChange, min, max) {
+  return clamp(value + randomBetween(minChange, maxChange), min, max);
+}
+
+function nextDayForecast(readings) {
+  const predicted = {
+    ph: forecastValue(readings.ph, -0.2, 0.2, 4.8, 7.4),
+    water: forecastValue(readings.water, -8, -2, 20, 98),
+    temperature: forecastValue(readings.temperature, -1, 1.3, 15, 34),
+    nutrient: forecastValue(readings.nutrient, -0.25, 0.1, 0.5, 3.2),
+  };
+  const state = getOverallState(
+    [
+      classifyMetric("ph", predicted.ph),
+      classifyMetric("water", predicted.water),
+      classifyMetric("temperature", predicted.temperature),
+      classifyMetric("nutrient", predicted.nutrient),
+    ],
+    calculateAnomalyScore(predicted),
+  );
+
+  return {
+    predicted,
+    state,
+    recommendations: recommendationItems(predicted, state).slice(0, 3),
+  };
+}
+
 function updateDashboard(readings) {
+  currentReadings = { ...readings };
   const phState = classifyMetric("ph", readings.ph);
   const waterState = classifyMetric("water", readings.water);
   const temperatureState = classifyMetric("temperature", readings.temperature);
@@ -314,10 +395,22 @@ function updateDashboard(readings) {
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();
-  updateDashboard(parseReadings(sensorInput.value));
 });
 
-simulateWarningButton.addEventListener("click", () => {
-  sensorInput.value = "pH 5.4, water 37%, temperature 30.8C, EC 0.9";
-  updateDashboard(parseReadings(sensorInput.value));
+simulateConditionButton.addEventListener("click", () => {
+  const readings = simulatedReading();
+  elements.simulatedValues.textContent = readingSummary(readings);
+  mlAnalysisCard.classList.remove("is-rotated");
+  updateDashboard(readings);
+});
+
+mlAnalyzeButton.addEventListener("click", () => {
+  const forecast = nextDayForecast(currentReadings);
+  elements.nextDayPrediction.textContent = `Based on the past few days and records coming in, I predict tomorrow's values will be water ${Math.round(
+    forecast.predicted.water,
+  )}%, pH ${forecast.predicted.ph.toFixed(1)}, EC ${forecast.predicted.nutrient.toFixed(1)}, and temperature ${forecast.predicted.temperature.toFixed(
+    1,
+  )}°C. The predicted condition is ${forecast.state.prediction.toLowerCase()}.`;
+  elements.nextDayRemedy.textContent = `I recommend before tomorrow: ${forecast.recommendations.join(" ")}`;
+  mlAnalysisCard.classList.add("is-rotated");
 });

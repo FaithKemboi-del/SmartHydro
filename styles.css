@@ -754,6 +754,55 @@ p {
   background: var(--green-50);
 }
 
+.ml-analysis-card {
+  min-height: 260px;
+  margin-top: 18px;
+  perspective: 1200px;
+}
+
+.ml-analysis-inner {
+  position: relative;
+  min-height: 260px;
+  transform-style: preserve-3d;
+  transition: transform 700ms ease;
+}
+
+.ml-analysis-card.is-rotated .ml-analysis-inner {
+  transform: rotateY(180deg);
+}
+
+.ml-analysis-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 22px;
+  backface-visibility: hidden;
+}
+
+.ml-analysis-front {
+  align-items: flex-start;
+  background:
+    linear-gradient(135deg, rgba(231, 245, 236, 0.92), rgba(232, 246, 252, 0.8)),
+    var(--white);
+}
+
+.ml-analysis-front p {
+  max-width: 420px;
+}
+
+.ml-analysis-back {
+  background: var(--white);
+  transform: rotateY(180deg);
+}
+
+.ml-analysis-back h3 {
+  margin-top: 8px;
+}
+
 .analysis-form,
 .analysis-result {
   display: flex;
@@ -767,6 +816,30 @@ p {
   margin-bottom: 10px;
   color: var(--green-900);
   font-weight: 900;
+}
+
+.analysis-form h3 {
+  margin-top: 10px;
+}
+
+.range-note {
+  border-left: 4px solid var(--blue-500);
+  border-radius: 10px;
+  font-size: 0.92rem;
+  margin: 4px 0 0;
+  padding: 12px 14px;
+  background: var(--blue-100);
+}
+
+.simulated-values {
+  border: 1px dashed rgba(46, 139, 87, 0.34);
+  border-radius: var(--radius-sm);
+  color: var(--green-900);
+  font-size: 1rem;
+  font-weight: 900;
+  margin: 14px 0 20px;
+  padding: 16px;
+  background: var(--green-50);
 }
 
 textarea {
