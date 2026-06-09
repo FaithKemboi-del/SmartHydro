@@ -129,7 +129,7 @@ a {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: center;
-  gap: 48px;
+  gap: 34px 48px;
   min-height: calc(100vh - 79px);
   padding-top: 54px;
 }
@@ -162,12 +162,12 @@ p {
 }
 
 h1 {
-  max-width: 780px;
+  max-width: 1120px;
   margin-bottom: 22px;
   color: var(--green-900);
-  font-size: clamp(2.45rem, 6vw, 5rem);
-  line-height: 0.98;
-  letter-spacing: -0.06em;
+  font-size: clamp(2.25rem, 4.6vw, 4.7rem);
+  line-height: 1.04;
+  letter-spacing: -0.055em;
 }
 
 h2 {
@@ -192,6 +192,17 @@ p {
   max-width: 660px;
   margin-bottom: 30px;
   font-size: 1.16rem;
+}
+
+.hero-heading {
+  grid-column: 1 / -1;
+  max-width: 1120px;
+  margin: 0 auto 6px;
+  text-align: center;
+}
+
+.hero-heading h1 {
+  margin: 14px auto 0;
 }
 
 .hero-actions,

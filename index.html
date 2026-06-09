@@ -25,7 +25,7 @@
         <div class="nav-links" aria-label="Page sections">
           <a href="#status">Live Status</a>
           <a href="#ml-output">ML Output</a>
-          <a href="#analysis">Analysis</a>
+          <a href="#analysis">Simulation Mode</a>
           <a href="#alerts">Alerts</a>
         </div>
       </nav>
@@ -33,9 +33,12 @@
 
     <main id="top">
       <section class="hero section-shell">
-        <div class="hero-copy">
+        <div class="hero-heading">
           <span class="eyebrow">IoT + Machine Learning Hydroponics Prototype</span>
           <h1>Smart Hydroponics Monitoring and Anomaly Detection System Using IoT and Machine Learning</h1>
+        </div>
+
+        <div class="hero-copy">
           <p>
             An IoT and Machine Learning-based system for monitoring hydroponic environments and
             detecting abnormal plant conditions in real time.
@@ -208,17 +211,17 @@
 
       <section id="analysis" class="section-shell">
         <div class="section-heading">
-          <span class="eyebrow">Interactive Analysis</span>
-          <h2>Simulate sensor readings and recommendations</h2>
+          <span class="eyebrow">Simulation Mode</span>
+          <h2>Manual sensor simulation and recommendations</h2>
           <p>
-            Enter pH, water, temperature, and nutrient values to simulate how the system interprets
-            incoming data.
+            Use this mode to test example pH, water, temperature, and nutrient values before the
+            real IoT and ML pipeline is connected.
           </p>
         </div>
 
         <div class="analysis-layout">
           <form class="analysis-form" id="analysis-form">
-            <label for="sensor-input">Sensor input</label>
+            <label for="sensor-input">Simulation input</label>
             <textarea
               id="sensor-input"
               rows="5"
