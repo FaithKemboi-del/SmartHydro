@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Hydroponics Monitoring and Anomaly Detection System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="nav" aria-label="Main navigation">
+        <a class="brand" href="#top" aria-label="Smart Hydroponics home">
+          <span class="brand-mark">SH</span>
+          <span>
+            <strong>Smart Hydroponics</strong>
+            <small>Engineering Prototype</small>
+          </span>
+        </a>
+        <div class="nav-links" aria-label="Page sections">
+          <a href="#status">Live Status</a>
+          <a href="#ml-output">ML Output</a>
+          <a href="#analysis">Analysis</a>
+          <a href="#alerts">Alerts</a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero section-shell">
+        <div class="hero-copy">
+          <span class="eyebrow">IoT + Machine Learning Hydroponics Prototype</span>
+          <h1>Smart Hydroponics Monitoring and Anomaly Detection System Using IoT and Machine Learning</h1>
+          <p>
+            An IoT and Machine Learning-based system for monitoring hydroponic environments and
+            detecting abnormal plant conditions in real time.
+          </p>
+          <div class="hero-actions" aria-label="Primary actions">
+            <a class="button button-primary" href="#status">View Live Status</a>
+            <a class="button button-secondary" href="#analysis">Analyze System Data</a>
+          </div>
+        </div>
+
+        <div class="hero-visual" aria-label="Hydroponic plants connected to sensors illustration">
+          <div class="sensor-node sensor-node-left">
+            <span class="icon">pH</span>
+            <strong>6.3</strong>
+            <small>Balanced</small>
+          </div>
+          <div class="sensor-node sensor-node-right">
+            <span class="icon">EC</span>
+            <strong>1.8</strong>
+            <small>mS/cm</small>
+          </div>
+          <div class="hydroponic-card">
+            <div class="plant-row">
+              <div class="plant">
+                <span class="leaf leaf-left"></span>
+                <span class="leaf leaf-right"></span>
+                <span class="stem"></span>
+              </div>
+              <div class="plant plant-large">
+                <span class="leaf leaf-left"></span>
+                <span class="leaf leaf-right"></span>
+                <span class="stem"></span>
+              </div>
+              <div class="plant">
+                <span class="leaf leaf-left"></span>
+                <span class="leaf leaf-right"></span>
+                <span class="stem"></span>
+              </div>
+            </div>
+            <div class="grow-bed">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <div class="water-tank">
+              <div class="water-fill"></div>
+              <span>Water + Nutrient Solution</span>
+            </div>
+            <div class="connection-lines" aria-hidden="true">
+              <span class="line line-one"></span>
+              <span class="line line-two"></span>
+              <span class="line line-three"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="status" class="section-shell">
+        <div class="section-heading">
+          <span class="eyebrow">Live System Status</span>
+          <h2>Real-time hydroponic environment dashboard</h2>
+          <p>
+            Sensor data is organized into an academic dashboard layout to demonstrate plant health,
+            water availability, and nutrient balance.
+          </p>
+        </div>
+
+        <div class="status-layout">
+          <article class="status-card overall-health">
+            <div class="card-topline">
+              <span class="status-icon healthy" id="overall-health-dot"></span>
+              <span>Overall Plant Health</span>
+            </div>
+            <strong id="overall-health">Healthy</strong>
+            <p id="system-summary">
+              AI summary: Conditions are stable. pH, water level, temperature, and nutrient values
+              are within recommended hydroponic operating ranges.
+            </p>
+          </article>
+
+          <div class="metric-grid" aria-label="Current sensor readings">
+            <article class="metric-card" data-metric="ph">
+              <div>
+                <span class="metric-icon">pH</span>
+                <span class="metric-label">pH Level</span>
+              </div>
+              <strong id="ph-value">6.3</strong>
+              <span class="metric-status healthy" id="ph-status">Optimal</span>
+              <div class="progress-track" aria-label="pH level progress">
+                <span id="ph-progress" style="width: 72%"></span>
+              </div>
+            </article>
+
+            <article class="metric-card" data-metric="water">
+              <div>
+                <span class="metric-icon">💧</span>
+                <span class="metric-label">Water Level</span>
+              </div>
+              <strong><span id="water-value">78</span>%</strong>
+              <span class="metric-status healthy" id="water-status">Sufficient</span>
+              <div class="progress-track" aria-label="Water level progress">
+                <span id="water-progress" style="width: 78%"></span>
+              </div>
+            </article>
+
+            <article class="metric-card" data-metric="temperature">
+              <div>
+                <span class="metric-icon">°C</span>
+                <span class="metric-label">Temperature</span>
+              </div>
+              <strong><span id="temperature-value">24.6</span>°C</strong>
+              <span class="metric-status healthy" id="temperature-status">Stable</span>
+              <div class="progress-track" aria-label="Temperature progress">
+                <span id="temperature-progress" style="width: 61%"></span>
+              </div>
+            </article>
+
+            <article class="metric-card" data-metric="nutrient">
+              <div>
+                <span class="metric-icon">EC</span>
+                <span class="metric-label">Nutrient Level</span>
+              </div>
+              <strong><span id="nutrient-value">1.8</span> EC</strong>
+              <span class="metric-status healthy" id="nutrient-status">Balanced</span>
+              <div class="progress-track" aria-label="Nutrient level progress">
+                <span id="nutrient-progress" style="width: 68%"></span>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="ml-output" class="section-shell split-section">
+        <div class="section-heading compact">
+          <span class="eyebrow">AI Prediction / ML Output</span>
+          <h2>Machine learning anomaly classification</h2>
+          <p>
+            The prototype converts live sensor trends into a model score and interpretable output
+            for engineering evaluation.
+          </p>
+        </div>
+
+        <div class="ml-panel">
+          <div class="score-ring" aria-label="Anomaly score">
+            <span id="anomaly-score">0.18</span>
+            <small>Anomaly Score</small>
+          </div>
+          <div class="prediction-details">
+            <div class="prediction-row">
+              <span>Model Prediction</span>
+              <strong class="prediction-normal" id="model-prediction">Normal</strong>
+            </div>
+            <div class="prediction-row">
+              <span>Confidence Level</span>
+              <strong><span id="confidence-level">92</span>%</strong>
+            </div>
+            <div class="confidence-track" aria-label="Model confidence level">
+              <span id="confidence-progress" style="width: 92%"></span>
+            </div>
+            <p id="pattern-explanation">
+              Detected pattern explanation: Sensor readings show a consistent nutrient and water
+              profile with no abnormal decline.
+            </p>
+            <p class="model-note" id="classification-note">
+              System classified condition as NORMAL with 92% confidence.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="analysis" class="section-shell">
+        <div class="section-heading">
+          <span class="eyebrow">Interactive Analysis</span>
+          <h2>Simulate sensor readings and recommendations</h2>
+          <p>
+            Enter pH, water, temperature, and nutrient values to simulate how the system interprets
+            incoming data.
+          </p>
+        </div>
+
+        <div class="analysis-layout">
+          <form class="analysis-form" id="analysis-form">
+            <label for="sensor-input">Sensor input</label>
+            <textarea
+              id="sensor-input"
+              rows="5"
+              placeholder="Enter or simulate sensor readings... Example: pH 5.4, water 35%, temperature 31C, EC 0.9"
+            ></textarea>
+            <div class="form-actions">
+              <button class="button button-primary" type="submit">Run AI Analysis</button>
+              <button class="button button-ghost" type="button" id="simulate-warning">
+                Simulate Warning
+              </button>
+            </div>
+          </form>
+
+          <article class="analysis-result" aria-live="polite">
+            <span class="eyebrow">AI Interpretation</span>
+            <h3 id="analysis-title">Stable growing condition</h3>
+            <p id="analysis-text">
+              Current sample indicates healthy hydroponic conditions. Continue monitoring sensor
+              drift and refill solution before water drops below 50%.
+            </p>
+            <h4>Recommendations</h4>
+            <ul id="recommendations">
+              <li>Maintain nutrient circulation and check reservoir level during daily inspection.</li>
+              <li>Keep pH between 5.8 and 6.5 for optimal nutrient uptake.</li>
+              <li>Review trend data if temperature remains above 28°C.</li>
+            </ul>
+            <div class="warning-box is-hidden" id="analysis-warning">
+              Warning: anomaly detected. Immediate inspection is recommended.
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="readings" class="section-shell">
+        <div class="section-heading">
+          <span class="eyebrow">Detailed Sensor Readings</span>
+          <h2>Readable time-series data for engineering review</h2>
+          <p>
+            A simple table and bar-style trend chart show recent pH history, temperature trend,
+            water level changes, and nutrient fluctuations.
+          </p>
+        </div>
+
+        <div class="readings-layout">
+          <div class="trend-card">
+            <h3>Recent sensor trends</h3>
+            <div class="mini-chart" aria-label="Simple trend chart">
+              <div style="--height: 54%"><span>pH</span></div>
+              <div style="--height: 68%"><span>Temp</span></div>
+              <div style="--height: 78%"><span>Water</span></div>
+              <div style="--height: 64%"><span>EC</span></div>
+              <div style="--height: 45%" class="warning-bar"><span>EC drop</span></div>
+            </div>
+          </div>
+
+          <div class="table-card">
+            <table>
+              <caption>
+                Last five sensor samples
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Time</th>
+                  <th scope="col">pH</th>
+                  <th scope="col">Temp</th>
+                  <th scope="col">Water</th>
+                  <th scope="col">EC</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>08:00</td>
+                  <td>6.4</td>
+                  <td>24.1°C</td>
+                  <td>86%</td>
+                  <td>1.9</td>
+                  <td><span class="table-status healthy">Normal</span></td>
+                </tr>
+                <tr>
+                  <td>09:00</td>
+                  <td>6.3</td>
+                  <td>24.6°C</td>
+                  <td>82%</td>
+                  <td>1.8</td>
+                  <td><span class="table-status healthy">Normal</span></td>
+                </tr>
+                <tr>
+                  <td>10:00</td>
+                  <td>6.2</td>
+                  <td>25.0°C</td>
+                  <td>78%</td>
+                  <td>1.7</td>
+                  <td><span class="table-status warning">Watch</span></td>
+                </tr>
+                <tr>
+                  <td>11:00</td>
+                  <td>6.1</td>
+                  <td>25.7°C</td>
+                  <td>72%</td>
+                  <td>1.4</td>
+                  <td><span class="table-status warning">Warning</span></td>
+                </tr>
+                <tr>
+                  <td>12:00</td>
+                  <td>6.0</td>
+                  <td>26.2°C</td>
+                  <td>69%</td>
+                  <td>1.3</td>
+                  <td><span class="table-status warning">Nutrient drop</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="alerts" class="section-shell">
+        <div class="section-heading">
+          <span class="eyebrow">Alert System</span>
+          <h2>Actionable warnings and suggested responses</h2>
+        </div>
+
+        <div class="alerts-grid">
+          <article class="alert-card medium">
+            <div>
+              <span class="severity">Medium</span>
+              <h3>Low water level warning</h3>
+            </div>
+            <p>Timestamp: 12:18 PM</p>
+            <p>Suggested action: Refill reservoir before level drops below 50%.</p>
+          </article>
+          <article class="alert-card low">
+            <div>
+              <span class="severity">Low</span>
+              <h3>pH imbalance detected</h3>
+            </div>
+            <p>Timestamp: 11:42 AM</p>
+            <p>Suggested action: Add pH buffer and verify calibration reading.</p>
+          </article>
+          <article class="alert-card high">
+            <div>
+              <span class="severity">High</span>
+              <h3>Nutrient deficiency detected</h3>
+            </div>
+            <p>Timestamp: 10:55 AM</p>
+            <p>Suggested action: Add nutrients and re-check EC trend after circulation.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="workflow" class="section-shell">
+        <div class="section-heading">
+          <span class="eyebrow">How It Works</span>
+          <h2>Four-step IoT and machine learning workflow</h2>
+        </div>
+
+        <div class="workflow-grid">
+          <article>
+            <span class="workflow-icon">🌱</span>
+            <h3>1. Sensor collection</h3>
+            <p>IoT sensors collect pH, temperature, water level, and EC nutrient data.</p>
+          </article>
+          <article>
+            <span class="workflow-icon">📶</span>
+            <h3>2. ESP32 transmission</h3>
+            <p>ESP32 sends readings over Wi-Fi to the monitoring interface.</p>
+          </article>
+          <article>
+            <span class="workflow-icon">📊</span>
+            <h3>3. ML pattern analysis</h3>
+            <p>The machine learning model identifies abnormal sensor relationships.</p>
+          </article>
+          <article>
+            <span class="workflow-icon">🔔</span>
+            <h3>4. Alerts and guidance</h3>
+            <p>The system generates severity labels and maintenance recommendations.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="impact" class="section-shell impact-section">
+        <div>
+          <span class="eyebrow">SDG Impact</span>
+          <h2>Academic relevance and sustainable agriculture contribution</h2>
+        </div>
+        <div class="impact-grid">
+          <article>
+            <strong>SDG 2</strong>
+            <span>Zero Hunger</span>
+            <p>Supports controlled-environment agriculture and more reliable crop production.</p>
+          </article>
+          <article>
+            <strong>SDG 9</strong>
+            <span>Industry, Innovation and Infrastructure</span>
+            <p>Demonstrates IoT-enabled infrastructure and applied ML in agriculture.</p>
+          </article>
+          <article>
+            <strong>SDG 12</strong>
+            <span>Responsible Consumption and Production</span>
+            <p>Encourages efficient nutrient and water use through sensor-based monitoring.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div>
+        <strong>Smart Hydroponics Monitoring and Anomaly Detection System</strong>
+        <span>Student Name: [Your Name] • Institution: [University Name] • Year: 2026</span>
+      </div>
+      <a href="#" aria-label="Optional GitHub repository link">GitHub Repository</a>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
