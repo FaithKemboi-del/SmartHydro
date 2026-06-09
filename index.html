@@ -16,10 +16,9 @@
     <header class="site-header">
       <nav class="nav" aria-label="Main navigation">
         <a class="brand" href="#top" aria-label="Smart Hydroponics home">
-          <span class="brand-mark">SH</span>
+          <span class="brand-leaf" aria-hidden="true"></span>
           <span>
-            <strong>Smart Hydroponics</strong>
-            <small>Engineering Prototype</small>
+            <strong>Smart Hydro</strong>
           </span>
         </a>
         <div class="nav-links" aria-label="Page sections">
@@ -34,8 +33,8 @@
     <main id="top">
       <section class="hero section-shell">
         <div class="hero-heading">
-          <span class="eyebrow">IoT + Machine Learning Hydroponics Prototype</span>
-          <h1>Smart Hydroponics Monitoring and Anomaly Detection System Using IoT and Machine Learning</h1>
+          <span class="eyebrow">Smart Hydroponics System Prototype</span>
+          <h1>Smart Hydroponics Monitoring and Anomaly Detection System</h1>
         </div>
 
         <div class="hero-copy">
@@ -93,6 +92,16 @@
               <span class="line line-three"></span>
             </div>
           </div>
+          <article class="model-review-card">
+            <span class="eyebrow">Past 5 Days</span>
+            <h3>Model review and next-day prediction</h3>
+            <ul>
+              <li>Day 1-2: stable pH and water level.</li>
+              <li>Day 3-4: nutrient level slowly declined.</li>
+              <li>Day 5: model predicts warning risk for tomorrow.</li>
+            </ul>
+            <p>Notification: add nutrient solution today to prevent plant stress.</p>
+          </article>
         </div>
       </section>
 
@@ -169,6 +178,21 @@
             </article>
           </div>
         </div>
+
+        <div class="remedy-panel" aria-label="Suggested dashboard remedies">
+          <article>
+            <strong>Temperature:</strong> Move to shade when hot; move to light when cold.
+          </article>
+          <article>
+            <strong>Nutrients:</strong> Add nutrient solution when EC is low; dilute when EC is high.
+          </article>
+          <article>
+            <strong>Water:</strong> Add water when low; reduce flow or inspect drainage when high.
+          </article>
+          <article>
+            <strong>pH:</strong> Add pH Up when low; add pH Down when high.
+          </article>
+        </div>
       </section>
 
       <section id="ml-output" class="section-shell split-section">
@@ -176,8 +200,8 @@
           <span class="eyebrow">AI Prediction / ML Output</span>
           <h2>Machine learning anomaly classification</h2>
           <p>
-            The prototype converts live sensor trends into a model score and interpretable output
-            for engineering evaluation.
+            The model learns from system readings and predicts the condition one day ahead, so the
+            user can act early or confirm that the hydroponic environment is okay.
           </p>
         </div>
 
@@ -244,9 +268,9 @@
             </p>
             <h4>Recommendations</h4>
             <ul id="recommendations">
-              <li>Maintain nutrient circulation and check reservoir level during daily inspection.</li>
-              <li>Keep pH between 5.8 and 6.5 for optimal nutrient uptake.</li>
-              <li>Review trend data if temperature remains above 28°C.</li>
+              <li>Add or reduce nutrient solution based on the EC reading.</li>
+              <li>Use pH Up or pH Down to keep pH between 5.8 and 6.5.</li>
+              <li>Move plants to shade when hot or to light when cold.</li>
             </ul>
             <div class="warning-box is-hidden" id="analysis-warning">
               Warning: anomaly detected. Immediate inspection is recommended.
@@ -258,7 +282,7 @@
       <section id="readings" class="section-shell">
         <div class="section-heading">
           <span class="eyebrow">Detailed Sensor Readings</span>
-          <h2>Readable time-series data for engineering review</h2>
+          <h2>Readable time-series data</h2>
           <p>
             A simple table and bar-style trend chart show recent pH history, temperature trend,
             water level changes, and nutrient fluctuations.
@@ -403,29 +427,6 @@
         </div>
       </section>
 
-      <section id="impact" class="section-shell impact-section">
-        <div>
-          <span class="eyebrow">SDG Impact</span>
-          <h2>Academic relevance and sustainable agriculture contribution</h2>
-        </div>
-        <div class="impact-grid">
-          <article>
-            <strong>SDG 2</strong>
-            <span>Zero Hunger</span>
-            <p>Supports controlled-environment agriculture and more reliable crop production.</p>
-          </article>
-          <article>
-            <strong>SDG 9</strong>
-            <span>Industry, Innovation and Infrastructure</span>
-            <p>Demonstrates IoT-enabled infrastructure and applied ML in agriculture.</p>
-          </article>
-          <article>
-            <strong>SDG 12</strong>
-            <span>Responsible Consumption and Production</span>
-            <p>Encourages efficient nutrient and water use through sensor-based monitoring.</p>
-          </article>
-        </div>
-      </section>
     </main>
 
     <footer class="footer">

@@ -70,30 +70,44 @@ a {
   gap: 12px;
 }
 
-.brand-mark {
-  display: grid;
-  width: 46px;
-  height: 46px;
-  place-items: center;
-  border-radius: 14px;
-  color: var(--white);
-  font-weight: 800;
-  background: linear-gradient(135deg, var(--green-700), var(--blue-500));
-  box-shadow: 0 10px 24px rgba(46, 139, 87, 0.22);
+.brand-leaf {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--green-100);
+  box-shadow: 0 10px 24px rgba(46, 139, 87, 0.16);
 }
 
-.brand strong,
-.brand small {
+.brand-leaf::before,
+.brand-leaf::after {
+  position: absolute;
+  width: 18px;
+  height: 24px;
+  border-radius: 18px 18px 4px 18px;
+  background: linear-gradient(135deg, var(--green-700), #8bd9a6);
+  content: "";
+}
+
+.brand-leaf::before {
+  top: 6px;
+  left: 7px;
+  transform: rotate(-28deg);
+}
+
+.brand-leaf::after {
+  top: 8px;
+  right: 6px;
+  transform: scaleX(-1) rotate(-28deg);
+}
+
+.brand strong {
   display: block;
 }
 
 .brand strong {
   color: var(--green-900);
-}
-
-.brand small {
-  color: var(--gray-500);
-  font-size: 0.75rem;
 }
 
 .nav-links {
@@ -260,7 +274,7 @@ p {
 
 .hero-visual {
   position: relative;
-  min-height: 520px;
+  min-height: 560px;
 }
 
 .hydroponic-card {
@@ -432,6 +446,42 @@ p {
   font-weight: 700;
 }
 
+.model-review-card {
+  position: absolute;
+  z-index: 8;
+  right: 34px;
+  bottom: 0;
+  left: 34px;
+  border: 1px solid rgba(230, 235, 239, 0.95);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 16px 42px rgba(22, 74, 53, 0.12);
+}
+
+.model-review-card h3 {
+  margin: 8px 0 10px;
+}
+
+.model-review-card ul {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+
+.model-review-card li,
+.model-review-card p {
+  color: var(--gray-700);
+  font-size: 0.9rem;
+}
+
+.model-review-card p {
+  margin-bottom: 0;
+  color: var(--green-900);
+  font-weight: 800;
+}
+
 .line {
   position: absolute;
   z-index: 1;
@@ -486,6 +536,7 @@ p {
 
 .status-card,
 .metric-card,
+.remedy-panel article,
 .ml-panel,
 .analysis-form,
 .analysis-result,
@@ -554,6 +605,23 @@ p {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
+}
+
+.remedy-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.remedy-panel article {
+  color: var(--gray-700);
+  font-size: 0.92rem;
+  padding: 18px;
+}
+
+.remedy-panel strong {
+  color: var(--green-900);
 }
 
 .metric-card {
@@ -954,7 +1022,8 @@ td {
   }
 
   .workflow-grid,
-  .alerts-grid {
+  .alerts-grid,
+  .remedy-panel {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -979,7 +1048,8 @@ td {
 
   .metric-grid,
   .workflow-grid,
-  .alerts-grid {
+  .alerts-grid,
+  .remedy-panel {
     grid-template-columns: 1fr;
   }
 
@@ -1001,6 +1071,11 @@ td {
   .hero-visual {
     display: flex;
     flex-direction: column;
+  }
+
+  .model-review-card {
+    position: static;
+    margin-top: 16px;
   }
 
   .hydroponic-card {

@@ -171,21 +171,33 @@ function recommendationItems(readings, state) {
   const recommendations = [];
 
   if (readings.nutrient < 1.4) {
-    recommendations.push("Add nutrients and verify EC again after the solution circulates.");
+    recommendations.push("Add nutrient solution and verify EC again after circulation.");
+  } else if (readings.nutrient > 2.4) {
+    recommendations.push("Reduce nutrient strength by diluting the solution with clean water.");
   } else {
     recommendations.push("Maintain nutrient circulation and continue observing EC fluctuation.");
   }
 
-  if (readings.ph < 5.8 || readings.ph > 6.5) {
-    recommendations.push("Adjust pH level toward the recommended 5.8 to 6.5 hydroponic range.");
+  if (readings.ph < 5.8) {
+    recommendations.push("Add pH Up solution to move pH toward the 5.8 to 6.5 range.");
+  } else if (readings.ph > 6.5) {
+    recommendations.push("Add pH Down solution to move pH toward the 5.8 to 6.5 range.");
   } else {
     recommendations.push("Keep pH level stable through regular calibration and buffer checks.");
   }
 
   if (readings.water < 60) {
-    recommendations.push("Increase water supply by refilling the reservoir and checking pump flow.");
+    recommendations.push("Add water by refilling the reservoir and checking pump flow.");
+  } else if (readings.water > 90) {
+    recommendations.push("Reduce water level or inspect drainage to avoid overfilling.");
   } else {
     recommendations.push("Maintain reservoir level and inspect tubing for consistent flow.");
+  }
+
+  if (readings.temperature > 28) {
+    recommendations.push("Move plants to shade or improve ventilation to lower temperature.");
+  } else if (readings.temperature < 20) {
+    recommendations.push("Move plants to light or a warmer area to raise temperature.");
   }
 
   if (state.level !== "healthy") {
