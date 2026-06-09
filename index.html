@@ -210,46 +210,26 @@
             <span id="anomaly-score">0.18</span>
             <small>Anomaly Score</small>
           </div>
-          <div class="prediction-details">
-            <div class="prediction-row">
-              <span>Model Prediction</span>
-              <strong class="prediction-normal" id="model-prediction">Normal</strong>
-            </div>
-            <div class="prediction-row">
-              <span>Confidence Level</span>
-              <strong><span id="confidence-level">92</span>%</strong>
-            </div>
-            <div class="confidence-track" aria-label="Model confidence level">
-              <span id="confidence-progress" style="width: 92%"></span>
-            </div>
-            <p id="pattern-explanation">
-              Detected pattern explanation: Sensor readings show a consistent nutrient and water
-              profile with no abnormal decline.
-            </p>
-            <p class="model-note" id="classification-note">
-              System classified condition as NORMAL with 92% confidence.
-            </p>
-            <div class="ml-analysis-card" id="ml-analysis-card">
-              <div class="ml-analysis-inner">
-                <div class="ml-analysis-face ml-analysis-front">
-                  <span class="eyebrow">Next-day forecast</span>
-                  <h3>Analyze</h3>
-                  <p>Click to review recent records and predict tomorrow's hydroponic condition.</p>
-                  <button class="button button-primary" type="button" id="ml-analyze">
-                    Analyze
-                  </button>
-                </div>
-                <div class="ml-analysis-face ml-analysis-back">
-                  <span class="eyebrow">Prediction Result</span>
-                  <h3>Tomorrow's system forecast</h3>
-                  <p id="next-day-prediction">
-                    Based on the past few days and incoming records, I predict tomorrow's water,
-                    pH, EC, and temperature will remain within healthy ranges.
-                  </p>
-                  <p class="model-note" id="next-day-remedy">
-                    Recommendation: continue monitoring and keep nutrient solution balanced before tomorrow.
-                  </p>
-                </div>
+          <div class="ml-analysis-card" id="ml-analysis-card">
+            <div class="ml-analysis-inner">
+              <div class="ml-analysis-face ml-analysis-front">
+                <span class="eyebrow">Next-day forecast</span>
+                <h3>Analyze</h3>
+                <p>Click to review recent records and predict tomorrow's hydroponic condition.</p>
+                <button class="button button-primary" type="button" id="ml-analyze">
+                  Analyze
+                </button>
+              </div>
+              <div class="ml-analysis-face ml-analysis-back">
+                <span class="eyebrow">Prediction Result</span>
+                <h3>Tomorrow's system forecast</h3>
+                <p id="next-day-prediction">
+                  Based on the past few days and incoming records, I predict tomorrow's water,
+                  pH, EC, and temperature will remain within healthy ranges.
+                </p>
+                <p class="model-note" id="next-day-remedy">
+                  Recommendation: continue monitoring and keep nutrient solution balanced before tomorrow.
+                </p>
               </div>
             </div>
           </div>
@@ -268,16 +248,34 @@
 
         <div class="analysis-layout">
           <form class="analysis-form" id="analysis-form">
-            <span class="eyebrow">Random test</span>
+            <span class="eyebrow">Input test</span>
             <h3>Simulate condition</h3>
             <p>
-              Click once to generate random sensor values. Some values are in the optimal range,
-              while others can trigger warnings so you can test the system yourself.
+              Enter your own values, then click Simulate Condition. Leave fields blank if you want
+              the system to generate a random optimal or warning condition.
             </p>
             <p class="range-note">
               Optimal examples: pH 5.8-6.5, water 65-90%, temperature 21-27°C, EC 1.4-2.3.
               Warning examples use lower or higher values outside those ranges.
             </p>
+            <div class="simulation-input-grid">
+              <label>
+                <span>pH</span>
+                <input id="input-ph" type="number" step="0.1" min="0" max="14" placeholder="6.2" />
+              </label>
+              <label>
+                <span>Water %</span>
+                <input id="input-water" type="number" step="1" min="0" max="100" placeholder="78" />
+              </label>
+              <label>
+                <span>Temperature °C</span>
+                <input id="input-temperature" type="number" step="0.1" placeholder="24.6" />
+              </label>
+              <label>
+                <span>EC</span>
+                <input id="input-nutrient" type="number" step="0.1" min="0" placeholder="1.8" />
+              </label>
+            </div>
             <div class="simulated-values" id="simulated-values" aria-live="polite">
               pH 6.3 • Water 78% • Temperature 24.6°C • EC 1.8
             </div>

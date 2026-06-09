@@ -693,7 +693,7 @@ p {
 
 .ml-panel {
   display: grid;
-  grid-template-columns: 190px minmax(0, 1fr);
+  grid-template-columns: minmax(170px, 0.42fr) minmax(0, 1fr);
   align-items: center;
   gap: 28px;
   padding: 30px;
@@ -756,7 +756,7 @@ p {
 
 .ml-analysis-card {
   min-height: 260px;
-  margin-top: 18px;
+  width: 100%;
   perspective: 1200px;
 }
 
@@ -829,6 +829,40 @@ p {
   margin: 4px 0 0;
   padding: 12px 14px;
   background: var(--blue-100);
+}
+
+.simulation-input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.simulation-input-grid label {
+  display: grid;
+  gap: 7px;
+}
+
+.simulation-input-grid span {
+  color: var(--green-900);
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.simulation-input-grid input {
+  width: 100%;
+  border: 1px solid var(--gray-200);
+  border-radius: 14px;
+  color: var(--gray-900);
+  font: inherit;
+  padding: 12px 14px;
+  background: var(--gray-100);
+}
+
+.simulation-input-grid input:focus {
+  border-color: var(--blue-500);
+  background: var(--white);
+  outline: 3px solid rgba(74, 168, 216, 0.18);
 }
 
 .simulated-values {
@@ -1122,7 +1156,8 @@ td {
   .metric-grid,
   .workflow-grid,
   .alerts-grid,
-  .remedy-panel {
+  .remedy-panel,
+  .simulation-input-grid {
     grid-template-columns: 1fr;
   }
 

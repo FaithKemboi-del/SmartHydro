@@ -2,6 +2,12 @@ const form = document.querySelector("#analysis-form");
 const simulateConditionButton = document.querySelector("#simulate-condition");
 const mlAnalyzeButton = document.querySelector("#ml-analyze");
 const mlAnalysisCard = document.querySelector("#ml-analysis-card");
+const simulationInputs = {
+  ph: document.querySelector("#input-ph"),
+  water: document.querySelector("#input-water"),
+  temperature: document.querySelector("#input-temperature"),
+  nutrient: document.querySelector("#input-nutrient"),
+};
 
 const elements = {
   overallHealth: document.querySelector("#overall-health"),
@@ -20,11 +26,6 @@ const elements = {
   nutrientStatus: document.querySelector("#nutrient-status"),
   nutrientProgress: document.querySelector("#nutrient-progress"),
   anomalyScore: document.querySelector("#anomaly-score"),
-  modelPrediction: document.querySelector("#model-prediction"),
-  confidenceLevel: document.querySelector("#confidence-level"),
-  confidenceProgress: document.querySelector("#confidence-progress"),
-  patternExplanation: document.querySelector("#pattern-explanation"),
-  classificationNote: document.querySelector("#classification-note"),
   analysisTitle: document.querySelector("#analysis-title"),
   analysisText: document.querySelector("#analysis-text"),
   recommendations: document.querySelector("#recommendations"),
@@ -110,6 +111,37 @@ function simulatedReading() {
   });
 
   return readings;
+}
+
+function hasSimulationInput() {
+  return Object.values(simulationInputs).some((input) => input.value.trim() !== "");
+}
+
+function inputValue(input, fallback) {
+  if (input.value.trim() === "") {
+    return fallback;
+  }
+
+  const value = Number(input.value);
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function readingFromInputs() {
+  const fallback = simulatedReading();
+
+  if (!hasSimulationInput()) {
+    Object.entries(fallback).forEach(([metric, value]) => {
+      simulationInputs[metric].value = metric === "water" ? Math.round(value) : value.toFixed(1);
+    });
+    return fallback;
+  }
+
+  return {
+    ph: inputValue(simulationInputs.ph, fallback.ph),
+    water: inputValue(simulationInputs.water, fallback.water),
+    temperature: inputValue(simulationInputs.temperature, fallback.temperature),
+    nutrient: inputValue(simulationInputs.nutrient, fallback.nutrient),
+  };
 }
 
 function classifyMetric(metric, value) {
@@ -311,7 +343,6 @@ function updateDashboard(readings) {
   const nutrientState = classifyMetric("nutrient", readings.nutrient);
   const anomalyScore = calculateAnomalyScore(readings);
   const overallState = getOverallState([phState, waterState, temperatureState, nutrientState], anomalyScore);
-  const confidence = clamp(overallState.confidence, 76, 98);
   const roundedScore = anomalyScore.toFixed(2);
 
   elements.overallHealth.textContent = overallState.label;
@@ -353,23 +384,6 @@ function updateDashboard(readings) {
   });
 
   elements.anomalyScore.textContent = roundedScore;
-  elements.modelPrediction.textContent = overallState.prediction;
-  elements.modelPrediction.className =
-    overallState.level === "healthy"
-      ? "prediction-normal"
-      : overallState.level === "warning"
-        ? "prediction-warning"
-        : "prediction-critical";
-  elements.confidenceLevel.textContent = confidence;
-  elements.confidenceProgress.style.width = `${confidence}%`;
-  elements.confidenceProgress.parentElement.classList.remove("warning", "critical");
-
-  if (overallState.level !== "healthy") {
-    elements.confidenceProgress.parentElement.classList.add(overallState.level);
-  }
-
-  elements.patternExplanation.textContent = patternText(readings, overallState);
-  elements.classificationNote.textContent = `System classified condition as ${overallState.prediction.toUpperCase()} with ${confidence}% confidence.`;
 
   elements.analysisTitle.textContent =
     overallState.level === "healthy"
@@ -395,10 +409,11 @@ function updateDashboard(readings) {
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();
+  simulateConditionButton.click();
 });
 
 simulateConditionButton.addEventListener("click", () => {
-  const readings = simulatedReading();
+  const readings = readingFromInputs();
   elements.simulatedValues.textContent = readingSummary(readings);
   mlAnalysisCard.classList.remove("is-rotated");
   updateDashboard(readings);
