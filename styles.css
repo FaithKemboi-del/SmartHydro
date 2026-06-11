@@ -274,7 +274,52 @@ p {
 
 .hero-visual {
   position: relative;
-  min-height: 560px;
+  min-height: 0;
+}
+
+.photo-showcase {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.project-photo {
+  position: relative;
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid rgba(230, 235, 239, 0.9);
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+
+.project-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.project-photo-large {
+  min-height: 500px;
+}
+
+.project-photo-small {
+  min-height: 500px;
+}
+
+.project-photo figcaption {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  border-radius: 999px;
+  color: var(--green-900);
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 7px 12px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(10px);
 }
 
 .hydroponic-card {
@@ -447,11 +492,12 @@ p {
 }
 
 .model-review-card {
-  position: absolute;
+  position: relative;
   z-index: 8;
-  right: 34px;
-  bottom: 0;
-  left: 34px;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  margin: 16px 34px 0;
   border: 1px solid rgba(230, 235, 239, 0.95);
   border-radius: var(--radius-md);
   padding: 20px;
@@ -1181,9 +1227,18 @@ td {
     flex-direction: column;
   }
 
+  .photo-showcase {
+    grid-template-columns: 1fr;
+  }
+
+  .project-photo-large,
+  .project-photo-small {
+    min-height: 340px;
+  }
+
   .model-review-card {
     position: static;
-    margin-top: 16px;
+    margin: 16px 0 0;
   }
 
   .hydroponic-card {
