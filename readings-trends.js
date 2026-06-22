@@ -9,6 +9,7 @@
 
   const samplesBody = document.querySelector("#sensor-samples-body");
   const miniChart = document.querySelector(".mini-chart");
+  const readingsPanel = document.querySelector("#readings-trends-panel");
   let activePulseInterval = null;
   let isIntensePulse = false;
 
@@ -31,6 +32,19 @@
         final: bar.final,
       }))
       .filter((bar) => bar.element);
+  }
+
+  function stabilizeChart() {
+    const bars = getBars();
+
+    bars.forEach((bar) => {
+      setBarHeight(bar.element, bar.final);
+      bar.element.classList.remove("is-live");
+      bar.element.classList.add("is-stable");
+    });
+
+    miniChart?.classList.remove("is-live");
+    miniChart?.classList.add("is-stable");
   }
 
   function formatSampleHour(date) {
@@ -83,6 +97,10 @@
       .join("");
   }
 
+  function isAnimating() {
+    return activePulseInterval !== null;
+  }
+
   function runChartPulse(options = {}) {
     const {
       durationMs = 5000,
@@ -111,6 +129,7 @@
 
     miniChart?.classList.remove("is-stable");
     miniChart?.classList.add("is-live");
+    readingsPanel?.classList.add("is-animating");
     bars.forEach((bar) => {
       bar.element.classList.remove("is-stable");
       bar.element.classList.add("is-live");
@@ -126,13 +145,8 @@
         window.clearInterval(activePulseInterval);
         activePulseInterval = null;
         isIntensePulse = false;
-        bars.forEach((bar) => {
-          setBarHeight(bar.element, bar.final);
-          bar.element.classList.remove("is-live");
-          bar.element.classList.add("is-stable");
-        });
-        miniChart?.classList.remove("is-live");
-        miniChart?.classList.add("is-stable");
+        stabilizeChart();
+        readingsPanel?.classList.remove("is-animating");
         onComplete?.();
         return;
       }
@@ -148,16 +162,16 @@
   }
 
   renderSensorSamples();
-  runChartPulse({ durationMs: 5000 });
+  stabilizeChart();
 
-  window.setInterval(() => {
-    if (isIntensePulse) {
+  readingsPanel?.addEventListener("mouseenter", () => {
+    if (isAnimating() || isIntensePulse) {
       return;
     }
 
     renderSensorSamples();
-    runChartPulse({ durationMs: 4000 });
-  }, 60000);
+    runChartPulse({ durationMs: 10000, tickMs: 500 });
+  });
 
   window.SmartHydroTrends = {
     runChartPulse,

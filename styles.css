@@ -161,7 +161,7 @@ html.auth-pending body {
 .hero {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: center;
+  align-items: stretch;
   gap: 34px 48px;
   min-height: calc(100vh - 79px);
   padding-top: 54px;
@@ -222,8 +222,13 @@ p {
 }
 
 .hero-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-self: center;
   max-width: 560px;
+  min-height: 500px;
+  padding-right: 12px;
 }
 
 .hero-copy p {
@@ -232,6 +237,15 @@ p {
   color: var(--gray-700);
   font-size: clamp(1.32rem, 2.15vw, 1.62rem);
   line-height: 1.58;
+}
+
+.hero-visual {
+  position: relative;
+  display: flex;
+  align-self: center;
+  align-items: center;
+  width: 100%;
+  min-height: 500px;
 }
 
 .hero-heading {
@@ -296,11 +310,6 @@ p {
 
 .button-ghost {
   background: var(--green-50);
-}
-
-.hero-visual {
-  position: relative;
-  min-height: 0;
 }
 
 .photo-showcase {
@@ -1127,6 +1136,16 @@ textarea:focus {
   align-items: stretch;
 }
 
+#readings-trends-panel {
+  cursor: pointer;
+  transition: box-shadow 280ms ease;
+}
+
+#readings-trends-panel:hover,
+#readings-trends-panel.is-animating {
+  box-shadow: 0 18px 44px rgba(22, 74, 53, 0.1);
+}
+
 .trend-card,
 .table-card {
   overflow: hidden;
@@ -1459,6 +1478,11 @@ td {
 
   .hero-visual {
     min-height: auto;
+  }
+
+  .hero-copy {
+    min-height: auto;
+    padding-right: 0;
   }
 
   .workflow-grid,
