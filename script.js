@@ -407,6 +407,14 @@ function updateDashboard(readings) {
       : "Warning: anomaly risk detected. Correct the highlighted parameter and monitor the next sample.";
 }
 
+window.SmartHydroDashboard = {
+  getCurrentReadings() {
+    return { ...currentReadings };
+  },
+  readingSummary,
+  updateDashboard,
+};
+
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   simulateConditionButton.click();

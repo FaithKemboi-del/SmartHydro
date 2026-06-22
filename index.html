@@ -11,6 +11,9 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <script>
+      document.documentElement.classList.add("auth-pending");
+    </script>
   </head>
   <body>
     <header class="site-header">
@@ -26,6 +29,7 @@
           <a href="#ml-output">ML Output</a>
           <a href="#analysis">Simulation Mode</a>
           <a href="#alerts">Alerts</a>
+          <button class="nav-action" id="sign-out-button" type="button">Sign Out</button>
         </div>
       </nav>
     </header>
@@ -441,6 +445,11 @@
       <p>Copyright 2026</p>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="auth-guard.js"></script>
     <script src="script.js"></script>
+    <script src="live-data.js"></script>
   </body>
 </html>
