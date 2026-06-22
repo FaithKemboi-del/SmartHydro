@@ -1108,16 +1108,27 @@ textarea:focus {
     var(--gray-100);
 }
 
+@property --height {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 40%;
+}
+
 .mini-chart div {
   position: relative;
   min-height: 32px;
   height: var(--height);
   border-radius: 16px 16px 8px 8px;
   background: linear-gradient(180deg, var(--green-700), #8bd9a6);
+  transition: --height 500ms ease, height 500ms ease;
 }
 
 .mini-chart .warning-bar {
   background: linear-gradient(180deg, var(--warning), #f5d777);
+}
+
+.mini-chart.is-stable .trend-bar.is-stable {
+  box-shadow: 0 10px 24px rgba(46, 139, 87, 0.14);
 }
 
 .mini-chart span {

@@ -260,11 +260,13 @@
           <div class="trend-card">
             <h3>Recent sensor trends</h3>
             <div class="mini-chart" aria-label="Simple trend chart">
-              <div style="--height: 54%"><span>pH</span></div>
-              <div style="--height: 68%"><span>Temp</span></div>
-              <div style="--height: 78%"><span>Water</span></div>
-              <div style="--height: 64%"><span>EC</span></div>
-              <div style="--height: 45%" class="warning-bar"><span>EC drop</span></div>
+              <div class="trend-bar" id="trend-bar-ph" style="--height: 40%"><span>pH</span></div>
+              <div class="trend-bar" id="trend-bar-temp" style="--height: 55%"><span>Temp</span></div>
+              <div class="trend-bar" id="trend-bar-water" style="--height: 62%"><span>Water</span></div>
+              <div class="trend-bar" id="trend-bar-ec" style="--height: 50%"><span>EC</span></div>
+              <div class="trend-bar warning-bar" id="trend-bar-ec-drop" style="--height: 38%">
+                <span>EC drop</span>
+              </div>
             </div>
           </div>
 
@@ -283,48 +285,7 @@
                   <th scope="col">Status</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td>08:00</td>
-                  <td>6.4</td>
-                  <td>24.1°C</td>
-                  <td>86%</td>
-                  <td>1.9</td>
-                  <td><span class="table-status healthy">Normal</span></td>
-                </tr>
-                <tr>
-                  <td>09:00</td>
-                  <td>6.3</td>
-                  <td>24.6°C</td>
-                  <td>82%</td>
-                  <td>1.8</td>
-                  <td><span class="table-status healthy">Normal</span></td>
-                </tr>
-                <tr>
-                  <td>10:00</td>
-                  <td>6.2</td>
-                  <td>25.0°C</td>
-                  <td>78%</td>
-                  <td>1.7</td>
-                  <td><span class="table-status warning">Watch</span></td>
-                </tr>
-                <tr>
-                  <td>11:00</td>
-                  <td>6.1</td>
-                  <td>25.7°C</td>
-                  <td>72%</td>
-                  <td>1.4</td>
-                  <td><span class="table-status warning">Warning</span></td>
-                </tr>
-                <tr>
-                  <td>12:00</td>
-                  <td>6.0</td>
-                  <td>26.2°C</td>
-                  <td>69%</td>
-                  <td>1.3</td>
-                  <td><span class="table-status warning">Nutrient drop</span></td>
-                </tr>
-              </tbody>
+              <tbody id="sensor-samples-body"></tbody>
             </table>
           </div>
         </div>
@@ -406,5 +367,6 @@
     <script src="auth-guard.js"></script>
     <script src="script.js"></script>
     <script src="live-data.js"></script>
+    <script src="readings-trends.js"></script>
   </body>
 </html>
