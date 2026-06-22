@@ -27,7 +27,6 @@
         <div class="nav-links" aria-label="Page sections">
           <a href="#status">Live Status</a>
           <a href="#ml-output">ML Output</a>
-          <a href="#analysis">Simulation Mode</a>
           <a href="#alerts">Alerts</a>
           <button class="nav-action" id="sign-out-button" type="button">Sign Out</button>
         </div>
@@ -48,7 +47,7 @@
           </p>
           <div class="hero-actions" aria-label="Primary actions">
             <a class="button button-primary" href="#status">View Live Status</a>
-            <a class="button button-secondary" href="#analysis">Analyze System Data</a>
+            <a class="button button-secondary" href="#ml-output">Analyze System Data</a>
           </div>
         </div>
 
@@ -104,15 +103,23 @@
 
         <div class="status-layout">
           <article class="status-card overall-health">
-            <div class="card-topline">
-              <span class="status-icon healthy" id="overall-health-dot"></span>
-              <span>Overall Plant Health</span>
+            <figure class="dashboard-photo">
+              <img
+                src="assets/hydroponics-buckets.jpg"
+                alt="Bucket hydroponic system with healthy pepper plants"
+              />
+            </figure>
+            <div class="health-summary-panel">
+              <div class="card-topline">
+                <span class="status-icon healthy" id="overall-health-dot"></span>
+                <span>Overall Plant Health</span>
+              </div>
+              <strong id="overall-health">Healthy</strong>
+              <p id="system-summary">
+                AI summary: Conditions are stable. pH, water level, temperature, and nutrient values
+                are within recommended hydroponic operating ranges.
+              </p>
             </div>
-            <strong id="overall-health">Healthy</strong>
-            <p id="system-summary">
-              AI summary: Conditions are stable. pH, water level, temperature, and nutrient values
-              are within recommended hydroponic operating ranges.
-            </p>
           </article>
 
           <div class="metric-grid" aria-label="Current sensor readings">
@@ -122,6 +129,7 @@
                 <span class="metric-label">pH Level</span>
               </div>
               <strong id="ph-value">6.3</strong>
+              <span class="trend-indicator steady" id="ph-trend">Stable</span>
               <span class="metric-status healthy" id="ph-status">Optimal</span>
               <div class="progress-track" aria-label="pH level progress">
                 <span id="ph-progress" style="width: 72%"></span>
@@ -134,6 +142,7 @@
                 <span class="metric-label">Water Level</span>
               </div>
               <strong><span id="water-value">78</span>%</strong>
+              <span class="trend-indicator steady" id="water-trend">Stable</span>
               <span class="metric-status healthy" id="water-status">Sufficient</span>
               <div class="progress-track" aria-label="Water level progress">
                 <span id="water-progress" style="width: 78%"></span>
@@ -146,6 +155,7 @@
                 <span class="metric-label">Temperature</span>
               </div>
               <strong><span id="temperature-value">24.6</span>°C</strong>
+              <span class="trend-indicator steady" id="temperature-trend">Stable</span>
               <span class="metric-status healthy" id="temperature-status">Stable</span>
               <div class="progress-track" aria-label="Temperature progress">
                 <span id="temperature-progress" style="width: 61%"></span>
@@ -158,11 +168,24 @@
                 <span class="metric-label">Nutrient Level</span>
               </div>
               <strong><span id="nutrient-value">1.8</span> EC</strong>
+              <span class="trend-indicator steady" id="nutrient-trend">Stable</span>
               <span class="metric-status healthy" id="nutrient-status">Balanced</span>
               <div class="progress-track" aria-label="Nutrient level progress">
                 <span id="nutrient-progress" style="width: 68%"></span>
               </div>
             </article>
+            <div class="monitoring-control-card">
+              <div>
+                <span class="eyebrow">Live monitoring</span>
+                <h3>Start real-time sensor tracking</h3>
+                <p id="monitoring-state">
+                  Click start to simulate live readings. Values will fluctuate slightly, then stabilize after one minute.
+                </p>
+              </div>
+              <button class="button button-primary" id="start-live-monitoring" type="button">
+                Start Live Monitoring
+              </button>
+            </div>
           </div>
         </div>
 
@@ -220,74 +243,6 @@
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section id="analysis" class="section-shell">
-        <div class="section-heading">
-          <span class="eyebrow">Simulation Mode</span>
-          <h2>Manual sensor simulation and recommendations</h2>
-          <p>
-            Use this mode to test example pH, water, temperature, and nutrient values before the
-            real IoT and ML pipeline is connected.
-          </p>
-        </div>
-
-        <div class="analysis-layout">
-          <form class="analysis-form" id="analysis-form">
-            <span class="eyebrow">Input test</span>
-            <h3>Simulate condition</h3>
-            <p>
-              Enter your own values, then click Simulate Condition. Leave fields blank if you want
-              the system to generate a random optimal or warning condition.
-            </p>
-            <p class="range-note">
-              Optimal examples: pH 5.8-6.5, water 65-90%, temperature 21-27°C, EC 1.4-2.3.
-              Warning examples use lower or higher values outside those ranges.
-            </p>
-            <div class="simulation-input-grid">
-              <label>
-                <span>pH</span>
-                <input id="input-ph" type="number" step="0.1" min="0" max="14" placeholder="6.2" />
-              </label>
-              <label>
-                <span>Water %</span>
-                <input id="input-water" type="number" step="1" min="0" max="100" placeholder="78" />
-              </label>
-              <label>
-                <span>Temperature °C</span>
-                <input id="input-temperature" type="number" step="0.1" placeholder="24.6" />
-              </label>
-              <label>
-                <span>EC</span>
-                <input id="input-nutrient" type="number" step="0.1" min="0" placeholder="1.8" />
-              </label>
-            </div>
-            <div class="simulated-values" id="simulated-values" aria-live="polite">
-              pH 6.3 • Water 78% • Temperature 24.6°C • EC 1.8
-            </div>
-            <button class="button button-primary" type="button" id="simulate-condition">
-              Simulate Condition
-            </button>
-          </form>
-
-          <article class="analysis-result" aria-live="polite">
-            <span class="eyebrow">AI Interpretation</span>
-            <h3 id="analysis-title">Stable growing condition</h3>
-            <p id="analysis-text">
-              Current sample indicates healthy hydroponic conditions. Continue monitoring sensor
-              drift and refill solution before water drops below 50%.
-            </p>
-            <h4>Recommendations</h4>
-            <ul id="recommendations">
-              <li>Add or reduce nutrient solution based on the EC reading.</li>
-              <li>Use pH Up or pH Down to keep pH between 5.8 and 6.5.</li>
-              <li>Move plants to shade when hot or to light when cold.</li>
-            </ul>
-            <div class="warning-box is-hidden" id="analysis-warning">
-              Warning: anomaly detected. Immediate inspection is recommended.
-            </div>
-          </article>
         </div>
       </section>
 

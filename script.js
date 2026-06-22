@@ -1,13 +1,6 @@
-const form = document.querySelector("#analysis-form");
-const simulateConditionButton = document.querySelector("#simulate-condition");
 const mlAnalyzeButton = document.querySelector("#ml-analyze");
 const mlAnalysisCard = document.querySelector("#ml-analysis-card");
-const simulationInputs = {
-  ph: document.querySelector("#input-ph"),
-  water: document.querySelector("#input-water"),
-  temperature: document.querySelector("#input-temperature"),
-  nutrient: document.querySelector("#input-nutrient"),
-};
+const startLiveMonitoringButton = document.querySelector("#start-live-monitoring");
 
 const elements = {
   overallHealth: document.querySelector("#overall-health"),
@@ -25,12 +18,12 @@ const elements = {
   nutrientValue: document.querySelector("#nutrient-value"),
   nutrientStatus: document.querySelector("#nutrient-status"),
   nutrientProgress: document.querySelector("#nutrient-progress"),
+  phTrend: document.querySelector("#ph-trend"),
+  waterTrend: document.querySelector("#water-trend"),
+  temperatureTrend: document.querySelector("#temperature-trend"),
+  nutrientTrend: document.querySelector("#nutrient-trend"),
   anomalyScore: document.querySelector("#anomaly-score"),
-  analysisTitle: document.querySelector("#analysis-title"),
-  analysisText: document.querySelector("#analysis-text"),
-  recommendations: document.querySelector("#recommendations"),
-  analysisWarning: document.querySelector("#analysis-warning"),
-  simulatedValues: document.querySelector("#simulated-values"),
+  monitoringState: document.querySelector("#monitoring-state"),
   nextDayPrediction: document.querySelector("#next-day-prediction"),
   nextDayRemedy: document.querySelector("#next-day-remedy"),
 };
@@ -50,6 +43,8 @@ const defaultReadings = {
 };
 
 let currentReadings = { ...defaultReadings };
+let previousReadings = { ...defaultReadings };
+let monitoringInterval = null;
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
@@ -58,90 +53,6 @@ function clamp(value, min, max) {
 function randomBetween(min, max, decimals = 1) {
   const value = Math.random() * (max - min) + min;
   return Number(value.toFixed(decimals));
-}
-
-function choose(options) {
-  return options[Math.floor(Math.random() * options.length)];
-}
-
-function optimalReading() {
-  return {
-    ph: randomBetween(5.8, 6.5),
-    water: randomBetween(65, 90, 0),
-    temperature: randomBetween(21, 27),
-    nutrient: randomBetween(1.4, 2.3),
-  };
-}
-
-function warningValue(metric) {
-  const warningRanges = {
-    ph: [
-      [5.2, 5.7],
-      [6.6, 7.1],
-    ],
-    water: [
-      [35, 59, 0],
-      [91, 98, 0],
-    ],
-    temperature: [
-      [16, 19.5],
-      [28.5, 32],
-    ],
-    nutrient: [
-      [0.7, 1.3],
-      [2.5, 3.0],
-    ],
-  };
-  const range = choose(warningRanges[metric]);
-  return randomBetween(range[0], range[1], range[2] ?? 1);
-}
-
-function simulatedReading() {
-  const readings = optimalReading();
-
-  if (Math.random() < 0.58) {
-    return readings;
-  }
-
-  const metrics = ["ph", "water", "temperature", "nutrient"].sort(() => Math.random() - 0.5);
-  const warningCount = Math.random() < 0.7 ? 1 : 2;
-
-  metrics.slice(0, warningCount).forEach((metric) => {
-    readings[metric] = warningValue(metric);
-  });
-
-  return readings;
-}
-
-function hasSimulationInput() {
-  return Object.values(simulationInputs).some((input) => input.value.trim() !== "");
-}
-
-function inputValue(input, fallback) {
-  if (input.value.trim() === "") {
-    return fallback;
-  }
-
-  const value = Number(input.value);
-  return Number.isFinite(value) ? value : fallback;
-}
-
-function readingFromInputs() {
-  const fallback = simulatedReading();
-
-  if (!hasSimulationInput()) {
-    Object.entries(fallback).forEach(([metric, value]) => {
-      simulationInputs[metric].value = metric === "water" ? Math.round(value) : value.toFixed(1);
-    });
-    return fallback;
-  }
-
-  return {
-    ph: inputValue(simulationInputs.ph, fallback.ph),
-    water: inputValue(simulationInputs.water, fallback.water),
-    temperature: inputValue(simulationInputs.temperature, fallback.temperature),
-    nutrient: inputValue(simulationInputs.nutrient, fallback.nutrient),
-  };
 }
 
 function classifyMetric(metric, value) {
@@ -336,6 +247,7 @@ function nextDayForecast(readings) {
 }
 
 function updateDashboard(readings) {
+  previousReadings = { ...currentReadings };
   currentReadings = { ...readings };
   const phState = classifyMetric("ph", readings.ph);
   const waterState = classifyMetric("water", readings.water);
@@ -383,28 +295,97 @@ function updateDashboard(readings) {
     progressElement.style.width = `${progressValue}%`;
   });
 
+  updateTrendIndicators(previousReadings, readings);
   elements.anomalyScore.textContent = roundedScore;
+}
 
-  elements.analysisTitle.textContent =
-    overallState.level === "healthy"
-      ? "Stable growing condition"
-      : overallState.level === "warning"
-        ? "Warning condition detected"
-        : "Critical anomaly detected";
-  elements.analysisText.textContent =
-    overallState.level === "healthy"
-      ? "Current sample indicates healthy hydroponic conditions. Continue monitoring sensor drift and refill solution before water drops below 50%."
-      : "The AI interpretation indicates abnormal or drifting sensor behavior. The system recommends corrective maintenance and closer monitoring of the next readings.";
+function updateTrendIndicators(previous, next) {
+  const trendMap = [
+    ["ph", elements.phTrend, 0.02],
+    ["water", elements.waterTrend, 0.25],
+    ["temperature", elements.temperatureTrend, 0.08],
+    ["nutrient", elements.nutrientTrend, 0.03],
+  ];
 
-  elements.recommendations.innerHTML = recommendationItems(readings, overallState)
-    .map((item) => `<li>${item}</li>`)
-    .join("");
+  trendMap.forEach(([metric, element, threshold]) => {
+    const difference = next[metric] - previous[metric];
 
-  elements.analysisWarning.classList.toggle("is-hidden", overallState.level === "healthy");
-  elements.analysisWarning.textContent =
-    overallState.level === "critical"
-      ? "High severity warning: anomaly detected. Inspect reservoir, pH, and nutrient solution immediately."
-      : "Warning: anomaly risk detected. Correct the highlighted parameter and monitor the next sample.";
+    element.classList.remove("up", "down", "steady");
+
+    if (Math.abs(difference) <= threshold) {
+      element.textContent = "Stable";
+      element.classList.add("steady");
+      return;
+    }
+
+    if (difference > 0) {
+      element.textContent = `Moving forward +${Math.abs(difference).toFixed(metric === "water" ? 0 : 1)}`;
+      element.classList.add("up");
+      return;
+    }
+
+    element.textContent = `Moving backward -${Math.abs(difference).toFixed(metric === "water" ? 0 : 1)}`;
+    element.classList.add("down");
+  });
+}
+
+function monitoringReading(tick, totalTicks) {
+  const progress = tick / totalTicks;
+  const settling = Math.max(0.12, 1 - progress);
+  const target = {
+    ph: 6.2,
+    water: 76,
+    temperature: 23.4,
+    nutrient: 1.8,
+  };
+
+  return {
+    ph: target.ph + randomBetween(-0.12, 0.12) * settling,
+    water: target.water + randomBetween(-1.4, 1.4, 0) * settling,
+    temperature: target.temperature + randomBetween(-0.35, 0.35) * settling,
+    nutrient: target.nutrient + randomBetween(-0.08, 0.08) * settling,
+  };
+}
+
+function startLiveMonitoring() {
+  if (monitoringInterval) {
+    window.clearInterval(monitoringInterval);
+  }
+
+  const totalTicks = 30;
+  let tick = 0;
+
+  startLiveMonitoringButton.disabled = true;
+  startLiveMonitoringButton.textContent = "Monitoring...";
+  window.SmartHydroLiveMonitoringActive = true;
+  elements.monitoringState.textContent =
+    "Live monitoring started. Readings are changing slightly as the system collects sensor data.";
+
+  monitoringInterval = window.setInterval(() => {
+    tick += 1;
+
+    if (tick >= totalTicks) {
+      window.clearInterval(monitoringInterval);
+      monitoringInterval = null;
+      window.SmartHydroLiveMonitoringActive = false;
+      updateDashboard({
+        ph: 6.2,
+        water: 76,
+        temperature: 23.4,
+        nutrient: 1.8,
+      });
+      elements.monitoringState.textContent =
+        "Monitoring stabilized after one minute. Current levels are healthy and ready for continued tracking.";
+      startLiveMonitoringButton.disabled = false;
+      startLiveMonitoringButton.textContent = "Start Live Monitoring";
+      return;
+    }
+
+    updateDashboard(monitoringReading(tick, totalTicks));
+    elements.monitoringState.textContent = `Monitoring in progress: ${Math.round(
+      (tick / totalTicks) * 60,
+    )} seconds of 60 seconds completed.`;
+  }, 2000);
 }
 
 window.SmartHydroDashboard = {
@@ -415,17 +396,7 @@ window.SmartHydroDashboard = {
   updateDashboard,
 };
 
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
-  simulateConditionButton.click();
-});
-
-simulateConditionButton.addEventListener("click", () => {
-  const readings = readingFromInputs();
-  elements.simulatedValues.textContent = readingSummary(readings);
-  mlAnalysisCard.classList.remove("is-rotated");
-  updateDashboard(readings);
-});
+startLiveMonitoringButton.addEventListener("click", startLiveMonitoring);
 
 mlAnalyzeButton.addEventListener("click", () => {
   const forecast = nextDayForecast(currentReadings);

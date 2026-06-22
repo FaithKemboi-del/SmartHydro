@@ -9,6 +9,10 @@
   const supabase = auth.getSupabaseClient();
 
   async function loadLatestReading() {
+    if (window.SmartHydroLiveMonitoringActive) {
+      return;
+    }
+
     const { data, error } = await supabase
       .from("sensor_readings")
       .select("ph, temperature, water_level, created_at")
