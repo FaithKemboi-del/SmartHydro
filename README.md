@@ -47,7 +47,19 @@ Run the complete script in `supabase_schema.sql` inside the Supabase SQL Editor.
 
 ## Frontend Supabase Auth configuration
 
-Update `supabase-config.js` with your Supabase project URL and anon key:
+Copy the example file and add your Supabase project URL and anon key:
+
+```bash
+copy supabase-config.example.js supabase-config.js
+```
+
+On macOS/Linux:
+
+```bash
+cp supabase-config.example.js supabase-config.js
+```
+
+Then edit `supabase-config.js`:
 
 ```js
 window.SMART_HYDRO_SUPABASE = {
@@ -55,6 +67,8 @@ window.SMART_HYDRO_SUPABASE = {
   anonKey: "your-supabase-anon-key",
 };
 ```
+
+`supabase-config.js` is ignored by git so your keys stay on your machine and pulls do not overwrite them.
 
 The hardcoded admin override works even before Supabase Auth is configured.
 
