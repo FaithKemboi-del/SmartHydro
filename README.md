@@ -67,6 +67,9 @@ SUPABASE_URL=https://your-project-ref.supabase.co
 SUPABASE_KEY=your-supabase-service-role-or-anon-key
 ```
 
+`SUPABASE_URL` must be only the Project URL from Supabase Project Settings > API. Do not paste
+the dashboard URL and do not include `/rest/v1`.
+
 Install the Python dependencies:
 
 ```bash
