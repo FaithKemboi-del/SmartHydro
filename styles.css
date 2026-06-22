@@ -602,7 +602,6 @@ p {
 .status-card,
 .metric-card,
 .remedy-panel article,
-.ml-panel,
 .analysis-form,
 .analysis-result,
 .trend-card,
@@ -851,12 +850,76 @@ p {
   background: linear-gradient(90deg, var(--danger), #ff8a80);
 }
 
-.ml-panel {
+.ml-layout {
   display: grid;
-  grid-template-columns: minmax(170px, 0.42fr) minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.ml-photo,
+.ml-detection-panel,
+.ml-result-panel {
+  border: 1px solid rgba(230, 235, 239, 0.95);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 42px rgba(22, 74, 53, 0.08);
+}
+
+.ml-photo {
+  display: flex;
+  overflow: hidden;
+  min-height: 340px;
+  margin: 0;
+  flex-direction: column;
+}
+
+.ml-photo img {
+  display: block;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  object-fit: cover;
+}
+
+.ml-photo figcaption {
+  padding: 14px 18px;
+  color: var(--gray-700);
+  font-size: 0.88rem;
+  font-weight: 800;
+  background: var(--gray-100);
+}
+
+.ml-detection-panel {
+  display: flex;
+  min-height: 340px;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 28px;
   padding: 30px;
+  background:
+    linear-gradient(135deg, rgba(231, 245, 236, 0.92), rgba(232, 246, 252, 0.8)),
+    var(--white);
+}
+
+.ml-detection-panel .button {
+  min-width: 220px;
+}
+
+.ml-result-panel {
+  grid-column: 1 / -1;
+  padding: 28px 30px;
+  opacity: 0.72;
+  transition: opacity 400ms ease, box-shadow 400ms ease;
+}
+
+.ml-result-panel.is-revealed {
+  opacity: 1;
+  box-shadow: 0 20px 48px rgba(22, 74, 53, 0.12);
+}
+
+.ml-result-panel h3 {
+  margin-top: 8px;
 }
 
 .score-ring {
@@ -912,55 +975,6 @@ p {
   font-weight: 800;
   padding: 14px;
   background: var(--green-50);
-}
-
-.ml-analysis-card {
-  min-height: 260px;
-  width: 100%;
-  perspective: 1200px;
-}
-
-.ml-analysis-inner {
-  position: relative;
-  min-height: 260px;
-  transform-style: preserve-3d;
-  transition: transform 700ms ease;
-}
-
-.ml-analysis-card.is-rotated .ml-analysis-inner {
-  transform: rotateY(180deg);
-}
-
-.ml-analysis-face {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-md);
-  padding: 22px;
-  backface-visibility: hidden;
-}
-
-.ml-analysis-front {
-  align-items: flex-start;
-  background:
-    linear-gradient(135deg, rgba(231, 245, 236, 0.92), rgba(232, 246, 252, 0.8)),
-    var(--white);
-}
-
-.ml-analysis-front p {
-  max-width: 420px;
-}
-
-.ml-analysis-back {
-  background: var(--white);
-  transform: rotateY(180deg);
-}
-
-.ml-analysis-back h3 {
-  margin-top: 8px;
 }
 
 .analysis-form,
@@ -1460,8 +1474,13 @@ td {
     width: 100%;
   }
 
-  .ml-panel {
+  .ml-layout {
     grid-template-columns: 1fr;
+  }
+
+  .ml-photo,
+  .ml-detection-panel {
+    min-height: 280px;
   }
 
   .score-ring {

@@ -1,5 +1,5 @@
-const mlAnalyzeButton = document.querySelector("#ml-analyze");
-const mlAnalysisCard = document.querySelector("#ml-analysis-card");
+const mlDetectButton = document.querySelector("#ml-detect-anomaly");
+const mlResultPanel = document.querySelector("#ml-result-panel");
 const startLiveMonitoringButton = document.querySelector("#start-live-monitoring");
 
 const elements = {
@@ -398,7 +398,7 @@ window.SmartHydroDashboard = {
 
 startLiveMonitoringButton.addEventListener("click", startLiveMonitoring);
 
-mlAnalyzeButton.addEventListener("click", () => {
+mlDetectButton?.addEventListener("click", () => {
   const forecast = nextDayForecast(currentReadings);
   elements.nextDayPrediction.textContent = `Based on the past few days and records coming in, I predict tomorrow's values will be water ${Math.round(
     forecast.predicted.water,
@@ -406,5 +406,5 @@ mlAnalyzeButton.addEventListener("click", () => {
     1,
   )}°C. The predicted condition is ${forecast.state.prediction.toLowerCase()}.`;
   elements.nextDayRemedy.textContent = `I recommend before tomorrow: ${forecast.recommendations.join(" ")}`;
-  mlAnalysisCard.classList.add("is-rotated");
+  mlResultPanel.classList.add("is-revealed");
 });

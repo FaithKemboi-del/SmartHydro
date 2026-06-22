@@ -205,8 +205,8 @@
         </div>
       </section>
 
-      <section id="ml-output" class="section-shell split-section">
-        <div class="section-heading compact">
+      <section id="ml-output" class="section-shell">
+        <div class="section-heading">
           <span class="eyebrow">AI Prediction / ML Output</span>
           <h2>Machine learning anomaly classification</h2>
           <p>
@@ -215,34 +215,36 @@
           </p>
         </div>
 
-        <div class="ml-panel">
-          <div class="score-ring" aria-label="Anomaly score">
-            <span id="anomaly-score">0.18</span>
-            <small>Anomaly Score</small>
-          </div>
-          <div class="ml-analysis-card" id="ml-analysis-card">
-            <div class="ml-analysis-inner">
-              <div class="ml-analysis-face ml-analysis-front">
-                <span class="eyebrow">Next-day forecast</span>
-                <h3>Analyze</h3>
-                <p>Click to review recent records and predict tomorrow's hydroponic condition.</p>
-                <button class="button button-primary" type="button" id="ml-analyze">
-                  Analyze
-                </button>
-              </div>
-              <div class="ml-analysis-face ml-analysis-back">
-                <span class="eyebrow">Prediction Result</span>
-                <h3>Tomorrow's system forecast</h3>
-                <p id="next-day-prediction">
-                  Based on the past few days and incoming records, I predict tomorrow's water,
-                  pH, EC, and temperature will remain within healthy ranges.
-                </p>
-                <p class="model-note" id="next-day-remedy">
-                  Recommendation: continue monitoring and keep nutrient solution balanced before tomorrow.
-                </p>
-              </div>
+        <div class="ml-layout">
+          <figure class="ml-photo">
+            <img
+              src="assets/hydroponics-buckets.jpg"
+              alt="Bucket hydroponic system with healthy pepper plants"
+            />
+            <figcaption>Bucket hydroponic system</figcaption>
+          </figure>
+
+          <div class="ml-detection-panel">
+            <div class="score-ring" aria-label="Anomaly score">
+              <span id="anomaly-score">0.18</span>
+              <small>Anomaly Score</small>
             </div>
+            <button class="button button-primary" type="button" id="ml-detect-anomaly">
+              Detect Anomaly
+            </button>
           </div>
+
+          <article class="ml-result-panel" id="ml-result-panel">
+            <span class="eyebrow">Detection Result</span>
+            <h3>Tomorrow's system forecast</h3>
+            <p id="next-day-prediction">
+              Run anomaly detection to review recent records and predict tomorrow's hydroponic
+              condition.
+            </p>
+            <p class="model-note" id="next-day-remedy">
+              Recommendation will appear here after detection completes.
+            </p>
+          </article>
         </div>
       </section>
 
