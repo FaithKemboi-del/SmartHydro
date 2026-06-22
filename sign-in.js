@@ -51,7 +51,7 @@ signInForm.addEventListener("submit", async (event) => {
 
     setMessage("Sign-in succeeded, but this dashboard is restricted to the admin account.", "warning");
   } catch (error) {
-    setMessage(error.message || "Unable to sign in. Check your details and try again.", "error");
+    setMessage(window.SmartHydroAuth.formatAuthError(error), "error");
   } finally {
     setLoading(false);
   }

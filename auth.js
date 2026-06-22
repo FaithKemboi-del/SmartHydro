@@ -4,20 +4,87 @@
   const ADMIN_SESSION_KEY = "smartHydroAdminSession";
   const AUTH_RETURN_KEY = "smartHydroReturnTo";
 
+  function normalizeSupabaseUrl(rawUrl) {
+    let url = String(rawUrl || "").trim().replace(/\/+$/, "");
+
+    if (!url) {
+      return "";
+    }
+
+    if (url.includes("app.supabase.com") || url.includes("/project/")) {
+      throw new Error(
+        "Use the Project URL from Supabase Project Settings > API, not the Supabase dashboard URL.",
+      );
+    }
+
+    if (url.endsWith("/rest/v1")) {
+      url = url.slice(0, -"/rest/v1".length);
+    }
+
+    if (url.endsWith("/auth/v1")) {
+      url = url.slice(0, -"/auth/v1".length);
+    }
+
+    let parsed;
+
+    try {
+      parsed = new URL(url);
+    } catch (_error) {
+      throw new Error(
+        "Supabase URL must look like https://your-project-ref.supabase.co with no extra path.",
+      );
+    }
+
+    if (parsed.protocol !== "https:" || !parsed.hostname.endsWith(".supabase.co")) {
+      throw new Error(
+        "Supabase URL must look like https://your-project-ref.supabase.co with no extra path.",
+      );
+    }
+
+    return `${parsed.protocol}//${parsed.hostname}`;
+  }
+
+  function normalizeSupabaseKey(rawKey) {
+    return String(rawKey || "")
+      .trim()
+      .replace(/^Bearer\s+/i, "");
+  }
+
+  function formatAuthError(error) {
+    const message = String(error?.message || error || "").trim();
+
+    if (
+      message.includes("Invalid path specified in request URL") ||
+      message.includes("PGRST125")
+    ) {
+      return (
+        "Supabase URL is wrong in supabase-config.js. Use only your Project URL, " +
+        "for example https://your-project-ref.supabase.co, with no /rest/v1 and no dashboard link."
+      );
+    }
+
+    return message || "Unable to complete the request. Try again.";
+  }
+
   function getSupabaseConfig() {
     return window.SMART_HYDRO_SUPABASE || {};
   }
 
   function hasSupabaseConfig() {
-    const config = getSupabaseConfig();
-    return (
-      typeof config.url === "string" &&
-      typeof config.anonKey === "string" &&
-      config.url.startsWith("https://") &&
-      !config.url.includes("your-project-ref") &&
-      config.anonKey.length > 20 &&
-      !config.anonKey.includes("your-supabase")
-    );
+    try {
+      const config = getSupabaseConfig();
+      const url = normalizeSupabaseUrl(config.url);
+      const anonKey = normalizeSupabaseKey(config.anonKey);
+
+      return (
+        url.startsWith("https://") &&
+        !url.includes("your-project-ref") &&
+        anonKey.length > 20 &&
+        !anonKey.includes("your-supabase")
+      );
+    } catch (_error) {
+      return false;
+    }
   }
 
   function getSupabaseClient() {
@@ -25,11 +92,12 @@
       return null;
     }
 
+    const config = getSupabaseConfig();
+    const url = normalizeSupabaseUrl(config.url);
+    const anonKey = normalizeSupabaseKey(config.anonKey);
+
     if (!window.smartHydroSupabaseClient) {
-      window.smartHydroSupabaseClient = window.supabase.createClient(
-        getSupabaseConfig().url,
-        getSupabaseConfig().anonKey,
-      );
+      window.smartHydroSupabaseClient = window.supabase.createClient(url, anonKey);
     }
 
     return window.smartHydroSupabaseClient;
@@ -132,6 +200,8 @@
     getSupabaseClient,
     getSupabaseSession,
     hasSupabaseConfig,
+    formatAuthError,
+    normalizeSupabaseUrl,
     signOut,
     dashboardUrl,
     signInUrl,

@@ -49,7 +49,7 @@ signUpForm.addEventListener("submit", async (event) => {
     setMessage("Account created. Check your email if confirmation is enabled, then sign in.", "success");
     signUpForm.reset();
   } catch (error) {
-    setMessage(error.message || "Unable to create account. Try again.", "error");
+    setMessage(window.SmartHydroAuth.formatAuthError(error), "error");
   } finally {
     setLoading(false);
   }
