@@ -1,5 +1,6 @@
 const mlDetectButton = document.querySelector("#ml-detect-anomaly");
 const mlResultPanel = document.querySelector("#ml-result-panel");
+const scoreRing = document.querySelector(".score-ring");
 const startLiveMonitoringButton = document.querySelector("#start-live-monitoring");
 
 const elements = {
@@ -162,37 +163,37 @@ function recommendationItems(readings, state) {
   const recommendations = [];
 
   if (readings.nutrient < 1.4) {
-    recommendations.push("Add nutrient solution and verify EC again after circulation.");
+    recommendations.push("Add nutrient solution and check the levels again.");
   } else if (readings.nutrient > 2.4) {
-    recommendations.push("Reduce nutrient strength by diluting the solution with clean water.");
+    recommendations.push("Add clean water to lower nutrient strength.");
   } else {
-    recommendations.push("Maintain nutrient circulation and continue observing EC fluctuation.");
+    recommendations.push("Keep nutrients flowing and check them regularly.");
   }
 
   if (readings.ph < 5.8) {
-    recommendations.push("Add pH Up solution to move pH toward the 5.8 to 6.5 range.");
+    recommendations.push("Add pH Up to raise the level.");
   } else if (readings.ph > 6.5) {
-    recommendations.push("Add pH Down solution to move pH toward the 5.8 to 6.5 range.");
+    recommendations.push("Add pH Down to lower the level.");
   } else {
-    recommendations.push("Keep pH level stable through regular calibration and buffer checks.");
+    recommendations.push("Check pH often and keep it steady.");
   }
 
   if (readings.water < 60) {
-    recommendations.push("Add water by refilling the reservoir and checking pump flow.");
+    recommendations.push("Add water to the tank and check the pump.");
   } else if (readings.water > 90) {
-    recommendations.push("Reduce water level or inspect drainage to avoid overfilling.");
+    recommendations.push("Lower the water level or check drainage.");
   } else {
-    recommendations.push("Maintain reservoir level and inspect tubing for consistent flow.");
+    recommendations.push("Keep the water level steady.");
   }
 
   if (readings.temperature > 28) {
-    recommendations.push("Move plants to shade or improve ventilation to lower temperature.");
+    recommendations.push("Move plants to shade or add more airflow.");
   } else if (readings.temperature < 20) {
-    recommendations.push("Move plants to light or a warmer area to raise temperature.");
+    recommendations.push("Move plants to a warmer spot with more light.");
   }
 
   if (state.level !== "healthy") {
-    recommendations.push("Record this event for model validation and inspect plants for visible stress.");
+    recommendations.push("Look at your plants for any signs of stress.");
   }
 
   return recommendations;
@@ -398,13 +399,77 @@ window.SmartHydroDashboard = {
 
 startLiveMonitoringButton.addEventListener("click", startLiveMonitoring);
 
+function formatPredictionText(forecast) {
+  const { predicted, state } = forecast;
+  const condition =
+    state.prediction === "Normal"
+      ? "The system looks healthy."
+      : state.prediction === "Warning"
+        ? "The system may need attention tomorrow."
+        : "The system may have a problem tomorrow.";
+
+  return `Tomorrow we expect water at ${Math.round(predicted.water)}%, pH ${predicted.ph.toFixed(1)}, nutrients at ${predicted.nutrient.toFixed(1)}, and temperature ${predicted.temperature.toFixed(1)}°C. ${condition}`;
+}
+
+function formatRecommendationText(recommendations) {
+  return `What to do before tomorrow: ${recommendations.join(" ")}`;
+}
+
+function showDetectionResult(forecast) {
+  elements.nextDayPrediction.textContent = formatPredictionText(forecast);
+  elements.nextDayRemedy.textContent = formatRecommendationText(forecast.recommendations);
+  mlResultPanel?.classList.add("is-revealed");
+}
+
+function stopScoreScan(baseScore) {
+  scoreRing?.classList.remove("is-scanning");
+  if (elements.anomalyScore && baseScore !== undefined) {
+    elements.anomalyScore.textContent = baseScore;
+  }
+}
+
+function startScoreScan(baseScore) {
+  if (!scoreRing || !elements.anomalyScore) {
+    return null;
+  }
+
+  scoreRing.classList.add("is-scanning");
+  const numericScore = Number(baseScore);
+
+  return window.setInterval(() => {
+    const shift = (Math.random() * 0.12 - 0.06).toFixed(2);
+    elements.anomalyScore.textContent = clamp(numericScore + Number(shift), 0.05, 0.95).toFixed(2);
+  }, 350);
+}
+
 mlDetectButton?.addEventListener("click", () => {
   const forecast = nextDayForecast(currentReadings);
-  elements.nextDayPrediction.textContent = `Based on the past few days and records coming in, I predict tomorrow's values will be water ${Math.round(
-    forecast.predicted.water,
-  )}%, pH ${forecast.predicted.ph.toFixed(1)}, EC ${forecast.predicted.nutrient.toFixed(1)}, and temperature ${forecast.predicted.temperature.toFixed(
-    1,
-  )}°C. The predicted condition is ${forecast.state.prediction.toLowerCase()}.`;
-  elements.nextDayRemedy.textContent = `I recommend before tomorrow: ${forecast.recommendations.join(" ")}`;
-  mlResultPanel.classList.add("is-revealed");
+  const baseScore = elements.anomalyScore?.textContent ?? "0.18";
+
+  mlDetectButton.disabled = true;
+  mlResultPanel?.classList.remove("is-revealed");
+  mlDetectButton.textContent = "Reading sensor data...";
+
+  const scanInterval = startScoreScan(baseScore);
+
+  const finishDetection = () => {
+    if (scanInterval) {
+      window.clearInterval(scanInterval);
+    }
+    stopScoreScan(baseScore);
+    showDetectionResult(forecast);
+    mlDetectButton.disabled = false;
+    mlDetectButton.textContent = "Detect Anomaly";
+  };
+
+  if (window.SmartHydroTrends?.runChartPulse) {
+    window.SmartHydroTrends.runChartPulse({
+      durationMs: 5000,
+      intense: true,
+      onComplete: finishDetection,
+    });
+    return;
+  }
+
+  window.setTimeout(finishDetection, 5000);
 });

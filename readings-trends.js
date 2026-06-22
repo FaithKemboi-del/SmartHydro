@@ -9,6 +9,8 @@
 
   const samplesBody = document.querySelector("#sensor-samples-body");
   const miniChart = document.querySelector(".mini-chart");
+  let activePulseInterval = null;
+  let isIntensePulse = false;
 
   function randomHeight(center, spread) {
     return Math.round(center + (Math.random() * spread * 2 - spread));
@@ -20,6 +22,15 @@
 
   function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
+  }
+
+  function getBars() {
+    return trendBars
+      .map((bar) => ({
+        element: document.getElementById(bar.id),
+        final: bar.final,
+      }))
+      .filter((bar) => bar.element);
   }
 
   function formatSampleHour(date) {
@@ -72,41 +83,84 @@
       .join("");
   }
 
-  function animateTrendChart() {
-    const bars = trendBars
-      .map((bar) => ({
-        element: document.getElementById(bar.id),
-        final: bar.final,
-      }))
-      .filter((bar) => bar.element);
+  function runChartPulse(options = {}) {
+    const {
+      durationMs = 5000,
+      tickMs = 500,
+      intense = false,
+      onComplete,
+    } = options;
 
-    if (!bars.length) {
+    if (isIntensePulse && !intense) {
       return;
     }
 
-    let tick = 0;
-    const totalTicks = 10;
+    const bars = getBars();
 
-    const interval = window.setInterval(() => {
+    if (!bars.length) {
+      onComplete?.();
+      return;
+    }
+
+    if (activePulseInterval) {
+      window.clearInterval(activePulseInterval);
+      activePulseInterval = null;
+    }
+
+    isIntensePulse = intense;
+
+    miniChart?.classList.remove("is-stable");
+    miniChart?.classList.add("is-live");
+    bars.forEach((bar) => {
+      bar.element.classList.remove("is-stable");
+      bar.element.classList.add("is-live");
+    });
+
+    let tick = 0;
+    const totalTicks = Math.max(1, Math.ceil(durationMs / tickMs));
+
+    activePulseInterval = window.setInterval(() => {
       tick += 1;
 
       if (tick >= totalTicks) {
-        window.clearInterval(interval);
+        window.clearInterval(activePulseInterval);
+        activePulseInterval = null;
+        isIntensePulse = false;
         bars.forEach((bar) => {
           setBarHeight(bar.element, bar.final);
+          bar.element.classList.remove("is-live");
           bar.element.classList.add("is-stable");
         });
+        miniChart?.classList.remove("is-live");
         miniChart?.classList.add("is-stable");
+        onComplete?.();
         return;
       }
 
+      const progress = tick / totalTicks;
+      const settling = intense ? Math.max(0.35, 1 - progress * 0.65) : 1 - progress;
+      const spread = (intense ? 18 : 14) * settling + 4;
+
       bars.forEach((bar) => {
-        const settling = 1 - tick / totalTicks;
-        setBarHeight(bar.element, randomHeight(bar.final, 14 * settling + 4));
+        setBarHeight(bar.element, randomHeight(bar.final, spread));
       });
-    }, 500);
+    }, tickMs);
   }
 
   renderSensorSamples();
-  animateTrendChart();
+  runChartPulse({ durationMs: 5000 });
+
+  window.setInterval(() => {
+    if (isIntensePulse) {
+      return;
+    }
+
+    renderSensorSamples();
+    runChartPulse({ durationMs: 4000 });
+  }, 60000);
+
+  window.SmartHydroTrends = {
+    runChartPulse,
+    renderSensorSamples,
+  };
 })();

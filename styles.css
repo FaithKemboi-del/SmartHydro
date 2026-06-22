@@ -221,10 +221,17 @@ p {
   color: var(--gray-700);
 }
 
+.hero-copy {
+  align-self: center;
+  max-width: 560px;
+}
+
 .hero-copy p {
-  max-width: 660px;
+  max-width: none;
   margin-bottom: 30px;
-  font-size: 1.16rem;
+  color: var(--gray-700);
+  font-size: clamp(1.32rem, 2.15vw, 1.62rem);
+  line-height: 1.58;
 }
 
 .hero-heading {
@@ -932,6 +939,24 @@ p {
   border-right-color: var(--blue-500);
   border-radius: 50%;
   text-align: center;
+  transition: transform 300ms ease;
+}
+
+.score-ring.is-scanning {
+  animation: score-ring-scan 900ms ease-in-out infinite;
+}
+
+@keyframes score-ring-scan {
+  0%,
+  100% {
+    transform: rotate(0deg);
+    border-top-color: var(--green-700);
+  }
+
+  50% {
+    transform: rotate(6deg);
+    border-top-color: var(--blue-500);
+  }
 }
 
 .score-ring span {
@@ -1139,6 +1164,10 @@ textarea:focus {
 
 .mini-chart .warning-bar {
   background: linear-gradient(180deg, var(--warning), #f5d777);
+}
+
+.mini-chart.is-live .trend-bar.is-live {
+  box-shadow: 0 8px 20px rgba(46, 139, 87, 0.18);
 }
 
 .mini-chart.is-stable .trend-bar.is-stable {
