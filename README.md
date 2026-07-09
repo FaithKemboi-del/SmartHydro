@@ -98,3 +98,23 @@ python3 simulator.py
 
 The simulator inserts a new row into `sensor_readings` every 5 seconds. If Supabase is configured
 in `supabase-config.js`, the protected dashboard polls the latest reading automatically.
+
+### Seed 60+ database readings (for ML / professor review)
+
+The dashboard does not create database rows by itself. To load more than 60 inputs quickly, run:
+
+```bash
+python3 seed_database.py
+```
+
+This inserts 100 historical sensor rows by default (one every 5 seconds going backward in time).
+To choose a different count:
+
+```bash
+set SEED_ROW_COUNT=120
+python seed_database.py
+```
+
+On macOS/Linux, use `export SEED_ROW_COUNT=120` instead of `set`.
+
+You can confirm the count in Supabase: **Table Editor** > `sensor_readings`.
