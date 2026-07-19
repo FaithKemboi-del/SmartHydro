@@ -24,6 +24,7 @@ signInForm.addEventListener("submit", async (event) => {
   try {
     if (window.SmartHydroAuth.isAdminOverride(email, password)) {
       window.SmartHydroAuth.createAdminSession(email);
+      await window.SmartHydroAuth.trackUserActivity(email, "admin");
       window.location.href = window.SmartHydroAuth.consumeReturnTo();
       return;
     }
@@ -43,13 +44,18 @@ signInForm.addEventListener("submit", async (event) => {
       throw error;
     }
 
+    await window.SmartHydroAuth.trackUserActivity(data.user?.email || email, "user");
+
     if (data.user?.email === window.SmartHydroAuth.ADMIN_EMAIL) {
       window.SmartHydroAuth.createAdminSession(data.user.email);
       window.location.href = window.SmartHydroAuth.consumeReturnTo();
       return;
     }
 
-    setMessage("Sign-in succeeded, but this dashboard is restricted to the admin account.", "warning");
+    setMessage(
+      "Sign-in succeeded. Your account is recorded for admin review. Full monitoring access remains restricted to the admin account.",
+      "warning",
+    );
   } catch (error) {
     setMessage(window.SmartHydroAuth.formatAuthError(error), "error");
   } finally {

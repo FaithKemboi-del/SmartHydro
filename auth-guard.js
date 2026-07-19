@@ -31,6 +31,13 @@
     return;
   }
 
+  if (currentPage === "admin.html" && adminSession.email !== auth.ADMIN_EMAIL) {
+    window.location.replace("index.html");
+    return;
+  }
+
+  await auth.trackUserActivity(adminSession.email, "admin");
+
   wireSignOut();
   finishGuard();
 })();

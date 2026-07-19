@@ -41,6 +41,25 @@ Password: Hydrouser2026..
 This stores an admin session in LocalStorage and redirects to `dashboard.html`, which then opens
 the protected dashboard at `index.html`.
 
+## Admin panel
+
+After signing in as the admin user, open:
+
+```text
+http://localhost:8000/admin.html
+```
+
+Or use the **Admin Panel** link in the monitoring dashboard navigation.
+
+The admin panel includes:
+
+- Active and inactive user management
+- Full sensor database records view
+- Alert history logs
+- System settings to enable/disable monitoring and sensors
+
+Run the latest `supabase_schema.sql` in the Supabase SQL Editor so `app_users`, `alert_logs`, and `system_settings` tables exist. If those tables are missing, the admin panel still works with local browser storage for demo purposes.
+
 ## Supabase SQL
 
 Run the complete script in `supabase_schema.sql` inside the Supabase SQL Editor.

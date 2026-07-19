@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel | Smart Hydro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script>
+      document.documentElement.classList.add("auth-pending");
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="nav" aria-label="Admin navigation">
+        <a class="brand" href="index.html" aria-label="Smart Hydroponics home">
+          <span class="brand-leaf" aria-hidden="true"></span>
+          <span>
+            <strong>Smart Hydro</strong>
+          </span>
+        </a>
+        <div class="nav-links" aria-label="Admin sections">
+          <a href="index.html">User Dashboard</a>
+          <a href="#users">Users</a>
+          <a href="#records">Records</a>
+          <a href="#alerts-admin">Alerts</a>
+          <a href="#settings">Settings</a>
+          <button class="nav-action" id="sign-out-button" type="button">Sign Out</button>
+        </div>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="section-shell admin-hero">
+        <div class="section-heading">
+          <span class="eyebrow">Admin Only</span>
+          <h1>System administration panel</h1>
+          <p>
+            Manage users, review full sensor records, inspect alert history, and control monitoring
+            settings for the Smart Hydroponics system.
+          </p>
+        </div>
+
+        <div class="admin-stat-grid" aria-label="Admin overview">
+          <article class="admin-stat-card">
+            <span>Active users</span>
+            <strong id="stat-active-users">0</strong>
+          </article>
+          <article class="admin-stat-card">
+            <span>Inactive users</span>
+            <strong id="stat-inactive-users">0</strong>
+          </article>
+          <article class="admin-stat-card">
+            <span>Database records</span>
+            <strong id="stat-db-records">0</strong>
+          </article>
+          <article class="admin-stat-card">
+            <span>Alert logs</span>
+            <strong id="stat-alert-count">0</strong>
+          </article>
+        </div>
+        <p class="admin-status-note" id="admin-data-source" aria-live="polite"></p>
+      </section>
+
+      <section id="users" class="section-shell">
+        <div class="section-heading">
+          <span class="eyebrow">User Management</span>
+          <h2>Active and inactive users</h2>
+          <p>See who is currently using the system and who has been marked inactive.</p>
+        </div>
+
+        <div class="admin-split">
+          <div class="admin-panel">
+            <div class="admin-panel-head">
+              <h3>Currently active</h3>
+              <button class="button button-ghost" type="button" id="refresh-users">Refresh</button>
+            </div>
+            <div class="table-card admin-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Email</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Last seen</th>
+                    <th scope="col">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="active-users-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="admin-panel">
+            <div class="admin-panel-head">
+              <h3>Inactive users</h3>
+            </div>
+            <div class="table-card admin-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Email</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Last seen</th>
+                    <th scope="col">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="inactive-users-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="records" class="section-shell">
+        <div class="section-heading">
+          <span class="eyebrow">Database Records</span>
+          <h2>Full sensor readings</h2>
+          <p>View stored pH, temperature, and water level records from the database.</p>
+        </div>
+
+        <div class="admin-panel">
+          <div class="admin-panel-head">
+            <h3>sensor_readings</h3>
+            <button class="button button-ghost" type="button" id="refresh-records">Refresh</button>
+          </div>
+          <div class="table-card admin-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Time</th>
+                  <th scope="col">pH</th>
+                  <th scope="col">Temperature</th>
+                  <th scope="col">Water level</th>
+                </tr>
+              </thead>
+              <tbody id="records-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="alerts-admin" class="section-shell">
+        <div class="section-heading">
+          <span class="eyebrow">Alert History</span>
+          <h2>System alert logs</h2>
+          <p>Review past warnings and critical events recorded by the system.</p>
+        </div>
+
+        <div class="admin-panel">
+          <div class="admin-panel-head">
+            <h3>Recent alerts</h3>
+            <button class="button button-primary" type="button" id="add-sample-alert">
+              Log Sample Alert
+            </button>
+          </div>
+          <div class="table-card admin-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Time</th>
+                  <th scope="col">Severity</th>
+                  <th scope="col">Title</th>
+                  <th scope="col">Message</th>
+                </tr>
+              </thead>
+              <tbody id="alerts-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="settings" class="section-shell">
+        <div class="section-heading">
+          <span class="eyebrow">System Settings</span>
+          <h2>Monitoring and sensor controls</h2>
+          <p>Enable or disable overall monitoring and individual sensors.</p>
+        </div>
+
+        <div class="admin-settings-grid">
+          <label class="admin-toggle-card">
+            <span>
+              <strong>Live monitoring</strong>
+              <small>Allow the dashboard to track sensor updates</small>
+            </span>
+            <input id="setting-monitoring" type="checkbox" />
+          </label>
+          <label class="admin-toggle-card">
+            <span>
+              <strong>pH sensor</strong>
+              <small>Collect and display pH readings</small>
+            </span>
+            <input id="setting-ph" type="checkbox" />
+          </label>
+          <label class="admin-toggle-card">
+            <span>
+              <strong>Temperature sensor</strong>
+              <small>Collect and display temperature readings</small>
+            </span>
+            <input id="setting-temperature" type="checkbox" />
+          </label>
+          <label class="admin-toggle-card">
+            <span>
+              <strong>Water level sensor</strong>
+              <small>Collect and display water level readings</small>
+            </span>
+            <input id="setting-water" type="checkbox" />
+          </label>
+          <label class="admin-toggle-card">
+            <span>
+              <strong>EC / nutrient sensor</strong>
+              <small>Collect and display nutrient readings</small>
+            </span>
+            <input id="setting-ec" type="checkbox" />
+          </label>
+          <label class="admin-toggle-card">
+            <span>
+              <strong>Anomaly detection</strong>
+              <small>Allow Detect Anomaly on the user dashboard</small>
+            </span>
+            <input id="setting-anomaly" type="checkbox" />
+          </label>
+        </div>
+
+        <div class="admin-settings-actions">
+          <button class="button button-primary" type="button" id="save-settings">
+            Save Settings
+          </button>
+          <p class="admin-status-note" id="settings-message" aria-live="polite"></p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Copyright 2026</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="auth-guard.js"></script>
+    <script src="admin.js"></script>
+  </body>
+</html>

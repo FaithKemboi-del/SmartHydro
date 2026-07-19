@@ -348,7 +348,68 @@ function monitoringReading(tick, totalTicks) {
   };
 }
 
+function getSystemSettings() {
+  const defaults = {
+    monitoring_enabled: true,
+    ph_sensor_enabled: true,
+    temperature_sensor_enabled: true,
+    water_sensor_enabled: true,
+    ec_sensor_enabled: true,
+    anomaly_detection_enabled: true,
+  };
+
+  try {
+    return { ...defaults, ...JSON.parse(localStorage.getItem("smartHydroSystemSettings") || "{}") };
+  } catch (_error) {
+    return defaults;
+  }
+}
+
+async function logDashboardAlert(severity, title, message) {
+  const payload = {
+    created_at: new Date().toISOString(),
+    severity,
+    title,
+    message,
+    source: "dashboard",
+  };
+
+  try {
+    const existing = JSON.parse(localStorage.getItem("smartHydroAlertLogs") || "[]");
+    const next = Array.isArray(existing) ? existing : [];
+    next.unshift(payload);
+    localStorage.setItem("smartHydroAlertLogs", JSON.stringify(next.slice(0, 100)));
+  } catch (_error) {
+    // Ignore local storage failures.
+  }
+
+  const client = window.SmartHydroAuth?.getSupabaseClient?.();
+
+  if (!client) {
+    return;
+  }
+
+  try {
+    await client.from("alert_logs").insert({
+      severity,
+      title,
+      message,
+      source: "dashboard",
+    });
+  } catch (_error) {
+    // Table may not exist until schema is updated.
+  }
+}
+
 function startLiveMonitoring() {
+  const settings = getSystemSettings();
+
+  if (!settings.monitoring_enabled) {
+    elements.monitoringState.textContent =
+      "Live monitoring is disabled in the admin system settings.";
+    return;
+  }
+
   if (monitoringInterval) {
     window.clearInterval(monitoringInterval);
   }

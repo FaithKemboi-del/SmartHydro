@@ -190,6 +190,68 @@
     return email === ADMIN_EMAIL && password === ADMIN_PASSWORD;
   }
 
+  function adminPanelUrl() {
+    return "admin.html";
+  }
+
+  async function trackUserActivity(email, role = "user") {
+    if (!email) {
+      return;
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const resolvedRole = normalizedEmail === ADMIN_EMAIL ? "admin" : role;
+    const now = new Date().toISOString();
+    const localKey = "smartHydroAppUsers";
+
+    try {
+      const existing = JSON.parse(localStorage.getItem(localKey) || "[]");
+      const next = Array.isArray(existing) ? existing : [];
+      const index = next.findIndex((user) => user.email === normalizedEmail);
+
+      if (index >= 0) {
+        next[index] = {
+          ...next[index],
+          role: resolvedRole,
+          status: next[index].status || "active",
+          last_seen: now,
+        };
+      } else {
+        next.unshift({
+          email: normalizedEmail,
+          role: resolvedRole,
+          status: "active",
+          last_seen: now,
+          created_at: now,
+        });
+      }
+
+      localStorage.setItem(localKey, JSON.stringify(next));
+    } catch (_error) {
+      // Ignore local storage failures and continue with Supabase when available.
+    }
+
+    const client = getSupabaseClient();
+
+    if (!client) {
+      return;
+    }
+
+    try {
+      await client.from("app_users").upsert(
+        {
+          email: normalizedEmail,
+          role: resolvedRole,
+          status: "active",
+          last_seen: now,
+        },
+        { onConflict: "email" },
+      );
+    } catch (_error) {
+      // Table may not exist until supabase_schema.sql is updated.
+    }
+  }
+
   window.SmartHydroAuth = {
     ADMIN_EMAIL,
     ADMIN_SESSION_KEY,
@@ -205,9 +267,11 @@
     signOut,
     dashboardUrl,
     signInUrl,
+    adminPanelUrl,
     redirectToDashboard,
     redirectToSignIn,
     consumeReturnTo,
     isAdminOverride,
+    trackUserActivity,
   };
 })();

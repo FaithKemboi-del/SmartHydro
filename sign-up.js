@@ -46,6 +46,8 @@ signUpForm.addEventListener("submit", async (event) => {
       throw error;
     }
 
+    await window.SmartHydroAuth.trackUserActivity(email, "user");
+
     setMessage("Account created. Check your email if confirmation is enabled, then sign in.", "success");
     signUpForm.reset();
   } catch (error) {
