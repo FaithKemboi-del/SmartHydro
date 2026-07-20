@@ -24,7 +24,6 @@
     detailEmail: document.querySelector("#detail-email"),
     detailRole: document.querySelector("#detail-role"),
     detailStatus: document.querySelector("#detail-status"),
-    detailLastSeen: document.querySelector("#detail-last-seen"),
     detailRecordCount: document.querySelector("#detail-record-count"),
     detailCreated: document.querySelector("#detail-created"),
     toggleUserStatus: document.querySelector("#toggle-user-status"),
@@ -99,18 +98,10 @@
   }
 
   function classifyUsers(users) {
-    const now = Date.now();
-
-    return users.map((user) => {
-      const lastSeen = new Date(user.last_seen || user.created_at || Date.now()).getTime();
-      const recentlySeen = now - lastSeen <= ACTIVE_WINDOW_MS;
-      const isActive = user.status === "active" && recentlySeen;
-
-      return {
-        ...user,
-        displayStatus: isActive ? "active" : "inactive",
-      };
-    });
+    return users.map((user) => ({
+      ...user,
+      displayStatus: user.status === "active" ? "active" : "inactive",
+    }));
   }
 
   async function loadUsers() {
@@ -430,8 +421,7 @@
       elements.detailEmail.textContent = "—";
       elements.detailRole.textContent = "—";
       elements.detailStatus.textContent = "—";
-      elements.detailLastSeen.textContent = "—";
-      elements.detailRecordCount.textContent = "0";
+        elements.detailRecordCount.textContent = "0";
       elements.detailCreated.textContent = "—";
       elements.toggleUserStatus.disabled = true;
       elements.toggleUserStatus.textContent = "Mark inactive";
@@ -442,7 +432,6 @@
     elements.detailEmail.textContent = user.email;
     elements.detailRole.textContent = user.role;
     elements.detailStatus.textContent = user.displayStatus === "active" ? "Active" : "Inactive";
-    elements.detailLastSeen.textContent = formatDate(user.last_seen);
     elements.detailRecordCount.textContent = String(recordCounts[user.email] ?? 0);
     elements.detailCreated.textContent = formatDate(user.created_at);
     elements.toggleUserStatus.disabled = false;
