@@ -150,11 +150,13 @@ def assign_readings_to_users(supabase):
     update_ids(supabase, paul_ids, PAUL_EMAIL)
     update_ids(supabase, leftover_ids, None)
 
+    assigned_total = faith_target + paul_target
     print(f"Processed {total} sensor readings.")
     print(f"  Admin ({ADMIN_EMAIL}): 0 records")
     print(f"  Faith ({FAITH_EMAIL}): {faith_target} records")
     print(f"  Paul ({PAUL_EMAIL}): {paul_target} records")
     print(f"  Unassigned: {unassigned} records")
+    print(f"  Dashboard total (Faith + Paul only): {assigned_total}")
 
 
 def main():

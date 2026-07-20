@@ -133,22 +133,9 @@
     return { users: classifyUsers(auth().mergeProjectUsers(localUsers)), source: "local" };
   }
 
-  async function loadAllRecordsTotal() {
-    const client = supabase();
-
-    if (!client) {
-      return 0;
-    }
-
-    const { count, error } = await client
-      .from("sensor_readings")
-      .select("id", { count: "exact", head: true });
-
-    return error ? 0 : count || 0;
-  }
-
-  async function loadRecordCounts(totalRecords) {
+  async function loadRecordCounts() {
     const emails = auth().DEFAULT_USERS.map((user) => user.email);
+    const adminEmail = auth().ADMIN_EMAIL;
     const client = supabase();
     const counts = {};
 
@@ -156,12 +143,17 @@
       counts[email] = 0;
     });
 
-    if (!client || !totalRecords) {
+    if (!client) {
       return counts;
     }
 
     await Promise.all(
       emails.map(async (email) => {
+        if (email === adminEmail) {
+          counts[email] = 0;
+          return;
+        }
+
         const { count, error } = await client
           .from("sensor_readings")
           .select("id", { count: "exact", head: true })
@@ -172,6 +164,16 @@
     );
 
     return counts;
+  }
+
+  function assignedRecordsTotal(counts) {
+    const adminEmail = auth().ADMIN_EMAIL;
+    return Object.entries(counts).reduce((sum, [email, value]) => {
+      if (email === adminEmail) {
+        return sum;
+      }
+      return sum + Number(value || 0);
+    }, 0);
   }
 
   async function loadRecordsForUser(email) {
@@ -415,25 +417,34 @@
     renderUserList(allUsers);
     renderUserDetail(user);
 
+    if (email === auth().ADMIN_EMAIL) {
+      recordCounts[email] = 0;
+      renderUserList(allUsers);
+      renderUserDetail(user);
+      renderRecords([], user);
+      return;
+    }
+
     const recordsResult = await loadRecordsForUser(email);
     if (user) {
       recordCounts[user.email] = recordsResult.total;
       elements.detailRecordCount.textContent = String(recordsResult.total);
+      elements.statRecords.textContent = String(assignedRecordsTotal(recordCounts));
       renderUserList(allUsers);
     }
     renderRecords(recordsResult.records, user);
   }
 
   async function refreshAll() {
-    const [usersResult, alertsResult, settingsResult, totalRecords] = await Promise.all([
+    const [usersResult, alertsResult, settingsResult] = await Promise.all([
       loadUsers(),
       loadAlerts(),
       loadSettings(),
-      loadAllRecordsTotal(),
     ]);
 
     allUsers = usersResult.users;
-    recordCounts = await loadRecordCounts(totalRecords);
+    recordCounts = await loadRecordCounts();
+    const totalRecords = assignedRecordsTotal(recordCounts);
 
     const active = allUsers.filter((user) => user.displayStatus === "active");
     const inactive = allUsers.filter((user) => user.displayStatus === "inactive");
