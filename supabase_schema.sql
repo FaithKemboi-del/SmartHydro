@@ -63,6 +63,31 @@ alter table public.app_users disable row level security;
 alter table public.alert_logs disable row level security;
 alter table public.system_settings disable row level security;
 
+-- Remove any existing policies, then ensure RLS stays off for this student project.
+do $$
+declare
+  policy_record record;
+begin
+  for policy_record in
+    select schemaname, tablename, policyname
+    from pg_policies
+    where schemaname = 'public'
+      and tablename in ('sensor_readings', 'app_users', 'alert_logs', 'system_settings')
+  loop
+    execute format(
+      'drop policy if exists %I on %I.%I',
+      policy_record.policyname,
+      policy_record.schemaname,
+      policy_record.tablename
+    );
+  end loop;
+end $$;
+
+alter table public.sensor_readings disable row level security;
+alter table public.app_users disable row level security;
+alter table public.alert_logs disable row level security;
+alter table public.system_settings disable row level security;
+
 grant usage on schema public to anon, authenticated, service_role;
 
 grant select, insert, update, delete on public.sensor_readings to anon, authenticated, service_role;

@@ -1,6 +1,7 @@
 import os
 
 from dotenv import load_dotenv
+from postgrest.exceptions import APIError
 
 from simulator import create_supabase_client
 
