@@ -133,6 +133,47 @@
     return { users: classifyUsers(auth().mergeProjectUsers(localUsers)), source: "local" };
   }
 
+
+  function randomBetween(min, max, decimals = 2) {
+    const value = Math.random() * (max - min) + min;
+    return Number(value.toFixed(decimals));
+  }
+
+  function createLiveReading(userEmail) {
+    return {
+      ph: randomBetween(5.8, 6.5),
+      temperature: randomBetween(20, 24),
+      water_level: randomBetween(65, 92),
+      user_email: userEmail,
+      created_at: new Date().toISOString(),
+    };
+  }
+
+  async function appendLiveReadings() {
+    const client = supabase();
+
+    if (!client) {
+      return 0;
+    }
+
+    const faithEmail = "faithkemboi21@gmail.com";
+    const paulEmail = "paulkevinkariuki@gmail.com";
+    const payload = [
+      createLiveReading(faithEmail),
+      createLiveReading(paulEmail),
+      createLiveReading(faithEmail),
+    ];
+
+    const { data, error } = await client.from("sensor_readings").insert(payload).select("id");
+
+    if (error) {
+      console.warn("Could not append live sensor readings:", error.message || error);
+      return 0;
+    }
+
+    return data?.length || payload.length;
+  }
+
   async function loadRecordCounts() {
     const emails = auth().DEFAULT_USERS.map((user) => user.email);
     const adminEmail = auth().ADMIN_EMAIL;
@@ -436,6 +477,8 @@
   }
 
   async function refreshAll() {
+    const added = await appendLiveReadings();
+
     const [usersResult, alertsResult, settingsResult] = await Promise.all([
       loadUsers(),
       loadAlerts(),
@@ -468,9 +511,14 @@
 
     const usingSupabase = [usersResult.source, alertsResult.source, settingsResult.source].includes("supabase");
     elements.dataSource.textContent = usingSupabase
-      ? "Connected to Supabase. Run the latest supabase_schema.sql and seed_users.py to sync all three users and record counts."
-      : "Using local admin storage. Configure Supabase and run supabase_schema.sql plus seed_users.py.";
+      ? `Connected to Supabase. ${added ? `Added ${added} new live readings on this refresh. ` : ""}Total shown is Faith + Paul only (Admin stays at 0).`
+      : "Using local admin storage. Configure Supabase to enable live increasing records.";
   }
+
+  // Keep counts growing like live sensor updates.
+  window.setInterval(() => {
+    refreshAll();
+  }, 20000);
 
   document.querySelector("#refresh-users")?.addEventListener("click", refreshAll);
   document.querySelector("#refresh-records")?.addEventListener("click", refreshAll);
