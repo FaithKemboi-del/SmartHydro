@@ -30,8 +30,9 @@ DEFAULT_USERS = [
 ADMIN_EMAIL = "fyugalbox21@gmail.com"
 FAITH_EMAIL = "faithkemboi21@gmail.com"
 PAUL_EMAIL = "paulkevinkariuki@gmail.com"
-FAITH_TARGET = 340
-PAUL_TARGET = 260
+
+# Uneven split: Faith gets ~62%, Paul gets ~38%
+FAITH_SHARE = 0.62
 
 
 def run_with_retry(action, description, retries=4):
@@ -86,6 +87,7 @@ def fetch_all_reading_ids(supabase):
     start = 0
 
     while True:
+
         def action(start=start):
             return (
                 supabase.table("sensor_readings")
@@ -125,7 +127,7 @@ def update_ids(supabase, ids, owner):
                 .execute()
             )
 
-        run_with_retry(action, f"Assign chunk to {owner or 'unassigned'}")
+        run_with_retry(action, f"Assign chunk to {owner}")
 
 
 def assign_readings_to_users(supabase):
@@ -136,27 +138,20 @@ def assign_readings_to_users(supabase):
         return
 
     total = len(rows)
-    faith_target = min(FAITH_TARGET, total)
-    paul_target = min(PAUL_TARGET, max(0, total - faith_target))
-    unassigned = max(0, total - faith_target - paul_target)
+    faith_target = int(total * FAITH_SHARE)
+    paul_target = total - faith_target
 
     faith_ids = [row["id"] for row in rows[:faith_target]]
-    paul_ids = [row["id"] for row in rows[faith_target : faith_target + paul_target]]
-    leftover_ids = [row["id"] for row in rows[faith_target + paul_target :]]
+    paul_ids = [row["id"] for row in rows[faith_target:]]
 
-    # Clear admin ownership first, then assign uneven counts.
-    update_ids(supabase, [row["id"] for row in rows], None)
     update_ids(supabase, faith_ids, FAITH_EMAIL)
     update_ids(supabase, paul_ids, PAUL_EMAIL)
-    update_ids(supabase, leftover_ids, None)
 
-    assigned_total = faith_target + paul_target
-    print(f"Processed {total} sensor readings.")
+    print(f"Distributed all {total} sensor readings between Faith and Paul.")
     print(f"  Admin ({ADMIN_EMAIL}): 0 records")
     print(f"  Faith ({FAITH_EMAIL}): {faith_target} records")
     print(f"  Paul ({PAUL_EMAIL}): {paul_target} records")
-    print(f"  Unassigned: {unassigned} records")
-    print(f"  Dashboard total (Faith + Paul only): {assigned_total}")
+    print(f"  Dashboard total (Faith + Paul): {total}")
 
 
 def main():

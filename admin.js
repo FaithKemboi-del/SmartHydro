@@ -134,6 +134,61 @@
   }
 
 
+
+  async function redistributeAllReadingsUnevenly() {
+    const client = supabase();
+
+    if (!client) {
+      return false;
+    }
+
+    const faithEmail = "faithkemboi21@gmail.com";
+    const paulEmail = "paulkevinkariuki@gmail.com";
+    const pageSize = 1000;
+    let start = 0;
+    const ids = [];
+
+    while (true) {
+      const { data, error } = await client
+        .from("sensor_readings")
+        .select("id")
+        .order("created_at", { ascending: true })
+        .range(start, start + pageSize - 1);
+
+      if (error || !data?.length) {
+        break;
+      }
+
+      ids.push(...data.map((row) => row.id));
+
+      if (data.length < pageSize) {
+        break;
+      }
+
+      start += pageSize;
+    }
+
+    if (!ids.length) {
+      return false;
+    }
+
+    const faithTarget = Math.floor(ids.length * 0.62);
+    const faithIds = ids.slice(0, faithTarget);
+    const paulIds = ids.slice(faithTarget);
+
+    for (let index = 0; index < faithIds.length; index += 100) {
+      const chunk = faithIds.slice(index, index + 100);
+      await client.from("sensor_readings").update({ user_email: faithEmail }).in("id", chunk);
+    }
+
+    for (let index = 0; index < paulIds.length; index += 100) {
+      const chunk = paulIds.slice(index, index + 100);
+      await client.from("sensor_readings").update({ user_email: paulEmail }).in("id", chunk);
+    }
+
+    return true;
+  }
+
   function randomBetween(min, max, decimals = 2) {
     const value = Math.random() * (max - min) + min;
     return Number(value.toFixed(decimals));
@@ -186,6 +241,15 @@
 
     if (!client) {
       return counts;
+    }
+
+    const { count: unassignedCount } = await client
+      .from("sensor_readings")
+      .select("id", { count: "exact", head: true })
+      .is("user_email", null);
+
+    if ((unassignedCount || 0) > 0) {
+      await redistributeAllReadingsUnevenly();
     }
 
     await Promise.all(
