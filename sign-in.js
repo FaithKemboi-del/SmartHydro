@@ -1,6 +1,12 @@
 const signInForm = document.querySelector("#sign-in-form");
 const authMessage = document.querySelector("#auth-message");
 const submitButton = document.querySelector("#sign-in-submit");
+const adminLoginToggle = document.querySelector("#admin-login-toggle");
+const signInEyebrow = document.querySelector("#sign-in-eyebrow");
+const signInTitle = document.querySelector("#sign-in-title");
+const signInDescription = document.querySelector("#sign-in-description");
+
+let adminLoginMode = false;
 
 function setMessage(message, type = "info") {
   authMessage.textContent = message;
@@ -9,8 +15,37 @@ function setMessage(message, type = "info") {
 
 function setLoading(isLoading) {
   submitButton.disabled = isLoading;
-  submitButton.textContent = isLoading ? "Signing in..." : "Sign In";
+  submitButton.textContent = isLoading ? "Signing in..." : adminLoginMode ? "Sign In as Admin" : "Sign In";
 }
+
+function updateLoginModeUI() {
+  if (adminLoginMode) {
+    signInEyebrow.textContent = "Admin access";
+    signInTitle.textContent = "Sign in as admin";
+    signInDescription.textContent =
+      "Use the admin account to open the system administration panel and manage users, records, and settings.";
+    adminLoginToggle.textContent = "Back to user sign in";
+    adminLoginToggle.classList.add("is-active");
+    submitButton.textContent = "Sign In as Admin";
+    return;
+  }
+
+  signInEyebrow.textContent = "User access";
+  signInTitle.textContent = "Sign in";
+  signInDescription.textContent =
+    "Sign in to open the hydroponics monitoring dashboard and review live sensor data.";
+  adminLoginToggle.textContent = "Login as admin";
+  adminLoginToggle.classList.remove("is-active");
+  submitButton.textContent = "Sign In";
+}
+
+adminLoginToggle?.addEventListener("click", () => {
+  adminLoginMode = !adminLoginMode;
+  setMessage("");
+  updateLoginModeUI();
+});
+
+updateLoginModeUI();
 
 signInForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -22,7 +57,12 @@ signInForm.addEventListener("submit", async (event) => {
   const password = String(formData.get("password") || "");
 
   try {
-    if (window.SmartHydroAuth.isAdminOverride(email, password)) {
+    if (adminLoginMode || window.SmartHydroAuth.isAdminOverride(email, password)) {
+      if (!window.SmartHydroAuth.isAdminOverride(email, password)) {
+        throw new Error("Use the admin email and password to sign in as admin.");
+      }
+
+      window.SmartHydroAuth.clearUserSession();
       window.SmartHydroAuth.createAdminSession(email);
       await window.SmartHydroAuth.trackUserActivity(email, "admin");
       window.location.href = window.SmartHydroAuth.adminPanelUrl();
@@ -44,18 +84,19 @@ signInForm.addEventListener("submit", async (event) => {
       throw error;
     }
 
-    await window.SmartHydroAuth.trackUserActivity(data.user?.email || email, "user");
+    const signedInEmail = data.user?.email || email;
+    await window.SmartHydroAuth.trackUserActivity(signedInEmail, "user");
 
-    if (data.user?.email === window.SmartHydroAuth.ADMIN_EMAIL) {
-      window.SmartHydroAuth.createAdminSession(data.user.email);
+    if (signedInEmail === window.SmartHydroAuth.ADMIN_EMAIL) {
+      window.SmartHydroAuth.clearUserSession();
+      window.SmartHydroAuth.createAdminSession(signedInEmail);
       window.location.href = window.SmartHydroAuth.adminPanelUrl();
       return;
     }
 
-    setMessage(
-      "Sign-in succeeded. Your account is recorded for admin review. Full monitoring access remains restricted to the admin account.",
-      "warning",
-    );
+    window.SmartHydroAuth.clearAdminSession();
+    window.SmartHydroAuth.createUserSession(signedInEmail);
+    window.location.href = window.SmartHydroAuth.userDashboardUrl();
   } catch (error) {
     setMessage(window.SmartHydroAuth.formatAuthError(error), "error");
   } finally {

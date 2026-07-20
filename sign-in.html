@@ -22,11 +22,10 @@
           </span>
         </a>
 
-        <span class="eyebrow">Admin access</span>
-        <h1>Sign in to dashboard</h1>
-        <p>
-          Access the protected hydroponics monitoring dashboard, review sensor trends, and run
-          system analysis.
+        <span class="eyebrow" id="sign-in-eyebrow">User access</span>
+        <h1 id="sign-in-title">Sign in</h1>
+        <p id="sign-in-description">
+          Sign in to open the hydroponics monitoring dashboard and review live sensor data.
         </p>
 
         <form class="auth-form" id="sign-in-form">
@@ -51,6 +50,12 @@
           Need an account?
           <a href="sign-up.html">Create one</a>
         </p>
+
+        <div class="auth-admin-footer">
+          <button class="button button-ghost auth-admin-toggle" id="admin-login-toggle" type="button">
+            Login as admin
+          </button>
+        </div>
       </section>
     </main>
 

@@ -2,6 +2,7 @@
   const ADMIN_EMAIL = "fyugalbox21@gmail.com";
   const ADMIN_PASSWORD = "chep2005..";
   const ADMIN_SESSION_KEY = "smartHydroAdminSession";
+  const USER_SESSION_KEY = "smartHydroUserSession";
   const AUTH_RETURN_KEY = "smartHydroReturnTo";
 
   const DEFAULT_USERS = [
@@ -145,6 +146,44 @@
     localStorage.removeItem(ADMIN_SESSION_KEY);
   }
 
+  function createUserSession(email) {
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const profile = getDefaultUser(normalizedEmail);
+    const session = {
+      role: profile?.role === "admin" ? "admin" : "user",
+      email: normalizedEmail,
+      name: profile?.name || getUserDisplayName(normalizedEmail),
+      createdAt: new Date().toISOString(),
+    };
+
+    localStorage.setItem(USER_SESSION_KEY, JSON.stringify(session));
+    return session;
+  }
+
+  function getUserSession() {
+    const rawSession = localStorage.getItem(USER_SESSION_KEY);
+
+    if (!rawSession) {
+      return null;
+    }
+
+    try {
+      const session = JSON.parse(rawSession);
+      return session && session.email ? session : null;
+    } catch (_error) {
+      localStorage.removeItem(USER_SESSION_KEY);
+      return null;
+    }
+  }
+
+  function clearUserSession() {
+    localStorage.removeItem(USER_SESSION_KEY);
+  }
+
+  function userDashboardUrl() {
+    return "index.html";
+  }
+
   async function getSupabaseSession() {
     const client = getSupabaseClient();
 
@@ -158,6 +197,7 @@
 
   async function signOut() {
     clearAdminSession();
+    clearUserSession();
 
     const client = getSupabaseClient();
 
@@ -207,6 +247,63 @@
 
   function adminPanelUrl() {
     return "admin.html";
+  }
+
+  function buildProjectUserRecords() {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const inactiveSeen = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    const activeSeen = new Date().toISOString();
+
+    return DEFAULT_USERS.map((user) => ({
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      status: user.status,
+      last_seen: user.status === "inactive" ? inactiveSeen : activeSeen,
+      created_at: weekAgo,
+    }));
+  }
+
+  function mergeProjectUsers(fetchedUsers) {
+    const map = new Map(
+      (fetchedUsers || []).map((user) => [String(user.email || "").toLowerCase(), user]),
+    );
+
+    return buildProjectUserRecords().map((user) => {
+      const existing = map.get(user.email);
+
+      if (!existing) {
+        return user;
+      }
+
+      return {
+        email: user.email,
+        name: existing.name || user.name,
+        role: existing.role || user.role,
+        status: existing.status || user.status,
+        last_seen: existing.last_seen || user.last_seen,
+        created_at: existing.created_at || user.created_at,
+      };
+    });
+  }
+
+  async function ensureProjectUsers() {
+    const users = buildProjectUserRecords();
+    localStorage.setItem("smartHydroAppUsers", JSON.stringify(users));
+
+    const client = getSupabaseClient();
+
+    if (!client) {
+      return users;
+    }
+
+    try {
+      await client.from("app_users").upsert(users, { onConflict: "email" });
+    } catch (_error) {
+      // Table may not exist until schema is updated.
+    }
+
+    return users;
   }
 
   async function trackUserActivity(email, role = "user") {
@@ -276,10 +373,14 @@
     ADMIN_PASSWORD,
     DEFAULT_USERS,
     ADMIN_SESSION_KEY,
+    USER_SESSION_KEY,
     AUTH_RETURN_KEY,
     createAdminSession,
     getAdminSession,
     clearAdminSession,
+    createUserSession,
+    getUserSession,
+    clearUserSession,
     getSupabaseClient,
     getSupabaseSession,
     hasSupabaseConfig,
@@ -287,6 +388,7 @@
     normalizeSupabaseUrl,
     signOut,
     dashboardUrl,
+    userDashboardUrl,
     signInUrl,
     adminPanelUrl,
     redirectToDashboard,
@@ -295,6 +397,9 @@
     isAdminOverride,
     getDefaultUser,
     getUserDisplayName,
+    mergeProjectUsers,
+    ensureProjectUsers,
+    buildProjectUserRecords,
     trackUserActivity,
   };
 })();

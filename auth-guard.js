@@ -20,28 +20,34 @@
   }
 
   const adminSession = auth.getAdminSession();
+  const userSession = auth.getUserSession();
+  const isAdmin = adminSession?.email === auth.ADMIN_EMAIL;
 
-  if (!adminSession) {
+  if (!adminSession && !userSession) {
     auth.redirectToSignIn(currentPage);
     return;
   }
 
   if (currentPage === "dashboard.html") {
-    window.location.replace(auth.adminPanelUrl());
+    window.location.replace(isAdmin ? auth.adminPanelUrl() : auth.userDashboardUrl());
     return;
   }
 
-  if (currentPage === "admin.html" && adminSession.email !== auth.ADMIN_EMAIL) {
-    auth.redirectToSignIn(currentPage);
+  if (currentPage === "admin.html" && !isAdmin) {
+    window.location.replace(auth.userDashboardUrl());
     return;
   }
 
-  if (currentPage === "index.html" && adminSession.email !== auth.ADMIN_EMAIL) {
-    auth.redirectToSignIn(currentPage);
-    return;
+  if (isAdmin) {
+    await auth.trackUserActivity(adminSession.email, "admin");
+  } else if (userSession?.email) {
+    await auth.trackUserActivity(userSession.email, "user");
   }
 
-  await auth.trackUserActivity(adminSession.email, "admin");
+  const adminNavLink = document.querySelector('a[href="admin.html"]');
+  if (adminNavLink && !isAdmin) {
+    adminNavLink.style.display = "none";
+  }
 
   wireSignOut();
   finishGuard();

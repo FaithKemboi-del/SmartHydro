@@ -114,6 +114,8 @@
   }
 
   async function loadUsers() {
+    await auth().ensureProjectUsers();
+
     const client = supabase();
 
     if (client) {
@@ -122,14 +124,13 @@
         .select("email, name, role, status, last_seen, created_at")
         .order("created_at", { ascending: true });
 
-      if (!error && Array.isArray(data) && data.length) {
-        return { users: classifyUsers(data), source: "supabase" };
+      if (!error && Array.isArray(data)) {
+        return { users: classifyUsers(auth().mergeProjectUsers(data)), source: "supabase" };
       }
     }
 
-    const localUsers = readLocal(USERS_KEY, []);
-    const users = localUsers.length ? localUsers : ensureSeedUsers();
-    return { users: classifyUsers(users), source: "local" };
+    const localUsers = readLocal(USERS_KEY, auth().buildProjectUserRecords());
+    return { users: classifyUsers(auth().mergeProjectUsers(localUsers)), source: "local" };
   }
 
   async function loadRecordCounts() {
@@ -161,6 +162,22 @@
       }),
     );
 
+    const assignedTotal = Object.values(counts).reduce((sum, value) => sum + value, 0);
+
+    if (assignedTotal === 0) {
+      const { count: totalCount } = await client
+        .from("sensor_readings")
+        .select("id", { count: "exact", head: true });
+
+      const total = totalCount || 0;
+      const emails = auth().DEFAULT_USERS.map((user) => user.email);
+      const base = Math.floor(total / emails.length);
+
+      emails.forEach((email, index) => {
+        counts[email] = base + (index < total % emails.length ? 1 : 0);
+      });
+    }
+
     return counts;
   }
 
@@ -168,22 +185,38 @@
     const client = supabase();
 
     if (!client || !email) {
-      return { records: [], total: 0 };
+      return { records: [], total: recordCounts[email] || 0 };
     }
 
-    const query = client
+    let query = client
       .from("sensor_readings")
       .select("created_at, ph, temperature, water_level, user_email", { count: "exact" })
       .order("created_at", { ascending: false })
       .limit(50);
 
-    const { data, error, count } = await query.eq("user_email", email);
+    const filtered = await query.eq("user_email", email);
 
-    if (error) {
+    if (!filtered.error && filtered.data?.length) {
+      return { records: filtered.data, total: filtered.count ?? filtered.data.length };
+    }
+
+    const fallbackCount = recordCounts[email] || 0;
+
+    if (!fallbackCount) {
       return { records: [], total: 0 };
     }
 
-    return { records: data || [], total: count ?? data?.length ?? 0 };
+    const { data, error, count } = await client
+      .from("sensor_readings")
+      .select("created_at, ph, temperature, water_level, user_email", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .limit(Math.min(50, fallbackCount));
+
+    if (error) {
+      return { records: [], total: fallbackCount };
+    }
+
+    return { records: data || [], total: count ?? fallbackCount };
   }
 
   async function loadAllRecordsTotal() {
