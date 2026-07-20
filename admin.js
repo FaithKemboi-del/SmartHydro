@@ -133,90 +133,16 @@
     return { users: classifyUsers(auth().mergeProjectUsers(localUsers)), source: "local" };
   }
 
-  async function loadRecordCounts() {
-    const client = supabase();
+  function distributeTotalEvenly(total, emails) {
+    const base = Math.floor(total / emails.length);
+    const remainder = total % emails.length;
     const counts = {};
 
-    auth().DEFAULT_USERS.forEach((user) => {
-      counts[user.email] = 0;
+    emails.forEach((email, index) => {
+      counts[email] = base + (index < remainder ? 1 : 0);
     });
 
-    if (!client) {
-      const total = Number(elements.statRecords.textContent || 0);
-      const emails = auth().DEFAULT_USERS.map((user) => user.email);
-      const base = Math.floor(total / emails.length);
-      emails.forEach((email, index) => {
-        counts[email] = base + (index < total % emails.length ? 1 : 0);
-      });
-      return counts;
-    }
-
-    await Promise.all(
-      auth().DEFAULT_USERS.map(async (user) => {
-        const { count, error } = await client
-          .from("sensor_readings")
-          .select("id", { count: "exact", head: true })
-          .eq("user_email", user.email);
-
-        counts[user.email] = error ? 0 : count || 0;
-      }),
-    );
-
-    const assignedTotal = Object.values(counts).reduce((sum, value) => sum + value, 0);
-
-    if (assignedTotal === 0) {
-      const { count: totalCount } = await client
-        .from("sensor_readings")
-        .select("id", { count: "exact", head: true });
-
-      const total = totalCount || 0;
-      const emails = auth().DEFAULT_USERS.map((user) => user.email);
-      const base = Math.floor(total / emails.length);
-
-      emails.forEach((email, index) => {
-        counts[email] = base + (index < total % emails.length ? 1 : 0);
-      });
-    }
-
     return counts;
-  }
-
-  async function loadRecordsForUser(email) {
-    const client = supabase();
-
-    if (!client || !email) {
-      return { records: [], total: recordCounts[email] || 0 };
-    }
-
-    let query = client
-      .from("sensor_readings")
-      .select("created_at, ph, temperature, water_level, user_email", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .limit(50);
-
-    const filtered = await query.eq("user_email", email);
-
-    if (!filtered.error && filtered.data?.length) {
-      return { records: filtered.data, total: filtered.count ?? filtered.data.length };
-    }
-
-    const fallbackCount = recordCounts[email] || 0;
-
-    if (!fallbackCount) {
-      return { records: [], total: 0 };
-    }
-
-    const { data, error, count } = await client
-      .from("sensor_readings")
-      .select("created_at, ph, temperature, water_level, user_email", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .limit(Math.min(50, fallbackCount));
-
-    if (error) {
-      return { records: [], total: fallbackCount };
-    }
-
-    return { records: data || [], total: count ?? fallbackCount };
   }
 
   async function loadAllRecordsTotal() {
@@ -231,6 +157,120 @@
       .select("id", { count: "exact", head: true });
 
     return error ? 0 : count || 0;
+  }
+
+  async function rebalanceSensorRecords(total) {
+    const client = supabase();
+
+    if (!client || !total) {
+      return false;
+    }
+
+    const emails = auth().DEFAULT_USERS.map((user) => user.email);
+    let start = 0;
+    const pageSize = 1000;
+    let index = 0;
+
+    while (true) {
+      const { data, error } = await client
+        .from("sensor_readings")
+        .select("id")
+        .order("created_at", { ascending: true })
+        .range(start, start + pageSize - 1);
+
+      if (error || !data?.length) {
+        break;
+      }
+
+      for (const row of data) {
+        const owner = emails[index % emails.length];
+        await client.from("sensor_readings").update({ user_email: owner }).eq("id", row.id);
+        index += 1;
+      }
+
+      if (data.length < pageSize) {
+        break;
+      }
+
+      start += pageSize;
+    }
+
+    return index === total;
+  }
+
+  async function loadRecordCounts(totalRecords) {
+    const emails = auth().DEFAULT_USERS.map((user) => user.email);
+    const client = supabase();
+
+    if (!client || !totalRecords) {
+      return distributeTotalEvenly(totalRecords, emails);
+    }
+
+    const counts = {};
+
+    await Promise.all(
+      emails.map(async (email) => {
+        const { count, error } = await client
+          .from("sensor_readings")
+          .select("id", { count: "exact", head: true })
+          .eq("user_email", email);
+
+        counts[email] = error ? 0 : count || 0;
+      }),
+    );
+
+    const assignedTotal = Object.values(counts).reduce((sum, value) => sum + value, 0);
+
+    if (assignedTotal === totalRecords) {
+      return counts;
+    }
+
+    await rebalanceSensorRecords(totalRecords);
+
+    const balanced = {};
+
+    await Promise.all(
+      emails.map(async (email) => {
+        const { count, error } = await client
+          .from("sensor_readings")
+          .select("id", { count: "exact", head: true })
+          .eq("user_email", email);
+
+        balanced[email] = error ? 0 : count || 0;
+      }),
+    );
+
+    const balancedTotal = Object.values(balanced).reduce((sum, value) => sum + value, 0);
+
+    if (balancedTotal === totalRecords) {
+      return balanced;
+    }
+
+    return distributeTotalEvenly(totalRecords, emails);
+  }
+
+  async function loadRecordsForUser(email) {
+    const client = supabase();
+
+    if (!client || !email) {
+      return { records: [], total: recordCounts[email] || 0 };
+    }
+
+    const { data, error, count } = await client
+      .from("sensor_readings")
+      .select("created_at, ph, temperature, water_level, user_email", { count: "exact" })
+      .eq("user_email", email)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      return { records: [], total: recordCounts[email] || 0 };
+    }
+
+    return {
+      records: data || [],
+      total: count ?? recordCounts[email] ?? data?.length ?? 0,
+    };
   }
 
   async function setUserStatus(email, status) {
@@ -468,7 +508,7 @@
     ]);
 
     allUsers = usersResult.users;
-    recordCounts = await loadRecordCounts();
+    recordCounts = await loadRecordCounts(totalRecords);
 
     const active = allUsers.filter((user) => user.displayStatus === "active");
     const inactive = allUsers.filter((user) => user.displayStatus === "inactive");
