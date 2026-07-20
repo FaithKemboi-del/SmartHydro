@@ -34,8 +34,8 @@ http://localhost:8000/sign-in.html
 The dashboard can be accessed immediately from the sign-in page with:
 
 ```text
-Email: fchepkosgei21@gmail.com
-Password: Hydrouser2026..
+Email: fyugalbox21@gmail.com
+Password: chep2005..
 ```
 
 This stores an admin session in LocalStorage and redirects to `dashboard.html`, which then opens

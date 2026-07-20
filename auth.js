@@ -1,6 +1,6 @@
 (function () {
-  const ADMIN_EMAIL = "fchepkosgei21@gmail.com";
-  const ADMIN_PASSWORD = "Hydrouser2026..";
+  const ADMIN_EMAIL = "fyugalbox21@gmail.com";
+  const ADMIN_PASSWORD = "chep2005..";
   const ADMIN_SESSION_KEY = "smartHydroAdminSession";
   const AUTH_RETURN_KEY = "smartHydroReturnTo";
 
