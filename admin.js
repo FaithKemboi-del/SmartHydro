@@ -4,10 +4,13 @@
   const SETTINGS_KEY = "smartHydroSystemSettings";
   const ACTIVE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
+  let allUsers = [];
+  let selectedEmail = null;
+  let recordCounts = {};
+
   const elements = {
     dataSource: document.querySelector("#admin-data-source"),
-    activeUsersBody: document.querySelector("#active-users-body"),
-    inactiveUsersBody: document.querySelector("#inactive-users-body"),
+    userList: document.querySelector("#admin-user-list"),
     recordsBody: document.querySelector("#records-body"),
     alertsBody: document.querySelector("#alerts-body"),
     statActive: document.querySelector("#stat-active-users"),
@@ -15,6 +18,16 @@
     statRecords: document.querySelector("#stat-db-records"),
     statAlerts: document.querySelector("#stat-alert-count"),
     settingsMessage: document.querySelector("#settings-message"),
+    recordsHeadingNote: document.querySelector("#records-heading-note"),
+    recordsTableTitle: document.querySelector("#records-table-title"),
+    detailName: document.querySelector("#detail-name"),
+    detailEmail: document.querySelector("#detail-email"),
+    detailRole: document.querySelector("#detail-role"),
+    detailStatus: document.querySelector("#detail-status"),
+    detailLastSeen: document.querySelector("#detail-last-seen"),
+    detailRecordCount: document.querySelector("#detail-record-count"),
+    detailCreated: document.querySelector("#detail-created"),
+    toggleUserStatus: document.querySelector("#toggle-user-status"),
     settingMonitoring: document.querySelector("#setting-monitoring"),
     settingPh: document.querySelector("#setting-ph"),
     settingTemperature: document.querySelector("#setting-temperature"),
@@ -71,22 +84,18 @@
     return `<tr><td colspan="${columns}">${message}</td></tr>`;
   }
 
+  function defaultUsersSeed() {
+    return auth().DEFAULT_USERS.map((user) => ({
+      ...user,
+      last_seen: user.status === "inactive" ? new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() : new Date().toISOString(),
+      created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    }));
+  }
+
   function ensureSeedUsers() {
-    const users = readLocal(USERS_KEY, []);
-    const adminEmail = auth().ADMIN_EMAIL;
-
-    if (!users.some((user) => user.email === adminEmail)) {
-      users.unshift({
-        email: adminEmail,
-        role: "admin",
-        status: "active",
-        last_seen: new Date().toISOString(),
-        created_at: new Date().toISOString(),
-      });
-      writeLocal(USERS_KEY, users);
-    }
-
-    return users;
+    const seeded = defaultUsersSeed();
+    writeLocal(USERS_KEY, seeded);
+    return seeded;
   }
 
   function classifyUsers(users) {
@@ -110,24 +119,85 @@
     if (client) {
       const { data, error } = await client
         .from("app_users")
-        .select("email, role, status, last_seen, created_at")
-        .order("last_seen", { ascending: false });
+        .select("email, name, role, status, last_seen, created_at")
+        .order("created_at", { ascending: true });
 
-      if (!error && Array.isArray(data)) {
-        if (!data.length) {
-          await auth().trackUserActivity(auth().ADMIN_EMAIL, "admin");
-          const retry = await client
-            .from("app_users")
-            .select("email, role, status, last_seen, created_at")
-            .order("last_seen", { ascending: false });
-          return { users: classifyUsers(retry.data || []), source: "supabase" };
-        }
-
+      if (!error && Array.isArray(data) && data.length) {
         return { users: classifyUsers(data), source: "supabase" };
       }
     }
 
-    return { users: classifyUsers(ensureSeedUsers()), source: "local" };
+    const localUsers = readLocal(USERS_KEY, []);
+    const users = localUsers.length ? localUsers : ensureSeedUsers();
+    return { users: classifyUsers(users), source: "local" };
+  }
+
+  async function loadRecordCounts() {
+    const client = supabase();
+    const counts = {};
+
+    auth().DEFAULT_USERS.forEach((user) => {
+      counts[user.email] = 0;
+    });
+
+    if (!client) {
+      const total = Number(elements.statRecords.textContent || 0);
+      const emails = auth().DEFAULT_USERS.map((user) => user.email);
+      const base = Math.floor(total / emails.length);
+      emails.forEach((email, index) => {
+        counts[email] = base + (index < total % emails.length ? 1 : 0);
+      });
+      return counts;
+    }
+
+    await Promise.all(
+      auth().DEFAULT_USERS.map(async (user) => {
+        const { count, error } = await client
+          .from("sensor_readings")
+          .select("id", { count: "exact", head: true })
+          .eq("user_email", user.email);
+
+        counts[user.email] = error ? 0 : count || 0;
+      }),
+    );
+
+    return counts;
+  }
+
+  async function loadRecordsForUser(email) {
+    const client = supabase();
+
+    if (!client || !email) {
+      return { records: [], total: 0 };
+    }
+
+    const query = client
+      .from("sensor_readings")
+      .select("created_at, ph, temperature, water_level, user_email", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    const { data, error, count } = await query.eq("user_email", email);
+
+    if (error) {
+      return { records: [], total: 0 };
+    }
+
+    return { records: data || [], total: count ?? data?.length ?? 0 };
+  }
+
+  async function loadAllRecordsTotal() {
+    const client = supabase();
+
+    if (!client) {
+      return 0;
+    }
+
+    const { count, error } = await client
+      .from("sensor_readings")
+      .select("id", { count: "exact", head: true });
+
+    return error ? 0 : count || 0;
   }
 
   async function setUserStatus(email, status) {
@@ -144,31 +214,11 @@
       }
     }
 
-    const users = ensureSeedUsers().map((user) =>
-      user.email === email
-        ? { ...user, status, last_seen: new Date().toISOString() }
-        : user,
+    const users = readLocal(USERS_KEY, ensureSeedUsers()).map((user) =>
+      user.email === email ? { ...user, status, last_seen: new Date().toISOString() } : user,
     );
     writeLocal(USERS_KEY, users);
     return true;
-  }
-
-  async function loadRecords() {
-    const client = supabase();
-
-    if (client) {
-      const { data, error, count } = await client
-        .from("sensor_readings")
-        .select("created_at, ph, temperature, water_level", { count: "exact" })
-        .order("created_at", { ascending: false })
-        .limit(100);
-
-      if (!error && Array.isArray(data)) {
-        return { records: data, total: count ?? data.length, source: "supabase" };
-      }
-    }
-
-    return { records: [], total: 0, source: "local" };
   }
 
   async function loadAlerts() {
@@ -190,22 +240,14 @@
   }
 
   async function addAlert(alert) {
-    const payload = {
-      created_at: new Date().toISOString(),
-      severity: alert.severity || "warning",
-      title: alert.title,
-      message: alert.message,
-      source: alert.source || "admin",
-    };
-
     const client = supabase();
 
     if (client) {
       const { error } = await client.from("alert_logs").insert({
-        severity: payload.severity,
-        title: payload.title,
-        message: payload.message,
-        source: payload.source,
+        severity: alert.severity || "warning",
+        title: alert.title,
+        message: alert.message,
+        source: alert.source || "admin",
       });
 
       if (!error) {
@@ -214,7 +256,13 @@
     }
 
     const alerts = readLocal(ALERTS_KEY, []);
-    alerts.unshift(payload);
+    alerts.unshift({
+      created_at: new Date().toISOString(),
+      severity: alert.severity || "warning",
+      title: alert.title,
+      message: alert.message,
+      source: alert.source || "admin",
+    });
     writeLocal(ALERTS_KEY, alerts.slice(0, 100));
   }
 
@@ -237,10 +285,7 @@
 
   async function saveSettings(settings) {
     const client = supabase();
-    const payload = {
-      ...settings,
-      updated_at: new Date().toISOString(),
-    };
+    const payload = { ...settings, updated_at: new Date().toISOString() };
 
     if (client) {
       const { error } = await client.from("system_settings").upsert({ id: 1, ...payload });
@@ -255,54 +300,61 @@
     return { ok: true, source: "local" };
   }
 
-  function renderUsers(users) {
-    const active = users.filter((user) => user.displayStatus === "active");
-    const inactive = users.filter((user) => user.displayStatus === "inactive");
-
-    elements.statActive.textContent = String(active.length);
-    elements.statInactive.textContent = String(inactive.length);
-
-    elements.activeUsersBody.innerHTML = active.length
-      ? active
-          .map(
-            (user) => `
-              <tr>
-                <td>${user.email}</td>
-                <td>${user.role || "user"}</td>
-                <td>${formatDate(user.last_seen)}</td>
-                <td>
-                  <button class="button button-ghost admin-row-action" type="button" data-action="deactivate" data-email="${user.email}">
-                    Mark inactive
-                  </button>
-                </td>
-              </tr>
-            `,
-          )
-          .join("")
-      : emptyRow(4, "No active users right now.");
-
-    elements.inactiveUsersBody.innerHTML = inactive.length
-      ? inactive
-          .map(
-            (user) => `
-              <tr>
-                <td>${user.email}</td>
-                <td>${user.role || "user"}</td>
-                <td>${formatDate(user.last_seen)}</td>
-                <td>
-                  <button class="button button-ghost admin-row-action" type="button" data-action="activate" data-email="${user.email}">
-                    Mark active
-                  </button>
-                </td>
-              </tr>
-            `,
-          )
-          .join("")
-      : emptyRow(4, "No inactive users.");
+  function renderUserList(users) {
+    elements.userList.innerHTML = users
+      .map(
+        (user) => `
+          <button
+            class="admin-user-card ${selectedEmail === user.email ? "is-selected" : ""}"
+            type="button"
+            data-select-user="${user.email}"
+          >
+            <strong>${user.name}</strong>
+            <span>${user.email}</span>
+            <small>${user.displayStatus === "active" ? "Active" : "Inactive"} • ${user.role}</small>
+            <em>${recordCounts[user.email] ?? 0} records</em>
+          </button>
+        `,
+      )
+      .join("");
   }
 
-  function renderRecords(records, total) {
-    elements.statRecords.textContent = String(total);
+  function renderUserDetail(user) {
+    if (!user) {
+      elements.detailName.textContent = "Select a user";
+      elements.detailEmail.textContent = "—";
+      elements.detailRole.textContent = "—";
+      elements.detailStatus.textContent = "—";
+      elements.detailLastSeen.textContent = "—";
+      elements.detailRecordCount.textContent = "0";
+      elements.detailCreated.textContent = "—";
+      elements.toggleUserStatus.disabled = true;
+      elements.toggleUserStatus.textContent = "Mark inactive";
+      return;
+    }
+
+    elements.detailName.textContent = user.name;
+    elements.detailEmail.textContent = user.email;
+    elements.detailRole.textContent = user.role;
+    elements.detailStatus.textContent = user.displayStatus === "active" ? "Active" : "Inactive";
+    elements.detailLastSeen.textContent = formatDate(user.last_seen);
+    elements.detailRecordCount.textContent = String(recordCounts[user.email] ?? 0);
+    elements.detailCreated.textContent = formatDate(user.created_at);
+    elements.toggleUserStatus.disabled = false;
+    elements.toggleUserStatus.textContent =
+      user.status === "active" ? "Mark inactive" : "Mark active";
+  }
+
+  function renderRecords(records, user) {
+    if (!user) {
+      elements.recordsTableTitle.textContent = "sensor_readings";
+      elements.recordsHeadingNote.textContent = "Select a user above to filter their stored sensor records.";
+      elements.recordsBody.innerHTML = emptyRow(4, "No user selected.");
+      return;
+    }
+
+    elements.recordsTableTitle.textContent = `${user.name}'s sensor_readings`;
+    elements.recordsHeadingNote.textContent = `Showing records linked to ${user.name} (${user.email}).`;
 
     elements.recordsBody.innerHTML = records.length
       ? records
@@ -317,10 +369,7 @@
             `,
           )
           .join("")
-      : emptyRow(
-          4,
-          "No sensor records found. Confirm sensor_readings exists in Supabase and contains data.",
-        );
+      : emptyRow(4, `No sensor records linked to ${user.name} yet. Run seed_users.py to assign records.`);
   }
 
   function renderAlerts(alerts) {
@@ -362,39 +411,60 @@
     };
   }
 
+  async function selectUser(email) {
+    selectedEmail = email;
+    const user = allUsers.find((entry) => entry.email === email);
+    renderUserList(allUsers);
+    renderUserDetail(user);
+
+    const recordsResult = await loadRecordsForUser(email);
+    if (user) {
+      recordCounts[user.email] = recordsResult.total;
+      elements.detailRecordCount.textContent = String(recordsResult.total);
+      renderUserList(allUsers);
+    }
+    renderRecords(recordsResult.records, user);
+  }
+
   async function refreshAll() {
-    const [usersResult, recordsResult, alertsResult, settingsResult] = await Promise.all([
+    const [usersResult, alertsResult, settingsResult, totalRecords] = await Promise.all([
       loadUsers(),
-      loadRecords(),
       loadAlerts(),
       loadSettings(),
+      loadAllRecordsTotal(),
     ]);
 
-    renderUsers(usersResult.users);
-    renderRecords(recordsResult.records, recordsResult.total);
+    allUsers = usersResult.users;
+    recordCounts = await loadRecordCounts();
+
+    const active = allUsers.filter((user) => user.displayStatus === "active");
+    const inactive = allUsers.filter((user) => user.displayStatus === "inactive");
+
+    elements.statActive.textContent = String(active.length);
+    elements.statInactive.textContent = String(inactive.length);
+    elements.statRecords.textContent = String(totalRecords);
+
+    if (!selectedEmail && allUsers.length) {
+      selectedEmail = allUsers[0].email;
+    }
+
+    renderUserList(allUsers);
     renderAlerts(alertsResult.alerts);
     renderSettings(settingsResult.settings);
 
-    const sources = [
-      usersResult.source,
-      recordsResult.source,
-      alertsResult.source,
-      settingsResult.source,
-    ];
-    const usingSupabase = sources.includes("supabase");
+    const selectedUser = allUsers.find((user) => user.email === selectedEmail) || allUsers[0];
+    if (selectedUser) {
+      await selectUser(selectedUser.email);
+    }
 
+    const usingSupabase = [usersResult.source, alertsResult.source, settingsResult.source].includes("supabase");
     elements.dataSource.textContent = usingSupabase
-      ? "Connected to Supabase for available admin tables. Run the latest supabase_schema.sql if some sections still use local storage."
-      : "Using local admin storage. Run the latest supabase_schema.sql in Supabase to sync users, alerts, and settings to the cloud.";
+      ? "Connected to Supabase. Run the latest supabase_schema.sql and seed_users.py to sync all three users and record counts."
+      : "Using local admin storage. Configure Supabase and run supabase_schema.sql plus seed_users.py.";
   }
 
-  document.querySelector("#refresh-users")?.addEventListener("click", () => {
-    refreshAll();
-  });
-
-  document.querySelector("#refresh-records")?.addEventListener("click", () => {
-    refreshAll();
-  });
+  document.querySelector("#refresh-users")?.addEventListener("click", refreshAll);
+  document.querySelector("#refresh-records")?.addEventListener("click", refreshAll);
 
   document.querySelector("#add-sample-alert")?.addEventListener("click", async () => {
     await addAlert({
@@ -408,21 +478,24 @@
   document.querySelector("#save-settings")?.addEventListener("click", async () => {
     const result = await saveSettings(collectSettings());
     elements.settingsMessage.textContent =
-      result.source === "supabase"
-        ? "Settings saved to Supabase."
-        : "Settings saved locally on this browser.";
+      result.source === "supabase" ? "Settings saved to Supabase." : "Settings saved locally on this browser.";
   });
 
-  document.addEventListener("click", async (event) => {
-    const button = event.target.closest("[data-action][data-email]");
-
+  elements.userList?.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-select-user]");
     if (!button) {
       return;
     }
+    await selectUser(button.getAttribute("data-select-user"));
+  });
 
-    const email = button.getAttribute("data-email");
-    const action = button.getAttribute("data-action");
-    await setUserStatus(email, action === "activate" ? "active" : "inactive");
+  elements.toggleUserStatus?.addEventListener("click", async () => {
+    const user = allUsers.find((entry) => entry.email === selectedEmail);
+    if (!user) {
+      return;
+    }
+    const nextStatus = user.status === "active" ? "inactive" : "active";
+    await setUserStatus(user.email, nextStatus);
     await refreshAll();
   });
 

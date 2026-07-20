@@ -25,7 +25,7 @@ signInForm.addEventListener("submit", async (event) => {
     if (window.SmartHydroAuth.isAdminOverride(email, password)) {
       window.SmartHydroAuth.createAdminSession(email);
       await window.SmartHydroAuth.trackUserActivity(email, "admin");
-      window.location.href = window.SmartHydroAuth.consumeReturnTo();
+      window.location.href = window.SmartHydroAuth.adminPanelUrl();
       return;
     }
 
@@ -48,7 +48,7 @@ signInForm.addEventListener("submit", async (event) => {
 
     if (data.user?.email === window.SmartHydroAuth.ADMIN_EMAIL) {
       window.SmartHydroAuth.createAdminSession(data.user.email);
-      window.location.href = window.SmartHydroAuth.consumeReturnTo();
+      window.location.href = window.SmartHydroAuth.adminPanelUrl();
       return;
     }
 

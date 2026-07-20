@@ -70,62 +70,67 @@
       <section id="users" class="section-shell">
         <div class="section-heading">
           <span class="eyebrow">User Management</span>
-          <h2>Active and inactive users</h2>
-          <p>See who is currently using the system and who has been marked inactive.</p>
+          <h2>System users</h2>
+          <p>Select a user to view their details and sensor record count.</p>
         </div>
 
-        <div class="admin-split">
+        <div class="admin-user-layout">
           <div class="admin-panel">
             <div class="admin-panel-head">
-              <h3>Currently active</h3>
+              <h3>All users (3)</h3>
               <button class="button button-ghost" type="button" id="refresh-users">Refresh</button>
             </div>
-            <div class="table-card admin-table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">Email</th>
-                    <th scope="col">Role</th>
-                    <th scope="col">Last seen</th>
-                    <th scope="col">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="active-users-body"></tbody>
-              </table>
-            </div>
+            <div class="admin-user-list" id="admin-user-list"></div>
           </div>
 
-          <div class="admin-panel">
-            <div class="admin-panel-head">
-              <h3>Inactive users</h3>
+          <article class="admin-panel admin-user-detail" id="admin-user-detail">
+            <span class="eyebrow">Selected user</span>
+            <h3 id="detail-name">Select a user</h3>
+            <dl class="admin-detail-grid">
+              <div>
+                <dt>Email</dt>
+                <dd id="detail-email">—</dd>
+              </div>
+              <div>
+                <dt>Role</dt>
+                <dd id="detail-role">—</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd id="detail-status">—</dd>
+              </div>
+              <div>
+                <dt>Last seen</dt>
+                <dd id="detail-last-seen">—</dd>
+              </div>
+              <div>
+                <dt>Sensor records</dt>
+                <dd id="detail-record-count">0</dd>
+              </div>
+              <div>
+                <dt>Account created</dt>
+                <dd id="detail-created">—</dd>
+              </div>
+            </dl>
+            <div class="admin-detail-actions">
+              <button class="button button-ghost" type="button" id="toggle-user-status" disabled>
+                Mark inactive
+              </button>
             </div>
-            <div class="table-card admin-table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">Email</th>
-                    <th scope="col">Role</th>
-                    <th scope="col">Last seen</th>
-                    <th scope="col">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="inactive-users-body"></tbody>
-              </table>
-            </div>
-          </div>
+          </article>
         </div>
       </section>
 
       <section id="records" class="section-shell">
         <div class="section-heading">
           <span class="eyebrow">Database Records</span>
-          <h2>Full sensor readings</h2>
-          <p>View stored pH, temperature, and water level records from the database.</p>
+          <h2>Sensor readings for selected user</h2>
+          <p id="records-heading-note">Select a user above to filter their stored sensor records.</p>
         </div>
 
         <div class="admin-panel">
           <div class="admin-panel-head">
-            <h3>sensor_readings</h3>
+            <h3 id="records-table-title">sensor_readings</h3>
             <button class="button button-ghost" type="button" id="refresh-records">Refresh</button>
           </div>
           <div class="table-card admin-table-wrap">

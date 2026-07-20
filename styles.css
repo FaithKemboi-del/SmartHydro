@@ -1599,7 +1599,9 @@ td {
 
   .admin-stat-grid,
   .admin-split,
-  .admin-settings-grid {
+  .admin-settings-grid,
+  .admin-user-layout,
+  .admin-detail-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -1646,6 +1648,88 @@ td {
   margin: 16px 0 0;
   color: var(--gray-500);
   font-size: 0.92rem;
+}
+
+.admin-user-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
+  gap: 24px;
+}
+
+.admin-user-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-user-card {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  border: 1px solid var(--gray-200);
+  border-radius: 16px;
+  padding: 16px 18px;
+  text-align: left;
+  cursor: pointer;
+  background: var(--white);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.admin-user-card strong {
+  color: var(--green-900);
+  font-size: 1.05rem;
+}
+
+.admin-user-card span {
+  color: var(--gray-700);
+  font-size: 0.88rem;
+}
+
+.admin-user-card small,
+.admin-user-card em {
+  color: var(--gray-500);
+  font-size: 0.82rem;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.admin-user-card.is-selected,
+.admin-user-card:hover {
+  border-color: var(--green-700);
+  box-shadow: 0 12px 28px rgba(22, 74, 53, 0.1);
+  transform: translateY(-1px);
+}
+
+.admin-user-detail h3 {
+  margin-top: 8px;
+}
+
+.admin-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 20px;
+  margin: 20px 0;
+}
+
+.admin-detail-grid dt {
+  margin-bottom: 4px;
+  color: var(--gray-500);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-detail-grid dd {
+  margin: 0;
+  color: var(--green-900);
+  font-weight: 800;
+}
+
+.admin-detail-actions {
+  margin-top: 8px;
 }
 
 .admin-split {

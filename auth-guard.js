@@ -27,12 +27,17 @@
   }
 
   if (currentPage === "dashboard.html") {
-    window.location.replace("index.html");
+    window.location.replace(auth.adminPanelUrl());
     return;
   }
 
   if (currentPage === "admin.html" && adminSession.email !== auth.ADMIN_EMAIL) {
-    window.location.replace("index.html");
+    auth.redirectToSignIn(currentPage);
+    return;
+  }
+
+  if (currentPage === "index.html" && adminSession.email !== auth.ADMIN_EMAIL) {
+    auth.redirectToSignIn(currentPage);
     return;
   }
 

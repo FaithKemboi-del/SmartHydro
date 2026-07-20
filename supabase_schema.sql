@@ -5,12 +5,14 @@ create table if not exists public.sensor_readings (
   created_at timestamp with time zone not null default now(),
   ph double precision not null,
   temperature double precision not null,
-  water_level double precision not null
+  water_level double precision not null,
+  user_email text
 );
 
 create table if not exists public.app_users (
   id uuid primary key default gen_random_uuid(),
   email text not null unique,
+  name text not null,
   role text not null default 'user',
   status text not null default 'active' check (status in ('active', 'inactive')),
   last_seen timestamp with time zone not null default now(),
@@ -37,9 +39,24 @@ create table if not exists public.system_settings (
   updated_at timestamp with time zone not null default now()
 );
 
+alter table public.sensor_readings add column if not exists user_email text;
+alter table public.app_users add column if not exists name text;
+
 insert into public.system_settings (id)
 values (1)
 on conflict (id) do nothing;
+
+insert into public.app_users (email, name, role, status, last_seen, created_at)
+values
+  ('fyugalbox21@gmail.com', 'Admin', 'admin', 'active', now(), now()),
+  ('faithkemboi21@gmail.com', 'Faith', 'user', 'active', now() - interval '2 hours', now() - interval '5 days'),
+  ('paulkevinkariuki@gmail.com', 'Paul', 'user', 'inactive', now() - interval '3 days', now() - interval '10 days')
+on conflict (email) do update
+set
+  name = excluded.name,
+  role = excluded.role,
+  status = excluded.status,
+  last_seen = excluded.last_seen;
 
 alter table public.sensor_readings disable row level security;
 alter table public.app_users disable row level security;

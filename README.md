@@ -58,7 +58,21 @@ The admin panel includes:
 - Alert history logs
 - System settings to enable/disable monitoring and sensors
 
-Run the latest `supabase_schema.sql` in the Supabase SQL Editor so `app_users`, `alert_logs`, and `system_settings` tables exist. If those tables are missing, the admin panel still works with local browser storage for demo purposes.
+Run the latest `supabase_schema.sql` in the Supabase SQL Editor so `app_users`, `alert_logs`, and `system_settings` tables exist.
+
+Seed the three project users and assign sensor records to each user:
+
+```bash
+python3 seed_users.py
+```
+
+Default users:
+
+- Admin — `fyugalbox21@gmail.com`
+- Faith — `faithkemboi21@gmail.com`
+- Paul — `paulkevinkariuki@gmail.com`
+
+Admin login now opens the admin panel directly at `admin.html`.
 
 ## Supabase SQL
 

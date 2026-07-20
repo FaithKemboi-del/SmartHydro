@@ -4,6 +4,12 @@
   const ADMIN_SESSION_KEY = "smartHydroAdminSession";
   const AUTH_RETURN_KEY = "smartHydroReturnTo";
 
+  const DEFAULT_USERS = [
+    { email: "fyugalbox21@gmail.com", name: "Admin", role: "admin", status: "active" },
+    { email: "faithkemboi21@gmail.com", name: "Faith", role: "user", status: "active" },
+    { email: "paulkevinkariuki@gmail.com", name: "Paul", role: "user", status: "inactive" },
+  ];
+
   function normalizeSupabaseUrl(rawUrl) {
     let url = String(rawUrl || "").trim().replace(/\/+$/, "");
 
@@ -183,7 +189,16 @@
   function consumeReturnTo() {
     const returnTo = localStorage.getItem(AUTH_RETURN_KEY);
     localStorage.removeItem(AUTH_RETURN_KEY);
-    return returnTo || dashboardUrl();
+    return returnTo || adminPanelUrl();
+  }
+
+  function getDefaultUser(email) {
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    return DEFAULT_USERS.find((user) => user.email === normalizedEmail) || null;
+  }
+
+  function getUserDisplayName(email) {
+    return getDefaultUser(email)?.name || String(email || "").split("@")[0] || "User";
   }
 
   function isAdminOverride(email, password) {
@@ -201,6 +216,7 @@
 
     const normalizedEmail = String(email).trim().toLowerCase();
     const resolvedRole = normalizedEmail === ADMIN_EMAIL ? "admin" : role;
+    const profile = getDefaultUser(normalizedEmail);
     const now = new Date().toISOString();
     const localKey = "smartHydroAppUsers";
 
@@ -212,15 +228,17 @@
       if (index >= 0) {
         next[index] = {
           ...next[index],
+          name: profile?.name || next[index].name || getUserDisplayName(normalizedEmail),
           role: resolvedRole,
-          status: next[index].status || "active",
+          status: next[index].status || profile?.status || "active",
           last_seen: now,
         };
       } else {
         next.unshift({
           email: normalizedEmail,
+          name: profile?.name || getUserDisplayName(normalizedEmail),
           role: resolvedRole,
-          status: "active",
+          status: profile?.status || "active",
           last_seen: now,
           created_at: now,
         });
@@ -241,8 +259,9 @@
       await client.from("app_users").upsert(
         {
           email: normalizedEmail,
+          name: profile?.name || getUserDisplayName(normalizedEmail),
           role: resolvedRole,
-          status: "active",
+          status: profile?.status || "active",
           last_seen: now,
         },
         { onConflict: "email" },
@@ -254,6 +273,8 @@
 
   window.SmartHydroAuth = {
     ADMIN_EMAIL,
+    ADMIN_PASSWORD,
+    DEFAULT_USERS,
     ADMIN_SESSION_KEY,
     AUTH_RETURN_KEY,
     createAdminSession,
@@ -272,6 +293,8 @@
     redirectToSignIn,
     consumeReturnTo,
     isAdminOverride,
+    getDefaultUser,
+    getUserDisplayName,
     trackUserActivity,
   };
 })();
