@@ -45,7 +45,6 @@ def upsert_users(supabase):
 
 
 def assign_readings_to_users(supabase):
-    emails = [user["email"] for user in DEFAULT_USERS]
     rows = []
     page_size = 1000
     start = 0
@@ -74,19 +73,30 @@ def assign_readings_to_users(supabase):
         print("No sensor readings found to assign.")
         return
 
-    for index, row in enumerate(rows):
-        owner = emails[index % len(emails)]
-        supabase.table("sensor_readings").update({"user_email": owner}).eq("id", row["id"]).execute()
-
-    print(f"Assigned {len(rows)} sensor readings across {len(emails)} users.")
+    admin_email = "fyugalbox21@gmail.com"
+    faith_email = "faithkemboi21@gmail.com"
+    paul_email = "paulkevinkariuki@gmail.com"
 
     total = len(rows)
-    base = total // len(emails)
-    remainder = total % len(emails)
+    faith_target = min(340, total)
+    paul_target = min(260, max(0, total - faith_target))
+    unassigned = max(0, total - faith_target - paul_target)
 
-    for index, user in enumerate(DEFAULT_USERS):
-        assigned = base + (1 if index < remainder else 0)
-        print(f"  {user['name']}: {assigned} records")
+    for index, row in enumerate(rows):
+        if index < faith_target:
+            owner = faith_email
+        elif index < faith_target + paul_target:
+            owner = paul_email
+        else:
+            owner = None
+
+        supabase.table("sensor_readings").update({"user_email": owner}).eq("id", row["id"]).execute()
+
+    print(f"Processed {total} sensor readings.")
+    print("  Admin: 0 records")
+    print(f"  Faith: {faith_target} records")
+    print(f"  Paul: {paul_target} records")
+    print(f"  Unassigned: {unassigned} records")
 
 
 def main():

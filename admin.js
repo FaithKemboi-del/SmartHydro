@@ -133,18 +133,6 @@
     return { users: classifyUsers(auth().mergeProjectUsers(localUsers)), source: "local" };
   }
 
-  function distributeTotalEvenly(total, emails) {
-    const base = Math.floor(total / emails.length);
-    const remainder = total % emails.length;
-    const counts = {};
-
-    emails.forEach((email, index) => {
-      counts[email] = base + (index < remainder ? 1 : 0);
-    });
-
-    return counts;
-  }
-
   async function loadAllRecordsTotal() {
     const client = supabase();
 
@@ -159,54 +147,18 @@
     return error ? 0 : count || 0;
   }
 
-  async function rebalanceSensorRecords(total) {
-    const client = supabase();
-
-    if (!client || !total) {
-      return false;
-    }
-
-    const emails = auth().DEFAULT_USERS.map((user) => user.email);
-    let start = 0;
-    const pageSize = 1000;
-    let index = 0;
-
-    while (true) {
-      const { data, error } = await client
-        .from("sensor_readings")
-        .select("id")
-        .order("created_at", { ascending: true })
-        .range(start, start + pageSize - 1);
-
-      if (error || !data?.length) {
-        break;
-      }
-
-      for (const row of data) {
-        const owner = emails[index % emails.length];
-        await client.from("sensor_readings").update({ user_email: owner }).eq("id", row.id);
-        index += 1;
-      }
-
-      if (data.length < pageSize) {
-        break;
-      }
-
-      start += pageSize;
-    }
-
-    return index === total;
-  }
-
   async function loadRecordCounts(totalRecords) {
     const emails = auth().DEFAULT_USERS.map((user) => user.email);
     const client = supabase();
+    const counts = {};
+
+    emails.forEach((email) => {
+      counts[email] = 0;
+    });
 
     if (!client || !totalRecords) {
-      return distributeTotalEvenly(totalRecords, emails);
+      return counts;
     }
-
-    const counts = {};
 
     await Promise.all(
       emails.map(async (email) => {
@@ -219,34 +171,7 @@
       }),
     );
 
-    const assignedTotal = Object.values(counts).reduce((sum, value) => sum + value, 0);
-
-    if (assignedTotal === totalRecords) {
-      return counts;
-    }
-
-    await rebalanceSensorRecords(totalRecords);
-
-    const balanced = {};
-
-    await Promise.all(
-      emails.map(async (email) => {
-        const { count, error } = await client
-          .from("sensor_readings")
-          .select("id", { count: "exact", head: true })
-          .eq("user_email", email);
-
-        balanced[email] = error ? 0 : count || 0;
-      }),
-    );
-
-    const balancedTotal = Object.values(balanced).reduce((sum, value) => sum + value, 0);
-
-    if (balancedTotal === totalRecords) {
-      return balanced;
-    }
-
-    return distributeTotalEvenly(totalRecords, emails);
+    return counts;
   }
 
   async function loadRecordsForUser(email) {
