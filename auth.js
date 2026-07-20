@@ -6,9 +6,30 @@
   const AUTH_RETURN_KEY = "smartHydroReturnTo";
 
   const DEFAULT_USERS = [
-    { email: "fyugalbox21@gmail.com", name: "Admin", role: "admin", status: "active" },
-    { email: "faithkemboi21@gmail.com", name: "Faith", role: "user", status: "active" },
-    { email: "paulkevinkariuki@gmail.com", name: "Paul", role: "user", status: "inactive" },
+    {
+      email: "fyugalbox21@gmail.com",
+      name: "Admin",
+      role: "admin",
+      status: "active",
+      created_at: "2026-06-01T08:00:00.000Z",
+      last_seen: null,
+    },
+    {
+      email: "faithkemboi21@gmail.com",
+      name: "Faith",
+      role: "user",
+      status: "active",
+      created_at: "2026-06-03T09:15:00.000Z",
+      last_seen: null,
+    },
+    {
+      email: "paulkevinkariuki@gmail.com",
+      name: "Paul",
+      role: "user",
+      status: "inactive",
+      created_at: "2026-06-28T14:40:00.000Z",
+      last_seen: null,
+    },
   ];
 
   function normalizeSupabaseUrl(rawUrl) {

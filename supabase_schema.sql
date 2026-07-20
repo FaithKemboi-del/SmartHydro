@@ -48,15 +48,16 @@ on conflict (id) do nothing;
 
 insert into public.app_users (email, name, role, status, last_seen, created_at)
 values
-  ('fyugalbox21@gmail.com', 'Admin', 'admin', 'active', now(), now()),
-  ('faithkemboi21@gmail.com', 'Faith', 'user', 'active', now() - interval '2 hours', now() - interval '5 days'),
-  ('paulkevinkariuki@gmail.com', 'Paul', 'user', 'inactive', now() - interval '3 days', now() - interval '10 days')
+  ('fyugalbox21@gmail.com', 'Admin', 'admin', 'active', now(), '2026-06-01 08:00:00+00'),
+  ('faithkemboi21@gmail.com', 'Faith', 'user', 'active', now() - interval '2 hours', '2026-06-03 09:15:00+00'),
+  ('paulkevinkariuki@gmail.com', 'Paul', 'user', 'inactive', now() - interval '3 days', '2026-06-28 14:40:00+00')
 on conflict (email) do update
 set
   name = excluded.name,
   role = excluded.role,
   status = excluded.status,
-  last_seen = excluded.last_seen;
+  last_seen = excluded.last_seen,
+  created_at = excluded.created_at;
 
 alter table public.sensor_readings disable row level security;
 alter table public.app_users disable row level security;

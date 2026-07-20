@@ -12,18 +12,21 @@ DEFAULT_USERS = [
         "name": "Admin",
         "role": "admin",
         "status": "active",
+        "created_at": "2026-06-01T08:00:00+00:00",
     },
     {
         "email": "faithkemboi21@gmail.com",
         "name": "Faith",
         "role": "user",
         "status": "active",
+        "created_at": "2026-06-03T09:15:00+00:00",
     },
     {
         "email": "paulkevinkariuki@gmail.com",
         "name": "Paul",
         "role": "user",
         "status": "inactive",
+        "created_at": "2026-06-28T14:40:00+00:00",
     },
 ]
 
