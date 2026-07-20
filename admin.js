@@ -587,12 +587,47 @@
   document.querySelector("#refresh-users")?.addEventListener("click", refreshAll);
   document.querySelector("#refresh-records")?.addEventListener("click", refreshAll);
 
-  document.querySelector("#add-sample-alert")?.addEventListener("click", async () => {
+  document.querySelector("#manual-alert-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const variable = String(form.variable.value || "").trim();
+    const severity = String(form.severity.value || "warning").trim();
+    const message = String(form.message.value || "").trim();
+    const note = document.querySelector("#manual-alert-message");
+    const submitButton = document.querySelector("#log-manual-alert");
+
+    if (!variable || !message) {
+      if (note) {
+        note.textContent = "Choose a sensor variable and write the alert message.";
+      }
+      return;
+    }
+
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Logging...";
+    }
+
     await addAlert({
-      severity: "warning",
-      title: "Nutrient level check",
-      message: "Admin logged a sample alert for nutrient monitoring review.",
+      severity,
+      title: `Manual ${variable} alert`,
+      message,
+      source: "manual-admin",
     });
+
+    form.reset();
+    form.severity.value = "warning";
+
+    if (note) {
+      note.textContent = `Manual alert logged for ${variable}.`;
+    }
+
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = "Log Manual Alert";
+    }
+
     await refreshAll();
   });
 
