@@ -195,10 +195,20 @@
     };
   }
 
-  async function appendLiveReadings() {
+  const LIVE_APPEND_KEY = "smartHydroLastLiveAppend";
+  const LIVE_APPEND_INTERVAL_MS = 5 * 60 * 1000;
+
+  async function appendLiveReadings(force = false) {
     const client = supabase();
 
     if (!client) {
+      return 0;
+    }
+
+    const lastAppend = Number(localStorage.getItem(LIVE_APPEND_KEY) || 0);
+    const now = Date.now();
+
+    if (!force && lastAppend && now - lastAppend < LIVE_APPEND_INTERVAL_MS) {
       return 0;
     }
 
@@ -217,6 +227,7 @@
       return 0;
     }
 
+    localStorage.setItem(LIVE_APPEND_KEY, String(now));
     return data?.length || payload.length;
   }
 
@@ -564,14 +575,14 @@
 
     const usingSupabase = [usersResult.source, alertsResult.source, settingsResult.source].includes("supabase");
     elements.dataSource.textContent = usingSupabase
-      ? `Connected to Supabase. ${added ? `Added ${added} new live readings on this refresh. ` : ""}Total shown is Faith + Paul only (Admin stays at 0).`
+      ? `Connected to Supabase. ${added ? `Added ${added} new live readings (every 5 minutes). ` : ""}Total shown is Faith + Paul only (Admin stays at 0).`
       : "Using local admin storage. Configure Supabase to enable live increasing records.";
   }
 
-  // Keep counts growing like live sensor updates.
+  // Add new sensor readings about every 5 minutes.
   window.setInterval(() => {
     refreshAll();
-  }, 20000);
+  }, LIVE_APPEND_INTERVAL_MS);
 
   document.querySelector("#refresh-users")?.addEventListener("click", refreshAll);
   document.querySelector("#refresh-records")?.addEventListener("click", refreshAll);
