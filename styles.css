@@ -1826,6 +1826,61 @@ td {
   margin-top: 20px;
 }
 
+.manual-alert-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.manual-alert-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--green-900);
+  font-weight: 800;
+}
+
+.manual-alert-form .manual-alert-message {
+  grid-column: 1 / -1;
+}
+
+.manual-alert-form select,
+.manual-alert-form textarea {
+  width: 100%;
+  border: 1px solid var(--gray-200);
+  border-radius: 14px;
+  color: var(--gray-900);
+  font: inherit;
+  font-weight: 600;
+  padding: 12px 14px;
+  background: var(--gray-100);
+}
+
+.manual-alert-form textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.manual-alert-form select:focus,
+.manual-alert-form textarea:focus {
+  border-color: var(--blue-500);
+  background: var(--white);
+  outline: none;
+}
+
+.manual-alert-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+@media (max-width: 720px) {
+  .manual-alert-form {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

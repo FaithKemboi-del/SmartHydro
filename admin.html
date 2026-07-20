@@ -149,15 +149,61 @@
         <div class="section-heading">
           <span class="eyebrow">Alert History</span>
           <h2>System alert logs</h2>
-          <p>Review past warnings and critical events recorded by the system.</p>
+          <p>
+            Review past warnings and log a manual alert when you notice an issue in the records that
+            the system did not catch.
+          </p>
         </div>
 
         <div class="admin-panel">
           <div class="admin-panel-head">
+            <h3>Manual alert</h3>
+          </div>
+          <form class="manual-alert-form" id="manual-alert-form">
+            <label for="alert-variable">
+              Sensor variable
+              <select id="alert-variable" name="variable" required>
+                <option value="">Select a variable</option>
+                <option value="pH">pH</option>
+                <option value="Temperature">Temperature</option>
+                <option value="Water level">Water level</option>
+                <option value="EC / Nutrients">EC / Nutrients</option>
+                <option value="Overall system">Overall system</option>
+              </select>
+            </label>
+
+            <label for="alert-severity">
+              Severity
+              <select id="alert-severity" name="severity" required>
+                <option value="warning">Warning</option>
+                <option value="critical">Critical</option>
+                <option value="info">Info</option>
+              </select>
+            </label>
+
+            <label for="alert-message" class="manual-alert-message">
+              What should the alert say?
+              <textarea
+                id="alert-message"
+                name="message"
+                rows="3"
+                placeholder="Example: Water level dropped steadily over the last records and needs refill."
+                required
+              ></textarea>
+            </label>
+
+            <div class="manual-alert-actions">
+              <button class="button button-primary" type="submit" id="log-manual-alert">
+                Log Manual Alert
+              </button>
+              <p class="admin-status-note" id="manual-alert-message" aria-live="polite"></p>
+            </div>
+          </form>
+        </div>
+
+        <div class="admin-panel" style="margin-top: 24px">
+          <div class="admin-panel-head">
             <h3>Recent alerts</h3>
-            <button class="button button-primary" type="button" id="add-sample-alert">
-              Log Sample Alert
-            </button>
           </div>
           <div class="table-card admin-table-wrap">
             <table>
