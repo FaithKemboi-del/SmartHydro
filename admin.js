@@ -33,6 +33,7 @@
     detailStatus: document.querySelector("#detail-status"),
     detailRecordCount: document.querySelector("#detail-record-count"),
     detailCreated: document.querySelector("#detail-created"),
+    detailPasswordHash: document.querySelector("#detail-password-hash"),
     toggleUserStatus: document.querySelector("#toggle-user-status"),
     settingMonitoring: document.querySelector("#setting-monitoring"),
     settingPh: document.querySelector("#setting-ph"),
@@ -453,8 +454,11 @@
       elements.detailEmail.textContent = "—";
       elements.detailRole.textContent = "—";
       elements.detailStatus.textContent = "—";
-        elements.detailRecordCount.textContent = "0";
+      elements.detailRecordCount.textContent = "0";
       elements.detailCreated.textContent = "—";
+      if (elements.detailPasswordHash) {
+        elements.detailPasswordHash.textContent = "—";
+      }
       elements.toggleUserStatus.disabled = true;
       elements.toggleUserStatus.textContent = "Mark inactive";
       if (elements.downloadWeeklyReportButton) {
@@ -468,6 +472,21 @@
     elements.detailStatus.textContent = user.displayStatus === "active" ? "Active" : "Inactive";
     elements.detailRecordCount.textContent = String(recordCounts[user.email] ?? 0);
     elements.detailCreated.textContent = formatDate(user.created_at);
+    if (elements.detailPasswordHash) {
+      elements.detailPasswordHash.textContent = "Loading hash...";
+      window.SmartHydroPasswordStore?.getHashedUser?.(user.email)
+        .then((hashedUser) => {
+          if (elements.detailEmail?.textContent !== user.email) {
+            return;
+          }
+          elements.detailPasswordHash.textContent = hashedUser?.passwordHash || "No local hash yet";
+        })
+        .catch(() => {
+          if (elements.detailEmail?.textContent === user.email) {
+            elements.detailPasswordHash.textContent = "Hash unavailable";
+          }
+        });
+    }
     elements.toggleUserStatus.disabled = false;
     elements.toggleUserStatus.textContent =
       user.status === "active" ? "Mark inactive" : "Mark active";
@@ -1079,4 +1098,17 @@
   refreshAll().catch((error) => {
     elements.dataSource.textContent = `Load error: ${String(error?.message || error)}`;
   });
+
+  window.SmartHydroPasswordStore?.ensureDemoHashedUsers?.()
+    .then(() => {
+      if (selectedEmail) {
+        const user = allUsers.find((entry) => entry.email === selectedEmail);
+        if (user) {
+          renderUserDetail(user);
+        }
+      }
+    })
+    .catch(() => {
+      // Keep admin usable if IndexedDB is blocked.
+    });
 })();

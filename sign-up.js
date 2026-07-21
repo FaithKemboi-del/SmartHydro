@@ -48,6 +48,15 @@ signUpForm.addEventListener("submit", async (event) => {
 
     await window.SmartHydroAuth.trackUserActivity(email, "user");
 
+    if (window.SmartHydroPasswordStore?.registerHashedUser) {
+      await window.SmartHydroPasswordStore.registerHashedUser({
+        email,
+        password,
+        name: email.split("@")[0] || "User",
+        role: "user",
+      });
+    }
+
     setMessage("Account created. Check your email if confirmation is enabled, then sign in.", "success");
     signUpForm.reset();
   } catch (error) {

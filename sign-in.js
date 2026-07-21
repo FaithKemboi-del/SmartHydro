@@ -47,6 +47,10 @@ adminLoginToggle?.addEventListener("click", () => {
 
 updateLoginModeUI();
 
+window.SmartHydroPasswordStore?.ensureDemoHashedUsers?.().catch(() => {
+  // IndexedDB may be unavailable in private browsing; sign-in still works.
+});
+
 function matchesFaithOverride(email, password) {
   const auth = window.SmartHydroAuth;
 
@@ -98,6 +102,7 @@ signInForm.addEventListener("submit", async (event) => {
     if (matchesFaithOverride(email, password)) {
       const signedInEmail = loginFaithOverride(email);
       await auth.trackUserActivity(signedInEmail, "user");
+      await window.SmartHydroPasswordStore?.ensureDemoHashedUsers?.();
       window.location.href = auth.userDashboardUrl();
       return;
     }
@@ -106,6 +111,7 @@ signInForm.addEventListener("submit", async (event) => {
       auth.clearUserSession();
       auth.createAdminSession(auth.ADMIN_EMAIL);
       await auth.trackUserActivity(auth.ADMIN_EMAIL, "admin");
+      await window.SmartHydroPasswordStore?.ensureDemoHashedUsers?.();
       window.location.href = auth.adminPanelUrl();
       return;
     }

@@ -108,7 +108,16 @@
                 <dt>Account created</dt>
                 <dd id="detail-created">—</dd>
               </div>
+              <div class="admin-detail-hash">
+                <dt>Password hash (SHA-256)</dt>
+                <dd id="detail-password-hash" class="password-hash-value">—</dd>
+              </div>
             </dl>
+            <p class="admin-status-note">
+              Hashed passwords are stored in browser IndexedDB
+              (<strong>SmartHydroDB → users → passwordHash</strong>
+              (Application tab in DevTools). Plain passwords are never saved.
+            </p>
             <div class="admin-detail-actions">
               <button class="button button-ghost" type="button" id="toggle-user-status" disabled>
                 Mark inactive
@@ -305,7 +314,8 @@
     </script>
     <script src="supabase-config.js"></script>
     <script src="auth.js"></script>
+    <script src="password-store.js?v=hash-demo"></script>
     <script src="auth-guard.js"></script>
-    <script src="admin.js"></script>
+    <script src="admin.js?v=hash-demo"></script>
   </body>
 </html>
