@@ -273,14 +273,33 @@ plt.show()
 #     rows = []
 #     offset = 0
 #
-#     while True:
+#     # Quick count check first
+#     count_response = (
+#         client.table("sensor_readings")
+#         .select("id", count="exact", head=True)
+#         .execute()
+#     )
+#     total = count_response.count or 0
+#     print("Total rows reported by Supabase:", total)
+#
+#     if total == 0:
+#         print("No rows returned. Check:")
+#         print("1) Table Editor > sensor_readings has data")
+#         print("2) Use anon JWT key (eyJ...) not only sb_publishable_ key")
+#         print("3) Run supabase_schema.sql to disable RLS")
+#         return []
+#
+#     while offset < total:
 #         response = (
 #             client.table("sensor_readings")
 #             .select("created_at, ph, temperature, water_level, user_email")
-#             .order("created_at", desc=False)
+#             .order("created_at")
 #             .range(offset, offset + page_size - 1)
 #             .execute()
 #         )
+#
+#         if getattr(response, "error", None):
+#             raise RuntimeError(response.error)
 #
 #         batch = response.data or []
 #         if not batch:
