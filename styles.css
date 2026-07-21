@@ -1772,6 +1772,14 @@ td {
   margin-bottom: 0;
 }
 
+.admin-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
 .admin-table-wrap {
   padding: 0;
   box-shadow: none;
