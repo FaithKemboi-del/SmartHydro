@@ -235,6 +235,10 @@
     return "sign-in.html";
   }
 
+  function welcomeUrl() {
+    return "welcome.html";
+  }
+
   function redirectToDashboard() {
     window.location.href = dashboardUrl();
   }
@@ -244,7 +248,7 @@
       localStorage.setItem(AUTH_RETURN_KEY, returnTo);
     }
 
-    window.location.href = signInUrl();
+    window.location.href = welcomeUrl();
   }
 
   function consumeReturnTo() {
@@ -411,6 +415,7 @@
     dashboardUrl,
     userDashboardUrl,
     signInUrl,
+    welcomeUrl,
     adminPanelUrl,
     redirectToDashboard,
     redirectToSignIn,
