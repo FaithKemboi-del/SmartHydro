@@ -234,6 +234,14 @@
     return "profile.html";
   }
 
+  function profileAccountUrl() {
+    return "profile-account.html";
+  }
+
+  function profilePlantsUrl() {
+    return "profile-plants.html";
+  }
+
   function readStoredProfiles() {
     try {
       const raw = localStorage.getItem(USER_PROFILES_KEY);
@@ -267,27 +275,23 @@
       region: "Kenya",
       plants: [],
     };
-    const stored = readStoredProfiles()[normalizedEmail] || {};
-    const county =
-      stored.county !== undefined && stored.county !== null ? stored.county : defaults.county;
-    let region =
-      stored.region !== undefined && stored.region !== null ? stored.region : defaults.region;
+    const stored = readStoredProfiles()[normalizedEmail];
 
-    if (stored.county && !stored.region) {
-      region = buildRegionFromCounty(stored.county);
-    } else if (
-      stored.county &&
-      stored.region === defaults.region &&
-      stored.county !== defaults.county
-    ) {
-      region = buildRegionFromCounty(stored.county);
+    if (!stored) {
+      return {
+        email: normalizedEmail,
+        fullName: defaults.fullName,
+        county: defaults.county || "",
+        region: defaults.region,
+        plants: defaults.plants || [],
+      };
     }
 
     return {
       email: normalizedEmail,
       fullName: stored.fullName ?? defaults.fullName,
-      county,
-      region,
+      county: stored.county ?? defaults.county ?? "",
+      region: stored.region ?? defaults.region,
       plants: stored.plants?.length ? stored.plants : defaults.plants || [],
     };
   }
@@ -296,13 +300,18 @@
     const normalizedEmail = normalizeAuthEmail(email);
     const current = getUserProfile(normalizedEmail);
     const county = String(updates.county ?? current.county).trim();
-    const regionInput = updates.region !== undefined ? String(updates.region).trim() : null;
-    const region = regionInput || (county ? buildRegionFromCounty(county) : current.region);
+    const hasRegionUpdate = Object.prototype.hasOwnProperty.call(updates, "region");
+    const regionValue = hasRegionUpdate ? String(updates.region ?? "").trim() : null;
+    const region = hasRegionUpdate
+      ? regionValue || (county ? buildRegionFromCounty(county) : current.region)
+      : county
+        ? buildRegionFromCounty(county)
+        : current.region;
 
     const nextProfile = {
       fullName: String(updates.fullName ?? current.fullName).trim() || current.fullName,
       county,
-      region: region || current.region,
+      region,
       plants: Array.isArray(updates.plants) ? updates.plants : current.plants,
     };
 
@@ -315,7 +324,10 @@
       createUserSession(normalizedEmail);
     }
 
-    return getUserProfile(normalizedEmail);
+    return {
+      email: normalizedEmail,
+      ...nextProfile,
+    };
   }
 
   async function getSupabaseSession() {
@@ -553,6 +565,8 @@
     dashboardUrl,
     userDashboardUrl,
     profileUrl,
+    profileAccountUrl,
+    profilePlantsUrl,
     buildRegionFromCounty,
     getUserProfile,
     saveUserProfile,

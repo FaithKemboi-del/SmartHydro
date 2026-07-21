@@ -2266,6 +2266,73 @@ body.onboarding-open {
   gap: 18px;
 }
 
+.profile-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(230, 235, 239, 0.95);
+  box-shadow: 0 8px 24px rgba(22, 74, 53, 0.06);
+}
+
+.profile-subnav a {
+  border-radius: 999px;
+  color: var(--gray-700);
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 10px 14px;
+}
+
+.profile-subnav a:hover,
+.profile-subnav a:focus-visible {
+  color: var(--green-900);
+  background: var(--green-100);
+  outline: none;
+}
+
+.profile-subnav a.is-active {
+  color: var(--white);
+  background: var(--green-800);
+}
+
+.profile-hub-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-hub-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid rgba(230, 235, 239, 0.95);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 32px rgba(22, 74, 53, 0.07);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.profile-hub-card:hover,
+.profile-hub-card:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(22, 74, 53, 0.12);
+  outline: none;
+}
+
+.profile-hub-card h2 {
+  margin: 0;
+  color: var(--gray-900);
+  font-size: 1.15rem;
+}
+
+.profile-hub-card p {
+  margin: 8px 0 0;
+  color: var(--gray-700);
+  font-size: 0.92rem;
+}
+
 .profile-toast {
   position: sticky;
   top: 88px;

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Profile Overview | Smart Hydro</title>
+    <title>My Profile | Smart Hydro</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -36,6 +36,13 @@
     <main class="profile-page" id="top">
       <nav class="profile-subnav" id="profile-subnav" aria-label="Profile sections"></nav>
 
+      <div class="profile-toast" id="profile-toast" role="status" aria-live="polite" hidden>
+        <span id="profile-toast-message">Profile updated successfully</span>
+        <button class="profile-toast-close" type="button" id="profile-toast-close" aria-label="Dismiss">
+          ×
+        </button>
+      </div>
+
       <section class="profile-card profile-region-card">
         <div class="profile-card-icon" aria-hidden="true">📍</div>
         <div>
@@ -45,25 +52,43 @@
         </div>
       </section>
 
-      <div class="profile-hub-grid">
-        <a class="profile-hub-card" href="profile-account.html">
+      <section class="profile-card profile-edit-card">
+        <div class="profile-section-head">
           <span class="profile-card-icon-inline" aria-hidden="true">👤</span>
           <div>
             <span class="profile-card-label">My profile</span>
             <h2>Edit your details</h2>
-            <p>Update your name, county, and monitoring region.</p>
           </div>
-        </a>
+        </div>
 
-        <a class="profile-hub-card" href="profile-plants.html">
-          <span class="profile-card-icon-inline" aria-hidden="true">🌿</span>
-          <div>
-            <span class="profile-card-label">Active crops</span>
-            <h2>What you are monitoring</h2>
-            <p>View herbs, lettuce, and other crops assigned to your setup.</p>
-          </div>
-        </a>
-      </div>
+        <form class="profile-form" id="profile-form">
+          <label class="profile-field">
+            <span>Full name</span>
+            <input id="profile-name" name="fullName" type="text" autocomplete="name" required />
+          </label>
+
+          <label class="profile-field">
+            <span>County</span>
+            <input id="profile-county" name="county" type="text" autocomplete="address-level1" />
+          </label>
+
+          <label class="profile-field">
+            <span>Monitoring region</span>
+            <input
+              id="profile-region-input"
+              name="region"
+              type="text"
+              placeholder="e.g. Nairobi, Nairobi County, Kenya"
+            />
+          </label>
+
+          <p class="profile-email" id="profile-email">Loading email...</p>
+
+          <button class="button button-primary profile-submit" type="submit" id="profile-submit">
+            Update profile
+          </button>
+        </form>
+      </section>
     </main>
 
     <footer class="footer profile-footer">
@@ -78,6 +103,6 @@
     <script src="auth.js?v=profile-split"></script>
     <script src="auth-guard.js"></script>
     <script src="profile-shared.js?v=profile-split"></script>
-    <script src="profile-hub.js?v=profile-split"></script>
+    <script src="profile-account.js?v=profile-split"></script>
   </body>
 </html>

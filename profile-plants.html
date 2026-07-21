@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Profile Overview | Smart Hydro</title>
+    <title>Active Crops | Smart Hydro</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -36,34 +36,20 @@
     <main class="profile-page" id="top">
       <nav class="profile-subnav" id="profile-subnav" aria-label="Profile sections"></nav>
 
-      <section class="profile-card profile-region-card">
-        <div class="profile-card-icon" aria-hidden="true">📍</div>
-        <div>
-          <span class="profile-card-label">Monitoring region</span>
-          <h1 id="profile-region">Loading region...</h1>
-          <p class="profile-region-note" id="profile-county-display"></p>
-        </div>
-      </section>
-
-      <div class="profile-hub-grid">
-        <a class="profile-hub-card" href="profile-account.html">
-          <span class="profile-card-icon-inline" aria-hidden="true">👤</span>
-          <div>
-            <span class="profile-card-label">My profile</span>
-            <h2>Edit your details</h2>
-            <p>Update your name, county, and monitoring region.</p>
-          </div>
-        </a>
-
-        <a class="profile-hub-card" href="profile-plants.html">
+      <section class="profile-card profile-plants-card">
+        <div class="profile-section-head">
           <span class="profile-card-icon-inline" aria-hidden="true">🌿</span>
           <div>
             <span class="profile-card-label">Active crops</span>
             <h2>What you are monitoring</h2>
-            <p>View herbs, lettuce, and other crops assigned to your setup.</p>
+            <p class="profile-section-copy">Your assigned hydroponic crops appear here.</p>
           </div>
-        </a>
-      </div>
+        </div>
+
+        <ul class="profile-plants-list" id="profile-plants-list">
+          <li class="profile-plant-item profile-plant-loading">Loading monitored plants...</li>
+        </ul>
+      </section>
     </main>
 
     <footer class="footer profile-footer">
@@ -78,6 +64,6 @@
     <script src="auth.js?v=profile-split"></script>
     <script src="auth-guard.js"></script>
     <script src="profile-shared.js?v=profile-split"></script>
-    <script src="profile-hub.js?v=profile-split"></script>
+    <script src="profile-plants.js?v=profile-split"></script>
   </body>
 </html>
