@@ -2243,10 +2243,17 @@ body.onboarding-open {
 }
 
 .profile-route-body {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
   background:
     radial-gradient(circle at 15% 0%, rgba(46, 139, 87, 0.12), transparent 24rem),
     radial-gradient(circle at 85% 100%, rgba(74, 168, 216, 0.1), transparent 22rem),
     linear-gradient(180deg, #eef8f1 0%, #f7fbf9 38%, #ffffff 100%);
+}
+
+.profile-route-body .profile-site-header {
+  flex-shrink: 0;
 }
 
 .profile-brand-tag {
@@ -2259,11 +2266,13 @@ body.onboarding-open {
 }
 
 .profile-page {
-  width: min(100%, 720px);
+  flex: 1;
+  width: min(100%, 960px);
   margin: 0 auto;
-  padding: 24px 18px 48px;
+  padding: 32px 24px 56px;
   display: grid;
-  gap: 18px;
+  gap: 22px;
+  align-content: start;
 }
 
 .profile-subnav {
@@ -2552,7 +2561,10 @@ body.onboarding-open {
 }
 
 .profile-footer {
-  margin-top: 12px;
+  flex-shrink: 0;
+  width: 100%;
+  max-width: none;
+  margin-top: auto;
 }
 
 @media (max-width: 720px) {
