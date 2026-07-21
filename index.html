@@ -294,6 +294,39 @@
             </table>
           </div>
         </div>
+
+        <div class="weekly-report-shell" id="weekly-report">
+          <div class="section-heading weekly-report-heading">
+            <span class="eyebrow">Weekly Report</span>
+            <h2>Your last 2 weeks and next-week outlook</h2>
+            <p id="weekly-report-intro">
+              Review weekly averages, see what the model predicted, and get simple care steps for the
+              coming week.
+            </p>
+          </div>
+
+          <div class="weekly-report-actions">
+            <button class="button button-primary" type="button" id="generate-weekly-report">
+              Generate weekly report
+            </button>
+            <p class="weekly-report-status" id="weekly-report-status" aria-live="polite"></p>
+          </div>
+
+          <div class="weekly-report-grid" id="weekly-report-grid">
+            <article class="weekly-report-card">
+              <span class="eyebrow">Loading</span>
+              <h3>Preparing your report...</h3>
+              <p>Fetching your sensor history and weekly predictions.</p>
+            </article>
+          </div>
+
+          <article class="weekly-report-next card-surface" id="weekly-report-next">
+            <span class="eyebrow">Next week</span>
+            <h3>What the model expects next week</h3>
+            <p id="weekly-next-prediction">Loading next-week prediction...</p>
+            <p class="model-note" id="weekly-next-actions">Care steps will appear here.</p>
+          </article>
+        </div>
       </section>
 
       <section id="alerts" class="section-shell">
@@ -367,11 +400,16 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+    <script>
+      window.SMART_HYDRO_SUPABASE = window.SMART_HYDRO_SUPABASE || {};
+    </script>
     <script src="supabase-config.js"></script>
     <script src="auth.js"></script>
     <script src="auth-guard.js"></script>
     <script src="script.js"></script>
     <script src="live-data.js"></script>
     <script src="readings-trends.js"></script>
+    <script src="weekly-report.js"></script>
   </body>
 </html>

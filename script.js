@@ -450,12 +450,44 @@ function startLiveMonitoring() {
   }, 2000);
 }
 
+function averagesToReadings(averages) {
+  const ph = Number(averages.ph ?? 6.2);
+  const water = Number(averages.water ?? 75);
+  const temperature = Number(averages.temperature ?? 23.5);
+  const nutrient = Number(
+    averages.nutrient ??
+      clamp(1.8 - (6.2 - ph) * 0.25 - Math.max(0, 70 - water) * 0.008, 0.9, 2.5),
+  );
+
+  return { ph, water, temperature, nutrient };
+}
+
+function weekStateFromReadings(readings) {
+  return getOverallState(
+    [
+      classifyMetric("ph", readings.ph),
+      classifyMetric("water", readings.water),
+      classifyMetric("temperature", readings.temperature),
+      classifyMetric("nutrient", readings.nutrient),
+    ],
+    calculateAnomalyScore(readings),
+  );
+}
+
 window.SmartHydroDashboard = {
   getCurrentReadings() {
     return { ...currentReadings };
   },
   readingSummary,
   updateDashboard,
+  nextDayForecast,
+  formatPredictionText,
+  formatRecommendationText,
+  recommendationItems,
+  averagesToReadings,
+  weekStateFromReadings,
+  classifyMetric,
+  calculateAnomalyScore,
 };
 
 startLiveMonitoringButton.addEventListener("click", startLiveMonitoring);
