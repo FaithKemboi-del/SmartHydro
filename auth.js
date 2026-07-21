@@ -264,13 +264,33 @@
     return getDefaultUser(email)?.name || String(email || "").split("@")[0] || "User";
   }
 
+  function normalizeAuthEmail(email) {
+    return String(email || "").trim().toLowerCase();
+  }
+
+  function normalizeAuthPassword(password) {
+    return String(password || "").trim();
+  }
+
   function isAdminOverride(email, password) {
-    return email === ADMIN_EMAIL && password === ADMIN_PASSWORD;
+    return (
+      normalizeAuthEmail(email) === normalizeAuthEmail(ADMIN_EMAIL) &&
+      normalizeAuthPassword(password) === ADMIN_PASSWORD
+    );
   }
 
   function isUserOverride(email, password) {
-    const normalizedEmail = String(email || "").trim().toLowerCase();
-    return normalizedEmail === FAITH_EMAIL && password === USER_OVERRIDE_PASSWORD;
+    return (
+      normalizeAuthEmail(email) === FAITH_EMAIL &&
+      normalizeAuthPassword(password) === USER_OVERRIDE_PASSWORD
+    );
+  }
+
+  function completeUserOverrideLogin(email) {
+    const normalizedEmail = normalizeAuthEmail(email);
+    clearAdminSession();
+    createUserSession(normalizedEmail);
+    return normalizedEmail;
   }
 
   function adminPanelUrl() {
@@ -426,6 +446,7 @@
     consumeReturnTo,
     isAdminOverride,
     isUserOverride,
+    completeUserOverrideLogin,
     getDefaultUser,
     getUserDisplayName,
     mergeProjectUsers,

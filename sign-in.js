@@ -47,6 +47,31 @@ adminLoginToggle?.addEventListener("click", () => {
 
 updateLoginModeUI();
 
+function matchesFaithOverride(email, password) {
+  const auth = window.SmartHydroAuth;
+
+  if (auth?.isUserOverride) {
+    return auth.isUserOverride(email, password);
+  }
+
+  return (
+    String(email || "").trim().toLowerCase() === "faithkemboi21@gmail.com" &&
+    String(password || "").trim() === "chep2005.."
+  );
+}
+
+function loginFaithOverride(email) {
+  const auth = window.SmartHydroAuth;
+
+  if (auth?.completeUserOverrideLogin) {
+    return auth.completeUserOverrideLogin(email);
+  }
+
+  auth.clearAdminSession();
+  auth.createUserSession("faithkemboi21@gmail.com");
+  return "faithkemboi21@gmail.com";
+}
+
 signInForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   setLoading(true);
@@ -54,30 +79,38 @@ signInForm.addEventListener("submit", async (event) => {
 
   const formData = new FormData(signInForm);
   const email = String(formData.get("email") || "").trim();
-  const password = String(formData.get("password") || "");
+  const password = String(formData.get("password") || "").trim();
+  const auth = window.SmartHydroAuth;
 
   try {
-    if (adminLoginMode || window.SmartHydroAuth.isAdminOverride(email, password)) {
-      if (!window.SmartHydroAuth.isAdminOverride(email, password)) {
+    if (adminLoginMode) {
+      if (!auth.isAdminOverride(email, password)) {
         throw new Error("Use the admin email and password to sign in as admin.");
       }
 
-      window.SmartHydroAuth.clearUserSession();
-      window.SmartHydroAuth.createAdminSession(email);
-      await window.SmartHydroAuth.trackUserActivity(email, "admin");
-      window.location.href = window.SmartHydroAuth.adminPanelUrl();
+      auth.clearUserSession();
+      auth.createAdminSession(auth.ADMIN_EMAIL);
+      await auth.trackUserActivity(auth.ADMIN_EMAIL, "admin");
+      window.location.href = auth.adminPanelUrl();
       return;
     }
 
-    if (window.SmartHydroAuth.isUserOverride(email, password)) {
-      window.SmartHydroAuth.clearAdminSession();
-      window.SmartHydroAuth.createUserSession(window.SmartHydroAuth.FAITH_EMAIL);
-      await window.SmartHydroAuth.trackUserActivity(window.SmartHydroAuth.FAITH_EMAIL, "user");
-      window.location.href = window.SmartHydroAuth.userDashboardUrl();
+    if (matchesFaithOverride(email, password)) {
+      const signedInEmail = loginFaithOverride(email);
+      await auth.trackUserActivity(signedInEmail, "user");
+      window.location.href = auth.userDashboardUrl();
       return;
     }
 
-    const supabase = window.SmartHydroAuth.getSupabaseClient();
+    if (auth.isAdminOverride(email, password)) {
+      auth.clearUserSession();
+      auth.createAdminSession(auth.ADMIN_EMAIL);
+      await auth.trackUserActivity(auth.ADMIN_EMAIL, "admin");
+      window.location.href = auth.adminPanelUrl();
+      return;
+    }
+
+    const supabase = auth.getSupabaseClient();
 
     if (!supabase) {
       throw new Error("Supabase is not configured. Update supabase-config.js with your project URL and anon key.");
@@ -89,6 +122,12 @@ signInForm.addEventListener("submit", async (event) => {
     });
 
     if (error) {
+      if (matchesFaithOverride(email, password)) {
+        const signedInEmail = loginFaithOverride(email);
+        await auth.trackUserActivity(signedInEmail, "user");
+        window.location.href = auth.userDashboardUrl();
+        return;
+      }
       throw error;
     }
 
