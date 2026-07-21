@@ -561,6 +561,13 @@
       elements.detailRecordCount.textContent = String(recordsResult.total);
       elements.statRecords.textContent = String(assignedRecordsTotal(recordCounts));
       renderUserList(allUsers);
+
+      // Update download button now that we know the record total.
+      if (elements.downloadWeeklyReportButton) {
+        const canDownload =
+          user.email !== auth().ADMIN_EMAIL && Number(recordCounts[user.email] || 0) > 0;
+        elements.downloadWeeklyReportButton.disabled = !canDownload;
+      }
     }
     renderRecords(recordsResult.records, user);
   }
