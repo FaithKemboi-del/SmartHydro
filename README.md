@@ -68,9 +68,9 @@ python3 seed_users.py
 
 Default users:
 
-- Admin — `fyugalbox21@gmail.com`
-- Faith — `faithkemboi21@gmail.com`
-- Paul — `paulkevinkariuki@gmail.com`
+- Admin — `fyugalbox21@gmail.com` / `chep2005..` (use **Login as admin**)
+- Faith — `faithkemboi21@gmail.com` / `chep2005..` (user dashboard)
+- Paul — `paulkevinkariuki@gmail.com` (Supabase sign-up password)
 
 Admin login now opens the admin panel directly at `admin.html`.
 

@@ -69,6 +69,14 @@ signInForm.addEventListener("submit", async (event) => {
       return;
     }
 
+    if (window.SmartHydroAuth.isUserOverride(email, password)) {
+      window.SmartHydroAuth.clearAdminSession();
+      window.SmartHydroAuth.createUserSession(window.SmartHydroAuth.FAITH_EMAIL);
+      await window.SmartHydroAuth.trackUserActivity(window.SmartHydroAuth.FAITH_EMAIL, "user");
+      window.location.href = window.SmartHydroAuth.userDashboardUrl();
+      return;
+    }
+
     const supabase = window.SmartHydroAuth.getSupabaseClient();
 
     if (!supabase) {

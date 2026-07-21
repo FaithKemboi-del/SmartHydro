@@ -1,6 +1,8 @@
 (function () {
   const ADMIN_EMAIL = "fyugalbox21@gmail.com";
   const ADMIN_PASSWORD = "chep2005..";
+  const FAITH_EMAIL = "faithkemboi21@gmail.com";
+  const USER_OVERRIDE_PASSWORD = "chep2005..";
   const ADMIN_SESSION_KEY = "smartHydroAdminSession";
   const USER_SESSION_KEY = "smartHydroUserSession";
   const AUTH_RETURN_KEY = "smartHydroReturnTo";
@@ -266,6 +268,11 @@
     return email === ADMIN_EMAIL && password === ADMIN_PASSWORD;
   }
 
+  function isUserOverride(email, password) {
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    return normalizedEmail === FAITH_EMAIL && password === USER_OVERRIDE_PASSWORD;
+  }
+
   function adminPanelUrl() {
     return "admin.html";
   }
@@ -392,6 +399,8 @@
   window.SmartHydroAuth = {
     ADMIN_EMAIL,
     ADMIN_PASSWORD,
+    FAITH_EMAIL,
+    USER_OVERRIDE_PASSWORD,
     DEFAULT_USERS,
     ADMIN_SESSION_KEY,
     USER_SESSION_KEY,
@@ -416,6 +425,7 @@
     redirectToSignIn,
     consumeReturnTo,
     isAdminOverride,
+    isUserOverride,
     getDefaultUser,
     getUserDisplayName,
     mergeProjectUsers,
