@@ -27,7 +27,17 @@
         <div class="nav-links" aria-label="Page sections">
           <a href="#status">Live Status</a>
           <a href="#ml-output">ML Output</a>
-          <a href="#alerts">Alerts</a>
+          <a href="#alerts" class="nav-alert-link" id="nav-alerts-link">
+            <span class="nav-bell" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path
+                  d="M12 2a5 5 0 0 0-5 5v2.1c0 .9-.3 1.8-.9 2.5L4.4 14.2A1.8 1.8 0 0 0 6 17h12a1.8 1.8 0 0 0 1.6-2.8l-1.7-2.6a4 4 0 0 1-.9-2.5V7a5 5 0 0 0-5-5zm0 20a2.4 2.4 0 0 0 2.3-1.8H9.7A2.4 2.4 0 0 0 12 22z"
+                />
+              </svg>
+            </span>
+            <span>Alerts</span>
+            <span class="nav-alert-badge" id="nav-alert-badge" hidden>0</span>
+          </a>
           <a href="profile.html">Profile</a>
           <a href="admin.html">Admin Panel</a>
           <button class="nav-action" id="sign-out-button" type="button">Sign Out</button>
@@ -330,36 +340,22 @@
         </div>
       </section>
 
-      <section id="alerts" class="section-shell">
+      <section id="alerts" class="section-shell alerts-section">
         <div class="section-heading">
           <span class="eyebrow">Alert System</span>
           <h2>Actionable warnings and suggested responses</h2>
+          <p class="alerts-section-note" id="alerts-section-note" hidden>
+            Active alerts need your attention.
+          </p>
         </div>
 
-        <div class="alerts-grid">
-          <article class="alert-card medium">
+        <div class="alerts-grid" id="alerts-grid">
+          <article class="alert-card alert-card-empty">
             <div>
-              <span class="severity">Medium</span>
-              <h3>Low water level warning</h3>
+              <span class="severity">Info</span>
+              <h3>Loading alerts...</h3>
             </div>
-            <p>Timestamp: 12:18 PM</p>
-            <p>Suggested action: Refill reservoir before level drops below 50%.</p>
-          </article>
-          <article class="alert-card low">
-            <div>
-              <span class="severity">Low</span>
-              <h3>pH imbalance detected</h3>
-            </div>
-            <p>Timestamp: 11:42 AM</p>
-            <p>Suggested action: Add pH buffer and verify calibration reading.</p>
-          </article>
-          <article class="alert-card high">
-            <div>
-              <span class="severity">High</span>
-              <h3>Nutrient deficiency detected</h3>
-            </div>
-            <p>Timestamp: 10:55 AM</p>
-            <p>Suggested action: Add nutrients and re-check EC trend after circulation.</p>
+            <p>Checking for warnings and critical sensor alerts.</p>
           </article>
         </div>
       </section>
@@ -411,6 +407,7 @@
     <script src="script.js"></script>
     <script src="live-data.js"></script>
     <script src="readings-trends.js"></script>
+    <script src="alerts-panel.js"></script>
     <script src="weekly-report.js"></script>
   </body>
 </html>

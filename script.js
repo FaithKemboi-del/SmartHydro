@@ -403,6 +403,7 @@ async function logDashboardAlert(severity, title, message) {
     const next = Array.isArray(existing) ? existing : [];
     next.unshift(payload);
     localStorage.setItem("smartHydroAlertLogs", JSON.stringify(next.slice(0, 100)));
+    window.dispatchEvent(new CustomEvent("smartHydro:alertsChanged"));
   } catch (_error) {
     // Ignore local storage failures.
   }

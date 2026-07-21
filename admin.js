@@ -377,6 +377,7 @@
       });
 
       if (!error) {
+        window.dispatchEvent(new CustomEvent("smartHydro:alertsChanged"));
         return;
       }
     }
@@ -390,6 +391,7 @@
       source: alert.source || "admin",
     });
     writeLocal(ALERTS_KEY, alerts.slice(0, 100));
+    window.dispatchEvent(new CustomEvent("smartHydro:alertsChanged"));
   }
 
   async function loadSettings() {
