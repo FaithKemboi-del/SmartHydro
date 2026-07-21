@@ -2432,3 +2432,155 @@ td {
     padding-top: 24px;
   }
 }
+
+.app-screen-body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(74, 168, 216, 0.22), transparent 30rem),
+    radial-gradient(circle at 80% 80%, rgba(46, 139, 87, 0.14), transparent 28rem),
+    linear-gradient(135deg, #f7fbf9, #ffffff 48%, #eef7fb);
+}
+
+.app-screen {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  padding: clamp(24px, 5vw, 40px) clamp(20px, 5vw, 36px) 32px;
+}
+
+.app-screen-brand {
+  margin-bottom: 28px;
+}
+
+.app-screen-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.app-screen-topbar .app-screen-brand {
+  margin-bottom: 0;
+}
+
+.app-screen-link {
+  color: var(--green-800);
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.app-screen-content {
+  flex: 1;
+  width: 100%;
+  max-width: 640px;
+}
+
+.app-screen-content h1 {
+  margin: 12px 0 16px;
+  font-size: clamp(2rem, 8vw, 3.1rem);
+}
+
+.app-screen-content > p {
+  max-width: 38rem;
+  margin-bottom: 24px;
+  color: var(--gray-700);
+}
+
+.app-screen-button {
+  width: 100%;
+  min-height: 54px;
+  margin-top: 8px;
+  border-radius: 999px;
+  font-size: 1rem;
+}
+
+.app-screen-ghost {
+  width: 100%;
+  min-height: 46px;
+  border-radius: 999px;
+}
+
+.app-screen-features {
+  display: grid;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.app-screen-features article {
+  padding: 16px 18px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.app-screen-features strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--green-900);
+}
+
+.app-screen-features span {
+  color: var(--gray-700);
+  font-size: 0.92rem;
+}
+
+.app-screen-note {
+  margin-top: 28px;
+  padding: 20px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.app-screen-note h2 {
+  margin-bottom: 10px;
+  color: var(--green-900);
+  font-size: 1.2rem;
+}
+
+.app-screen-note p {
+  margin: 0;
+  color: var(--gray-700);
+}
+
+.app-screen-footer {
+  margin-top: 32px;
+  padding-top: 20px;
+  text-align: center;
+}
+
+.app-screen-footer nav {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.app-screen-footer nav a {
+  color: var(--gray-700);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.app-screen-footer p {
+  margin: 0;
+  color: var(--gray-500);
+  font-size: 0.82rem;
+}
+
+@media (min-width: 900px) {
+  .app-screen {
+    padding-inline: clamp(36px, 8vw, 120px);
+  }
+
+  .app-screen-content {
+    max-width: 720px;
+  }
+
+  .app-screen-features {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
