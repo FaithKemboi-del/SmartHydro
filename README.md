@@ -26,14 +26,6 @@ python3 -m http.server 8000
 Then visit:
 
 ```text
-http://localhost:8000/welcome.html
-```
-
-New users land on the welcome page first, then choose **Get started** to register or **Sign in** for existing accounts.
-
-Legacy direct links still work:
-
-```text
 http://localhost:8000/sign-in.html
 ```
 

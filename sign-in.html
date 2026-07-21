@@ -12,16 +12,16 @@
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body class="app-screen-body">
-    <main class="app-screen">
-      <a class="brand app-screen-brand" href="welcome.html" aria-label="Smart Hydro home">
-        <span class="brand-leaf" aria-hidden="true"></span>
-        <span>
-          <strong>Smart Hydro</strong>
-        </span>
-      </a>
+  <body class="auth-route-body">
+    <main class="auth-page">
+      <section class="auth-card">
+        <a class="brand auth-brand" href="sign-in.html" aria-label="Smart Hydro sign in">
+          <span class="brand-leaf" aria-hidden="true"></span>
+          <span>
+            <strong>Smart Hydro</strong>
+          </span>
+        </a>
 
-      <section class="app-screen-content">
         <span class="eyebrow" id="sign-in-eyebrow">User access</span>
         <h1 id="sign-in-title">Sign in</h1>
         <p id="sign-in-description">
@@ -39,7 +39,7 @@
             <input id="password" name="password" type="password" autocomplete="current-password" required />
           </label>
 
-          <button class="button button-primary auth-submit app-screen-button" id="sign-in-submit" type="submit">
+          <button class="button button-primary auth-submit" id="sign-in-submit" type="submit">
             Sign In
           </button>
 
@@ -52,7 +52,7 @@
         </p>
 
         <div class="auth-admin-footer">
-          <button class="button button-ghost auth-admin-toggle app-screen-ghost" id="admin-login-toggle" type="button">
+          <button class="button button-ghost auth-admin-toggle" id="admin-login-toggle" type="button">
             Login as admin
           </button>
         </div>
@@ -60,9 +60,6 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-      window.SMART_HYDRO_SUPABASE = window.SMART_HYDRO_SUPABASE || {};
-    </script>
     <script src="supabase-config.js"></script>
     <script src="auth.js"></script>
     <script src="sign-in.js"></script>
