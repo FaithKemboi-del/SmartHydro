@@ -6,6 +6,28 @@
   const ADMIN_SESSION_KEY = "smartHydroAdminSession";
   const USER_SESSION_KEY = "smartHydroUserSession";
   const AUTH_RETURN_KEY = "smartHydroReturnTo";
+  const USER_PROFILES_KEY = "smartHydroUserProfiles";
+
+  const DEFAULT_PROFILES = {
+    "faithkemboi21@gmail.com": {
+      fullName: "Faith",
+      county: "Uasin Gishu County",
+      region: "Eldoret, Uasin Gishu County, Kenya",
+      plants: [{ group: "Plants", name: "Herbs" }],
+    },
+    "paulkevinkariuki@gmail.com": {
+      fullName: "Paul",
+      county: "Nairobi County",
+      region: "Nairobi, Kenya",
+      plants: [{ group: "Plants", name: "Lettuce" }],
+    },
+    "fyugalbox21@gmail.com": {
+      fullName: "Admin",
+      county: "Uasin Gishu County",
+      region: "Eldoret, Uasin Gishu County, Kenya",
+      plants: [{ group: "Plants", name: "System overview" }],
+    },
+  };
 
   const DEFAULT_USERS = [
     {
@@ -172,10 +194,11 @@
   function createUserSession(email) {
     const normalizedEmail = String(email || "").trim().toLowerCase();
     const profile = getDefaultUser(normalizedEmail);
+    const userProfile = getUserProfile(normalizedEmail);
     const session = {
       role: profile?.role === "admin" ? "admin" : "user",
       email: normalizedEmail,
-      name: profile?.name || getUserDisplayName(normalizedEmail),
+      name: userProfile.fullName || profile?.name || getUserDisplayName(normalizedEmail),
       createdAt: new Date().toISOString(),
     };
 
@@ -205,6 +228,65 @@
 
   function userDashboardUrl() {
     return "index.html";
+  }
+
+  function profileUrl() {
+    return "profile.html";
+  }
+
+  function readStoredProfiles() {
+    try {
+      const raw = localStorage.getItem(USER_PROFILES_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (_error) {
+      return {};
+    }
+  }
+
+  function writeStoredProfiles(profiles) {
+    localStorage.setItem(USER_PROFILES_KEY, JSON.stringify(profiles));
+  }
+
+  function getUserProfile(email) {
+    const normalizedEmail = normalizeAuthEmail(email);
+    const defaults = DEFAULT_PROFILES[normalizedEmail] || {
+      fullName: getUserDisplayName(normalizedEmail),
+      county: "",
+      region: "Kenya",
+      plants: [],
+    };
+    const stored = readStoredProfiles()[normalizedEmail] || {};
+
+    return {
+      email: normalizedEmail,
+      fullName: stored.fullName || defaults.fullName,
+      county: stored.county || defaults.county,
+      region: stored.region || defaults.region,
+      plants: stored.plants?.length ? stored.plants : defaults.plants || [],
+    };
+  }
+
+  function saveUserProfile(email, updates) {
+    const normalizedEmail = normalizeAuthEmail(email);
+    const current = getUserProfile(normalizedEmail);
+    const nextProfile = {
+      fullName: String(updates.fullName ?? current.fullName).trim() || current.fullName,
+      county: String(updates.county ?? current.county).trim(),
+      region: String(updates.region ?? current.region).trim() || current.region,
+      plants: Array.isArray(updates.plants) ? updates.plants : current.plants,
+    };
+
+    const allProfiles = readStoredProfiles();
+    allProfiles[normalizedEmail] = nextProfile;
+    writeStoredProfiles(allProfiles);
+
+    const userSession = getUserSession();
+    if (userSession?.email === normalizedEmail) {
+      createUserSession(normalizedEmail);
+    }
+
+    return getUserProfile(normalizedEmail);
   }
 
   async function getSupabaseSession() {
@@ -425,6 +507,8 @@
     ADMIN_SESSION_KEY,
     USER_SESSION_KEY,
     AUTH_RETURN_KEY,
+    USER_PROFILES_KEY,
+    DEFAULT_PROFILES,
     createAdminSession,
     getAdminSession,
     clearAdminSession,
@@ -439,6 +523,9 @@
     signOut,
     dashboardUrl,
     userDashboardUrl,
+    profileUrl,
+    getUserProfile,
+    saveUserProfile,
     signInUrl,
     adminPanelUrl,
     redirectToDashboard,
