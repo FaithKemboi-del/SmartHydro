@@ -18,6 +18,8 @@
     statInactive: document.querySelector("#stat-inactive-users"),
     statRecords: document.querySelector("#stat-db-records"),
     statAlerts: document.querySelector("#stat-alert-count"),
+    downloadWeeklyReportButton: document.querySelector("#download-weekly-report"),
+    recordsReportMessage: document.querySelector("#records-report-message"),
     settingsMessage: document.querySelector("#settings-message"),
     recordsHeadingNote: document.querySelector("#records-heading-note"),
     recordsTableTitle: document.querySelector("#records-table-title"),
@@ -449,6 +451,9 @@
       elements.detailCreated.textContent = "—";
       elements.toggleUserStatus.disabled = true;
       elements.toggleUserStatus.textContent = "Mark inactive";
+      if (elements.downloadWeeklyReportButton) {
+        elements.downloadWeeklyReportButton.disabled = true;
+      }
       return;
     }
 
@@ -461,6 +466,13 @@
     elements.toggleUserStatus.disabled = false;
     elements.toggleUserStatus.textContent =
       user.status === "active" ? "Mark inactive" : "Mark active";
+
+    // Download only when this user has records (Admin has 0 by design).
+    if (elements.downloadWeeklyReportButton) {
+      const canDownload =
+        user.email !== auth().ADMIN_EMAIL && Number(recordCounts[user.email] || 0) > 0;
+      elements.downloadWeeklyReportButton.disabled = !canDownload;
+    }
   }
 
   function renderRecords(records, user) {
@@ -599,6 +611,184 @@
 
   document.querySelector("#refresh-users")?.addEventListener("click", refreshAll);
   document.querySelector("#refresh-records")?.addEventListener("click", refreshAll);
+
+  async function downloadWeeklyTemperatureReport() {
+    const email = selectedEmail;
+    const button = elements.downloadWeeklyReportButton;
+    const messageEl = elements.recordsReportMessage;
+
+    if (!email) {
+      if (messageEl) messageEl.textContent = "Select a user first.";
+      return;
+    }
+
+    const user = allUsers.find((u) => u.email === email);
+    if (email === auth().ADMIN_EMAIL) {
+      if (messageEl) messageEl.textContent = "Admin has no assigned records to report.";
+      return;
+    }
+
+    const canDownload = Number(recordCounts[email] || 0) > 0;
+    if (!canDownload) {
+      if (messageEl) messageEl.textContent = "No records available for this user yet.";
+      return;
+    }
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Preparing...";
+    }
+    if (messageEl) messageEl.textContent = "Downloading weekly report...";
+
+    const client = supabase();
+    if (!client) {
+      if (messageEl)
+        messageEl.textContent = "Supabase is not configured, so the report can't be generated.";
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Download report";
+      }
+      return;
+    }
+
+    function startOfWeekUTC(dateValue) {
+      const d = new Date(dateValue);
+      const day = d.getUTCDay(); // 0=Sun, 1=Mon...
+      const diff = (day + 6) % 7; // days since Monday
+      d.setUTCDate(d.getUTCDate() - diff);
+      d.setUTCHours(0, 0, 0, 0);
+      return d;
+    }
+
+    function weekKeyUTC(dateValue) {
+      // Use Monday 00:00 UTC as the key.
+      return startOfWeekUTC(dateValue).toISOString().slice(0, 10);
+    }
+
+    async function fetchAllRecordsForUser(userEmail) {
+      const pageSize = 1000;
+      let offset = 0;
+      const all = [];
+
+      const { count, error: countError } = await client
+        .from("sensor_readings")
+        .select("id", { count: "exact", head: true })
+        .eq("user_email", userEmail);
+
+      if (countError) {
+        throw new Error(countError.message || "Failed to count sensor readings.");
+      }
+
+      const total = Number(count || 0);
+      if (!total) return [];
+
+      while (offset < total) {
+        const { data, error } = await client
+          .from("sensor_readings")
+          .select("created_at, temperature")
+          .eq("user_email", userEmail)
+          .order("created_at", { ascending: true })
+          .range(offset, offset + pageSize - 1);
+
+        if (error) {
+          throw new Error(error.message || "Failed to fetch sensor readings.");
+        }
+
+        if (!data?.length) break;
+
+        all.push(...data);
+        offset += data.length;
+      }
+
+      return all;
+    }
+
+    try {
+      const rows = await fetchAllRecordsForUser(email);
+      if (!rows.length) {
+        if (messageEl) messageEl.textContent = "No sensor readings found for this user.";
+        return;
+      }
+
+      const byWeek = new Map(); // weekKey => { sum, count }
+      for (const row of rows) {
+        const temp = Number(row.temperature);
+        if (!Number.isFinite(temp)) continue;
+        const key = weekKeyUTC(row.created_at);
+
+        const prev = byWeek.get(key) || { sum: 0, count: 0 };
+        prev.sum += temp;
+        prev.count += 1;
+        byWeek.set(key, prev);
+      }
+
+      const weeks = Array.from(byWeek.entries())
+        .map(([weekStart, v]) => ({
+          weekStart,
+          avgTemperature: v.count ? v.sum / v.count : 0,
+          count: v.count,
+        }))
+        .sort((a, b) => (a.weekStart < b.weekStart ? -1 : 1));
+
+      if (!weeks.length) {
+        if (messageEl) messageEl.textContent = "Temperature data is missing in the records.";
+        return;
+      }
+
+      let lowest = weeks[0];
+      let highest = weeks[0];
+      for (const w of weeks) {
+        if (w.avgTemperature < lowest.avgTemperature) lowest = w;
+        if (w.avgTemperature > highest.avgTemperature) highest = w;
+      }
+
+      const reportLines = [
+        "Smart Hydro - Weekly Temperature Report",
+        `Generated at: ${new Date().toLocaleString()}`,
+        `User: ${user?.name || email}`,
+        `Email: ${email}`,
+        `Weeks analyzed: ${weeks.length}`,
+        "",
+        "Lowest average temperature week:",
+        `Week starting ${lowest.weekStart}: ${lowest.avgTemperature.toFixed(2)} °C (from ${lowest.count} readings)`,
+        "",
+        "Highest average temperature week:",
+        `Week starting ${highest.weekStart}: ${highest.avgTemperature.toFixed(2)} °C (from ${highest.count} readings)`,
+        "",
+        "All weekly averages:",
+      ];
+
+      for (const w of weeks) {
+        reportLines.push(`${w.weekStart} -> ${w.avgTemperature.toFixed(2)} °C (n=${w.count})`);
+      }
+
+      const content = reportLines.join("\n");
+      const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+
+      const safeEmail = String(email).replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+      const fileName = `weekly-temperature-report-${safeEmail}.txt`;
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      if (messageEl) messageEl.textContent = `Report downloaded: ${fileName}`;
+    } catch (err) {
+      if (messageEl) messageEl.textContent = `Failed to generate report: ${String(err?.message || err)}`;
+    } finally {
+      if (button) {
+        button.disabled = !(Number(recordCounts[email] || 0) > 0);
+        button.textContent = "Download report";
+      }
+    }
+  }
+
+  document.querySelector("#download-weekly-report")?.addEventListener("click", downloadWeeklyTemperatureReport);
 
   document.querySelector("#manual-alert-form")?.addEventListener("submit", async (event) => {
     event.preventDefault();

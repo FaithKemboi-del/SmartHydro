@@ -128,7 +128,16 @@
           <div class="admin-panel-head">
             <h3 id="records-table-title">sensor_readings</h3>
             <button class="button button-ghost" type="button" id="refresh-records">Refresh</button>
+            <button
+              class="button button-primary"
+              type="button"
+              id="download-weekly-report"
+              disabled
+            >
+              Download report
+            </button>
           </div>
+          <p class="admin-status-note" id="records-report-message" aria-live="polite"></p>
           <div class="table-card admin-table-wrap">
             <table>
               <thead>
