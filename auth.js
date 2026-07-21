@@ -248,6 +248,17 @@
     localStorage.setItem(USER_PROFILES_KEY, JSON.stringify(profiles));
   }
 
+  function buildRegionFromCounty(county) {
+    const cleaned = String(county || "").trim();
+
+    if (!cleaned) {
+      return "";
+    }
+
+    const city = cleaned.replace(/\s+county$/i, "").trim();
+    return `${city}, ${cleaned}, Kenya`;
+  }
+
   function getUserProfile(email) {
     const normalizedEmail = normalizeAuthEmail(email);
     const defaults = DEFAULT_PROFILES[normalizedEmail] || {
@@ -257,12 +268,26 @@
       plants: [],
     };
     const stored = readStoredProfiles()[normalizedEmail] || {};
+    const county =
+      stored.county !== undefined && stored.county !== null ? stored.county : defaults.county;
+    let region =
+      stored.region !== undefined && stored.region !== null ? stored.region : defaults.region;
+
+    if (stored.county && !stored.region) {
+      region = buildRegionFromCounty(stored.county);
+    } else if (
+      stored.county &&
+      stored.region === defaults.region &&
+      stored.county !== defaults.county
+    ) {
+      region = buildRegionFromCounty(stored.county);
+    }
 
     return {
       email: normalizedEmail,
-      fullName: stored.fullName || defaults.fullName,
-      county: stored.county || defaults.county,
-      region: stored.region || defaults.region,
+      fullName: stored.fullName ?? defaults.fullName,
+      county,
+      region,
       plants: stored.plants?.length ? stored.plants : defaults.plants || [],
     };
   }
@@ -270,10 +295,14 @@
   function saveUserProfile(email, updates) {
     const normalizedEmail = normalizeAuthEmail(email);
     const current = getUserProfile(normalizedEmail);
+    const county = String(updates.county ?? current.county).trim();
+    const regionInput = updates.region !== undefined ? String(updates.region).trim() : null;
+    const region = regionInput || (county ? buildRegionFromCounty(county) : current.region);
+
     const nextProfile = {
       fullName: String(updates.fullName ?? current.fullName).trim() || current.fullName,
-      county: String(updates.county ?? current.county).trim(),
-      region: String(updates.region ?? current.region).trim() || current.region,
+      county,
+      region: region || current.region,
       plants: Array.isArray(updates.plants) ? updates.plants : current.plants,
     };
 
@@ -524,6 +553,7 @@
     dashboardUrl,
     userDashboardUrl,
     profileUrl,
+    buildRegionFromCounty,
     getUserProfile,
     saveUserProfile,
     signInUrl,

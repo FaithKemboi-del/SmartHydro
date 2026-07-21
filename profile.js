@@ -3,6 +3,8 @@
 
   const elements = {
     region: document.querySelector("#profile-region"),
+    regionInput: document.querySelector("#profile-region-input"),
+    countyDisplay: document.querySelector("#profile-county-display"),
     plantsList: document.querySelector("#profile-plants-list"),
     form: document.querySelector("#profile-form"),
     nameInput: document.querySelector("#profile-name"),
@@ -91,12 +93,22 @@
       elements.region.textContent = profile.region || "Kenya";
     }
 
+    if (elements.countyDisplay) {
+      elements.countyDisplay.textContent = profile.county
+        ? `County: ${profile.county}`
+        : "County not set yet";
+    }
+
     if (elements.nameInput) {
       elements.nameInput.value = profile.fullName || "";
     }
 
     if (elements.countyInput) {
       elements.countyInput.value = profile.county || "";
+    }
+
+    if (elements.regionInput) {
+      elements.regionInput.value = profile.region || "";
     }
 
     if (elements.email) {
@@ -129,6 +141,7 @@
 
     const fullName = elements.nameInput?.value.trim() || "";
     const county = elements.countyInput?.value.trim() || "";
+    const region = elements.regionInput?.value.trim() || "";
 
     if (!fullName) {
       showToast("Please enter your full name.");
@@ -140,13 +153,28 @@
       elements.submitButton.textContent = "Saving...";
     }
 
-    const updated = auth.saveUserProfile(email, { fullName, county });
+    const updated = auth.saveUserProfile(email, { fullName, county, region });
     renderProfile(updated);
     showToast("Profile updated successfully");
 
     if (elements.submitButton) {
       elements.submitButton.disabled = false;
       elements.submitButton.textContent = "Update profile";
+    }
+  });
+
+  elements.countyInput?.addEventListener("input", () => {
+    if (!elements.regionInput || elements.regionInput.dataset.manual === "true") {
+      return;
+    }
+
+    const county = elements.countyInput.value.trim();
+    elements.regionInput.value = auth.buildRegionFromCounty?.(county) || "";
+  });
+
+  elements.regionInput?.addEventListener("input", () => {
+    if (elements.regionInput) {
+      elements.regionInput.dataset.manual = elements.regionInput.value.trim() ? "true" : "false";
     }
   });
 

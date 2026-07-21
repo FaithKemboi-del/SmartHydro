@@ -46,6 +46,7 @@
         <div>
           <span class="profile-card-label">Monitoring region</span>
           <h1 id="profile-region">Loading region...</h1>
+          <p class="profile-region-note" id="profile-county-display"></p>
         </div>
       </section>
 
@@ -82,6 +83,16 @@
           <label class="profile-field">
             <span>County</span>
             <input id="profile-county" name="county" type="text" autocomplete="address-level1" />
+          </label>
+
+          <label class="profile-field">
+            <span>Monitoring region</span>
+            <input
+              id="profile-region-input"
+              name="region"
+              type="text"
+              placeholder="e.g. Nairobi, Nairobi County, Kenya"
+            />
           </label>
 
           <p class="profile-email" id="profile-email">Loading email...</p>
