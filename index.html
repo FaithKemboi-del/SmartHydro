@@ -360,37 +360,59 @@
         </div>
       </section>
 
-      <section id="workflow" class="section-shell">
+      <section id="workflow" class="section-shell workflow-section-compact">
         <div class="section-heading">
           <span class="eyebrow">How It Works</span>
           <h2>Four-step IoT and machine learning workflow</h2>
+          <p>
+            New here? A quick guided tour walks you through sensor collection, transmission, ML
+            analysis, and alerts. It appears automatically on your first three sign-ins.
+          </p>
         </div>
 
-        <div class="workflow-grid">
-          <article>
-            <span class="workflow-icon">🌱</span>
-            <h3>1. Sensor collection</h3>
-            <p>IoT sensors collect pH, temperature, water level, and EC nutrient data.</p>
-          </article>
-          <article>
-            <span class="workflow-icon">📶</span>
-            <h3>2. ESP32 transmission</h3>
-            <p>ESP32 sends readings over Wi-Fi to the monitoring interface.</p>
-          </article>
-          <article>
-            <span class="workflow-icon">📊</span>
-            <h3>3. ML pattern analysis</h3>
-            <p>The machine learning model identifies abnormal sensor relationships.</p>
-          </article>
-          <article>
-            <span class="workflow-icon">🔔</span>
-            <h3>4. Alerts and guidance</h3>
-            <p>The system generates severity labels and maintenance recommendations.</p>
-          </article>
+        <div class="workflow-replay-card">
+          <span class="workflow-icon" aria-hidden="true">🌱</span>
+          <div>
+            <h3>Replay the guided tour</h3>
+            <p>Step through the four parts of the Smart Hydro system anytime.</p>
+          </div>
+          <button class="button button-secondary" type="button" id="replay-onboarding-tour">
+            Start tour
+          </button>
         </div>
       </section>
 
     </main>
+
+    <div class="onboarding-overlay" id="onboarding-overlay" hidden>
+      <div
+        class="onboarding-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="onboarding-title"
+        aria-describedby="onboarding-copy"
+      >
+        <div class="onboarding-top">
+          <span class="eyebrow" id="onboarding-eyebrow">How it works</span>
+          <p class="onboarding-progress" id="onboarding-progress" aria-live="polite">Step 1 of 4</p>
+        </div>
+
+        <div class="onboarding-step" id="onboarding-step">
+          <span class="workflow-icon onboarding-icon" id="onboarding-icon" aria-hidden="true">🌱</span>
+          <h2 id="onboarding-title">1. Sensor collection</h2>
+          <p id="onboarding-copy">
+            IoT sensors collect pH, temperature, water level, and EC nutrient data.
+          </p>
+        </div>
+
+        <div class="onboarding-actions">
+          <button class="button button-ghost onboarding-skip" type="button" id="onboarding-skip">
+            Skip for now
+          </button>
+          <button class="button button-primary" type="button" id="onboarding-next">Next</button>
+        </div>
+      </div>
+    </div>
 
     <footer class="footer">
       <p>Copyright 2026</p>
@@ -408,6 +430,7 @@
     <script src="live-data.js"></script>
     <script src="readings-trends.js"></script>
     <script src="alerts-panel.js"></script>
+    <script src="onboarding-tour.js"></script>
     <script src="weekly-report.js"></script>
   </body>
 </html>
