@@ -247,6 +247,30 @@ function nextDayForecast(readings) {
   };
 }
 
+function nextWeekForecast(readings) {
+  const predicted = {
+    ph: forecastValue(readings.ph, -0.45, 0.45, 4.6, 7.6),
+    water: forecastValue(readings.water, -18, -4, 15, 98),
+    temperature: forecastValue(readings.temperature, -2.5, 2.5, 14, 36),
+    nutrient: forecastValue(readings.nutrient, -0.55, 0.15, 0.4, 3.4),
+  };
+  const state = getOverallState(
+    [
+      classifyMetric("ph", predicted.ph),
+      classifyMetric("water", predicted.water),
+      classifyMetric("temperature", predicted.temperature),
+      classifyMetric("nutrient", predicted.nutrient),
+    ],
+    calculateAnomalyScore(predicted),
+  );
+
+  return {
+    predicted,
+    state,
+    recommendations: recommendationItems(predicted, state).slice(0, 3),
+  };
+}
+
 function updateDashboard(readings) {
   previousReadings = { ...currentReadings };
   currentReadings = { ...readings };
@@ -481,8 +505,11 @@ window.SmartHydroDashboard = {
   readingSummary,
   updateDashboard,
   nextDayForecast,
+  nextWeekForecast,
   formatPredictionText,
   formatRecommendationText,
+  formatNextWeekPredictionText,
+  formatNextWeekRecommendationText,
   recommendationItems,
   averagesToReadings,
   weekStateFromReadings,
@@ -506,6 +533,22 @@ function formatPredictionText(forecast) {
 
 function formatRecommendationText(recommendations) {
   return `What to do before tomorrow: ${recommendations.join(" ")}`;
+}
+
+function formatNextWeekPredictionText(forecast) {
+  const { predicted, state } = forecast;
+  const condition =
+    state.prediction === "Normal"
+      ? "The system looks healthy for the week ahead."
+      : state.prediction === "Warning"
+        ? "The system may need attention next week."
+        : "The system may have a problem next week.";
+
+  return `Next week we expect water at ${Math.round(predicted.water)}%, pH ${predicted.ph.toFixed(1)}, nutrients at ${predicted.nutrient.toFixed(1)}, and temperature ${predicted.temperature.toFixed(1)}°C. ${condition}`;
+}
+
+function formatNextWeekRecommendationText(recommendations) {
+  return `What to do before next week: ${recommendations.join(" ")}`;
 }
 
 function showDetectionResult(forecast) {

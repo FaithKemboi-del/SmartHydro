@@ -124,7 +124,7 @@
 
         const readings = dashboard.averagesToReadings(averages);
         const actualState = dashboard.weekStateFromReadings(readings);
-        const forecast = dashboard.nextDayForecast(readings);
+        const forecast = dashboard.nextWeekForecast(readings);
 
         return {
           weekStart,
@@ -133,7 +133,7 @@
           readings: entry.readings,
           actualState,
           predictionMade: forecast.state,
-          predictionSummary: dashboard.formatPredictionText(forecast),
+          predictionSummary: dashboard.formatNextWeekPredictionText(forecast),
           recommendations: forecast.recommendations,
         };
       })
@@ -156,14 +156,14 @@
         ? dashboard.averagesToReadings(weeks[weeks.length - 1].averages)
         : dashboard.getCurrentReadings();
 
-    const nextWeekForecast = dashboard.nextDayForecast(latestReadings);
+    const nextWeekForecast = dashboard.nextWeekForecast(latestReadings);
 
     return {
       weeks: reportWeeks,
       nextWeek: {
         forecast: nextWeekForecast,
-        summary: dashboard.formatPredictionText(nextWeekForecast),
-        actions: dashboard.formatRecommendationText(nextWeekForecast.recommendations),
+        summary: dashboard.formatNextWeekPredictionText(nextWeekForecast),
+        actions: dashboard.formatNextWeekRecommendationText(nextWeekForecast.recommendations),
       },
     };
   }
@@ -259,7 +259,7 @@
         </div>
         <p>${week.predictionSummary}</p>
         <p class="weekly-report-outcome"><strong>Result:</strong> ${week.outcome}</p>
-        <p class="model-note">${dashboard.formatRecommendationText(week.recommendations)}</p>
+        <p class="model-note">${dashboard.formatNextWeekRecommendationText(week.recommendations)}</p>
       </article>
     `;
   }
@@ -323,7 +323,7 @@
       y = writePdfLine(doc, `Prediction made: ${week.predictionMade.prediction}`, y);
       y = writePdfLine(doc, week.predictionSummary, y);
       y = writePdfLine(doc, `Result: ${week.outcome}`, y);
-      y = writePdfLine(doc, dashboard.formatRecommendationText(week.recommendations), y);
+      y = writePdfLine(doc, dashboard.formatNextWeekRecommendationText(week.recommendations), y);
       y += 4;
 
       if (y > 250) {
