@@ -7,6 +7,7 @@
   let allUsers = [];
   let selectedEmail = null;
   let recordCounts = {};
+  let redistributionInFlight = false;
 
   const elements = {
     dataSource: document.querySelector("#admin-data-source"),
@@ -250,8 +251,20 @@
       .select("id", { count: "exact", head: true })
       .is("user_email", null);
 
-    if ((unassignedCount || 0) > 0) {
-      await redistributeAllReadingsUnevenly();
+    if ((unassignedCount || 0) > 0 && !redistributionInFlight) {
+      redistributionInFlight = true;
+      redistributeAllReadingsUnevenly()
+        .then((redistributed) => {
+          if (redistributed) {
+            refreshAll();
+          }
+        })
+        .catch(() => {
+          // Assignment can be retried on the next refresh.
+        })
+        .finally(() => {
+          redistributionInFlight = false;
+        });
     }
 
     await Promise.all(

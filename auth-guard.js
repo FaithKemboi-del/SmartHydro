@@ -38,12 +38,6 @@
     return;
   }
 
-  if (isAdmin) {
-    await auth.trackUserActivity(adminSession.email, "admin");
-  } else if (userSession?.email) {
-    await auth.trackUserActivity(userSession.email, "user");
-  }
-
   const adminNavLink = document.querySelector('a[href="admin.html"]');
   if (adminNavLink && !isAdmin) {
     adminNavLink.style.display = "none";
@@ -51,4 +45,13 @@
 
   wireSignOut();
   finishGuard();
+
+  const activityEmail = isAdmin ? adminSession.email : userSession?.email;
+  const activityRole = isAdmin ? "admin" : "user";
+
+  if (activityEmail) {
+    auth.trackUserActivity(activityEmail, activityRole).catch(() => {
+      // Keep the page usable even if Supabase activity tracking is slow or unavailable.
+    });
+  }
 })();

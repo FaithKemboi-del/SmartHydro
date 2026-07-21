@@ -74,6 +74,20 @@ Default users:
 
 Admin login now opens the admin panel directly at `admin.html`.
 
+### If `admin.html` will not open
+
+1. Start the server from the project folder:
+
+```bash
+python -m http.server 8000
+```
+
+2. Sign in first at `http://localhost:8000/sign-in.html`.
+3. Click **Login as admin** at the bottom, then sign in with the admin email and password above.
+4. Open `http://localhost:8000/admin.html`.
+
+`admin.html` is admin-only. If you are signed in as Faith or Paul, the page redirects to the user dashboard instead of showing the admin panel.
+
 ## Supabase SQL
 
 Run the complete script in `supabase_schema.sql` inside the Supabase SQL Editor.

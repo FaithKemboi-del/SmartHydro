@@ -271,9 +271,8 @@
   }
 
   function buildProjectUserRecords() {
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const inactiveSeen = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
     const activeSeen = new Date().toISOString();
+    const inactiveSeen = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
 
     return DEFAULT_USERS.map((user) => ({
       email: user.email,
@@ -281,7 +280,7 @@
       role: user.role,
       status: user.status,
       last_seen: user.status === "inactive" ? inactiveSeen : activeSeen,
-      created_at: weekAgo,
+      created_at: user.created_at,
     }));
   }
 
@@ -303,7 +302,8 @@
         role: existing.role || user.role,
         status: existing.status || user.status,
         last_seen: existing.last_seen || user.last_seen,
-        created_at: existing.created_at || user.created_at,
+        // Keep the project account-created dates (early/late June).
+        created_at: user.created_at,
       };
     });
   }

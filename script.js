@@ -504,6 +504,16 @@ function startScoreScan(baseScore) {
 }
 
 mlDetectButton?.addEventListener("click", () => {
+  const settings = getSystemSettings();
+
+  if (!settings.anomaly_detection_enabled) {
+    elements.nextDayPrediction.textContent =
+      "Anomaly detection is disabled in the admin system settings.";
+    elements.nextDayRemedy.textContent = "Ask the admin to enable anomaly detection, then try again.";
+    mlResultPanel?.classList.add("is-revealed");
+    return;
+  }
+
   const forecast = nextDayForecast(currentReadings);
   const baseScore = elements.anomalyScore?.textContent ?? "0.18";
 
@@ -521,6 +531,14 @@ mlDetectButton?.addEventListener("click", () => {
     showDetectionResult(forecast);
     mlDetectButton.disabled = false;
     mlDetectButton.textContent = "Detect Anomaly";
+
+    if (forecast.state.prediction !== "Normal") {
+      logDashboardAlert(
+        forecast.state.prediction === "Anomaly" ? "critical" : "warning",
+        `Anomaly detection: ${forecast.state.prediction}`,
+        formatRecommendationText(forecast.recommendations),
+      );
+    }
   };
 
   if (window.SmartHydroTrends?.runChartPulse) {
