@@ -145,9 +145,10 @@
 
       return {
         ...week,
+        isCurrentWeek: !nextWeek,
         outcome: nextWeek
           ? comparePrediction(week.predictionMade, nextWeek.actualState)
-          : "This is your most recent week. Use the next-week outlook below for what to do now.",
+          : "This is your most recent week. See the next-week outlook below.",
       };
     });
 
@@ -231,6 +232,17 @@
 
   function renderWeekCard(week, index) {
     const averages = week.averages;
+    const predictionBlock = week.isCurrentWeek
+      ? `<p class="weekly-report-outcome">${week.outcome}</p>`
+      : `
+        <div class="prediction-row">
+          <strong>Prediction made</strong>
+          <span class="${predictionClass(week.predictionMade.level)}">${week.predictionMade.prediction}</span>
+        </div>
+        <p>${week.predictionSummary}</p>
+        <p class="weekly-report-outcome"><strong>Result:</strong> ${week.outcome}</p>
+        <p class="model-note">${dashboard.formatNextWeekRecommendationText(week.recommendations)}</p>
+      `;
 
     return `
       <article class="weekly-report-card">
@@ -253,13 +265,7 @@
           </div>
         </dl>
 
-        <div class="prediction-row">
-          <strong>Prediction made</strong>
-          <span class="${predictionClass(week.predictionMade.level)}">${week.predictionMade.prediction}</span>
-        </div>
-        <p>${week.predictionSummary}</p>
-        <p class="weekly-report-outcome"><strong>Result:</strong> ${week.outcome}</p>
-        <p class="model-note">${dashboard.formatNextWeekRecommendationText(week.recommendations)}</p>
+        ${predictionBlock}
       </article>
     `;
   }
@@ -320,10 +326,16 @@
         `Averages: pH ${week.averages.ph?.toFixed(2) ?? "—"}, temp ${week.averages.temperature?.toFixed(1) ?? "—"}°C, water ${week.averages.water?.toFixed(1) ?? "—"}%`,
         y,
       );
-      y = writePdfLine(doc, `Prediction made: ${week.predictionMade.prediction}`, y);
-      y = writePdfLine(doc, week.predictionSummary, y);
-      y = writePdfLine(doc, `Result: ${week.outcome}`, y);
-      y = writePdfLine(doc, dashboard.formatNextWeekRecommendationText(week.recommendations), y);
+
+      if (week.isCurrentWeek) {
+        y = writePdfLine(doc, week.outcome, y);
+      } else {
+        y = writePdfLine(doc, `Prediction made: ${week.predictionMade.prediction}`, y);
+        y = writePdfLine(doc, week.predictionSummary, y);
+        y = writePdfLine(doc, `Result: ${week.outcome}`, y);
+        y = writePdfLine(doc, dashboard.formatNextWeekRecommendationText(week.recommendations), y);
+      }
+
       y += 4;
 
       if (y > 250) {
