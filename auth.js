@@ -56,6 +56,34 @@
     },
   ];
 
+  const EXTRA_DEMO_USERS = [
+    { email: "amani.wambui@example.com", name: "Amani Wambui", role: "user", status: "active", created_at: "2026-06-04T10:00:00.000Z" },
+    { email: "brian.otieno@example.com", name: "Brian Otieno", role: "user", status: "active", created_at: "2026-06-05T11:20:00.000Z" },
+    { email: "carol.njeri@example.com", name: "Carol Njeri", role: "user", status: "active", created_at: "2026-06-06T09:40:00.000Z" },
+    { email: "daniel.kipchoge@example.com", name: "Daniel Kipchoge", role: "user", status: "inactive", created_at: "2026-06-07T14:15:00.000Z" },
+    { email: "esther.akinyi@example.com", name: "Esther Akinyi", role: "user", status: "active", created_at: "2026-06-08T08:30:00.000Z" },
+    { email: "felix.mwangi@example.com", name: "Felix Mwangi", role: "user", status: "active", created_at: "2026-06-09T16:05:00.000Z" },
+    { email: "grace.chebet@example.com", name: "Grace Chebet", role: "user", status: "active", created_at: "2026-06-10T12:45:00.000Z" },
+    { email: "hassan.ali@example.com", name: "Hassan Ali", role: "user", status: "inactive", created_at: "2026-06-11T07:55:00.000Z" },
+    { email: "irene.muthoni@example.com", name: "Irene Muthoni", role: "user", status: "active", created_at: "2026-06-12T13:10:00.000Z" },
+    { email: "james.kamau@example.com", name: "James Kamau", role: "user", status: "active", created_at: "2026-06-13T15:25:00.000Z" },
+    { email: "karen.wanjira@example.com", name: "Karen Wanjira", role: "user", status: "active", created_at: "2026-06-14T10:50:00.000Z" },
+    { email: "leo.barasa@example.com", name: "Leo Barasa", role: "user", status: "inactive", created_at: "2026-06-15T09:05:00.000Z" },
+    { email: "mary.atieno@example.com", name: "Mary Atieno", role: "user", status: "active", created_at: "2026-06-16T11:35:00.000Z" },
+    { email: "nathan.kiplagat@example.com", name: "Nathan Kiplagat", role: "user", status: "active", created_at: "2026-06-17T14:00:00.000Z" },
+    { email: "olive.nyambura@example.com", name: "Olive Nyambura", role: "user", status: "active", created_at: "2026-06-18T08:20:00.000Z" },
+    { email: "peter.odhiambo@example.com", name: "Peter Odhiambo", role: "user", status: "inactive", created_at: "2026-06-19T17:40:00.000Z" },
+    { email: "queen.jemutai@example.com", name: "Queen Jemutai", role: "user", status: "active", created_at: "2026-06-20T12:15:00.000Z" },
+    { email: "ryan.mutua@example.com", name: "Ryan Mutua", role: "user", status: "active", created_at: "2026-06-21T09:55:00.000Z" },
+    { email: "sarah.wanjiku@example.com", name: "Sarah Wanjiku", role: "user", status: "active", created_at: "2026-06-22T16:30:00.000Z" },
+    { email: "tom.kiarie@example.com", name: "Tom Kiarie", role: "user", status: "inactive", created_at: "2026-06-23T11:10:00.000Z" },
+    { email: "uma.cherono@example.com", name: "Uma Cherono", role: "user", status: "active", created_at: "2026-06-24T13:45:00.000Z" },
+    { email: "victor.omondi@example.com", name: "Victor Omondi", role: "user", status: "active", created_at: "2026-06-25T08:05:00.000Z" },
+    { email: "winnie.njoki@example.com", name: "Winnie Njoki", role: "user", status: "active", created_at: "2026-06-26T15:50:00.000Z" },
+    { email: "xavier.korir@example.com", name: "Xavier Korir", role: "user", status: "inactive", created_at: "2026-06-27T10:25:00.000Z" },
+    { email: "yvonne.awuor@example.com", name: "Yvonne Awuor", role: "user", status: "active", created_at: "2026-06-29T14:35:00.000Z" },
+  ];
+
   function normalizeSupabaseUrl(rawUrl) {
     let url = String(rawUrl || "").trim().replace(/\/+$/, "");
 
@@ -423,8 +451,9 @@
   function buildProjectUserRecords() {
     const activeSeen = new Date().toISOString();
     const inactiveSeen = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    const allUsers = [...DEFAULT_USERS, ...EXTRA_DEMO_USERS];
 
-    return DEFAULT_USERS.map((user) => ({
+    return allUsers.map((user) => ({
       email: user.email,
       name: user.name,
       role: user.role,
@@ -439,8 +468,12 @@
       (fetchedUsers || []).map((user) => [String(user.email || "").toLowerCase(), user]),
     );
 
-    return buildProjectUserRecords().map((user) => {
-      const existing = map.get(user.email);
+    const projectEmails = new Set(
+      [...DEFAULT_USERS, ...EXTRA_DEMO_USERS].map((user) => user.email.toLowerCase()),
+    );
+
+    const mergedDefaults = buildProjectUserRecords().map((user) => {
+      const existing = map.get(user.email.toLowerCase());
 
       if (!existing) {
         return user;
@@ -452,10 +485,25 @@
         role: existing.role || user.role,
         status: existing.status || user.status,
         last_seen: existing.last_seen || user.last_seen,
-        // Keep the project account-created dates (early/late June).
         created_at: user.created_at,
       };
     });
+
+    const extrasFromDb = (fetchedUsers || [])
+      .filter((user) => {
+        const email = String(user.email || "").toLowerCase();
+        return email && !projectEmails.has(email);
+      })
+      .map((user) => ({
+        email: String(user.email).toLowerCase(),
+        name: user.name || String(user.email).split("@")[0],
+        role: user.role || "user",
+        status: user.status || "active",
+        last_seen: user.last_seen || null,
+        created_at: user.created_at || new Date().toISOString(),
+      }));
+
+    return [...mergedDefaults, ...extrasFromDb];
   }
 
   async function ensureProjectUsers() {
@@ -545,6 +593,7 @@
     FAITH_EMAIL,
     USER_OVERRIDE_PASSWORD,
     DEFAULT_USERS,
+    EXTRA_DEMO_USERS,
     ADMIN_SESSION_KEY,
     USER_SESSION_KEY,
     AUTH_RETURN_KEY,

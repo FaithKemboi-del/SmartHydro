@@ -6,6 +6,9 @@ from postgrest.exceptions import APIError
 from simulator import create_supabase_client
 
 
+from seed_extra_users import build_payload as build_extra_users
+
+
 DEFAULT_USERS = [
     {
         "email": "fyugalbox21@gmail.com",
@@ -67,13 +70,16 @@ def run_with_retry(action, description, retries=4):
 
 
 def upsert_users(supabase):
+    all_users = DEFAULT_USERS + build_extra_users()
+
     def action():
-        return supabase.table("app_users").upsert(DEFAULT_USERS, on_conflict="email").execute()
+        return supabase.table("app_users").upsert(all_users, on_conflict="email").execute()
 
     try:
         run_with_retry(action, "Upsert users")
-        for user in DEFAULT_USERS:
-            print(f"Upserted user: {user['name']} ({user['email']})")
+        print(f"Upserted {len(all_users)} users into app_users.")
+        for user in all_users:
+            print(f"  - {user['name']} ({user['email']})")
     except APIError as error:
         message = str(error)
         if "row-level security" in message or "42501" in message:

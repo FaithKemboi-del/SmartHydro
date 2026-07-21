@@ -430,6 +430,11 @@
   }
 
   function renderUserList(users) {
+    const heading = document.querySelector("#admin-users-heading");
+    if (heading) {
+      heading.textContent = `All users (${users.length})`;
+    }
+
     elements.userList.innerHTML = users
       .map(
         (user) => `
