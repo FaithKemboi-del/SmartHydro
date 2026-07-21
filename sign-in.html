@@ -12,54 +12,73 @@
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body class="auth-route-body">
-    <main class="auth-page">
-      <section class="auth-card">
-        <a class="brand auth-brand" href="welcome.html" aria-label="Smart Hydro home">
-          <span class="brand-leaf" aria-hidden="true"></span>
-          <span>
-            <strong>Smart Hydro</strong>
-          </span>
-        </a>
+  <body class="welcome-body auth-mobile-body">
+    <div class="welcome-glow welcome-glow-left" aria-hidden="true"></div>
+    <div class="welcome-glow welcome-glow-right" aria-hidden="true"></div>
 
-        <span class="eyebrow" id="sign-in-eyebrow">User access</span>
-        <h1 id="sign-in-title">Sign in</h1>
-        <p id="sign-in-description">
-          Sign in to open the hydroponics monitoring dashboard and review live sensor data.
-        </p>
+    <main class="auth-mobile-shell">
+      <div class="auth-mobile-frame" aria-label="Smart Hydro mobile sign in">
+        <div class="auth-mobile-notch" aria-hidden="true"></div>
+        <section class="auth-mobile-screen">
+          <header class="auth-mobile-header">
+            <a class="welcome-brand" href="welcome.html" aria-label="Smart Hydro home">
+              <span class="welcome-brand-icon" aria-hidden="true">🌿</span>
+              <strong>Smart Hydro</strong>
+            </a>
+            <a class="welcome-chip" href="welcome.html">Back</a>
+          </header>
 
-        <form class="auth-form" id="sign-in-form">
-          <label for="email">
-            Email
-            <input id="email" name="email" type="email" autocomplete="email" required />
-          </label>
+          <div class="auth-mobile-content">
+            <span class="welcome-badge" id="sign-in-eyebrow">User access</span>
+            <h1 id="sign-in-title">Sign in</h1>
+            <p class="auth-mobile-lead" id="sign-in-description">
+              Sign in to open the hydroponics monitoring dashboard and review live sensor data.
+            </p>
 
-          <label for="password">
-            Password
-            <input id="password" name="password" type="password" autocomplete="current-password" required />
-          </label>
+            <form class="auth-form auth-form-mobile" id="sign-in-form">
+              <label for="email">
+                Email
+                <input id="email" name="email" type="email" autocomplete="email" required />
+              </label>
 
-          <button class="button button-primary auth-submit" id="sign-in-submit" type="submit">
-            Sign In
-          </button>
+              <label for="password">
+                Password
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  required
+                />
+              </label>
 
-          <p class="auth-message" id="auth-message" aria-live="polite"></p>
-        </form>
+              <button class="welcome-cta auth-submit" id="sign-in-submit" type="submit">
+                Sign in
+                <span aria-hidden="true">›</span>
+              </button>
 
-        <p class="auth-switch">
-          Need an account?
-          <a href="sign-up.html">Create one</a>
-        </p>
+              <p class="auth-message" id="auth-message" aria-live="polite"></p>
+            </form>
 
-        <div class="auth-admin-footer">
-          <button class="button button-ghost auth-admin-toggle" id="admin-login-toggle" type="button">
-            Login as admin
-          </button>
-        </div>
-      </section>
+            <p class="auth-switch auth-switch-mobile">
+              Need an account?
+              <a href="sign-up.html">Create one</a>
+            </p>
+
+            <div class="auth-admin-footer auth-admin-footer-mobile">
+              <button class="welcome-chip auth-admin-toggle auth-admin-toggle-mobile" id="admin-login-toggle" type="button">
+                Login as admin
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      window.SMART_HYDRO_SUPABASE = window.SMART_HYDRO_SUPABASE || {};
+    </script>
     <script src="supabase-config.js"></script>
     <script src="auth.js"></script>
     <script src="sign-in.js"></script>
