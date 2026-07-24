@@ -621,7 +621,9 @@
     const recordsResult = await loadRecordsForUser(email);
     if (user) {
       recordCounts[user.email] = recordsResult.total;
-      elements.detailRecordCount.textContent = String(recordsResult.total);
+      if (elements.detailRecordCount) {
+        elements.detailRecordCount.textContent = String(recordsResult.total);
+      }
       updateFaithPaulRecordStats(recordCounts);
       renderUserList(allUsers);
       updateDownloadButtonState(user.email);
@@ -1075,7 +1077,20 @@
       if (!allUsers.length) {
         allUsers = classifyUsers(auth().buildProjectUserRecords());
         renderUserList(allUsers);
-      } finally {
+        const active = allUsers.filter((user) => user.displayStatus === "active");
+        const inactive = allUsers.filter((user) => user.displayStatus === "inactive");
+        if (elements.statActive) {
+          elements.statActive.textContent = String(active.length);
+        }
+        if (elements.statInactive) {
+          elements.statInactive.textContent = String(inactive.length);
+        }
+        if (allUsers[0]) {
+          selectedEmail = allUsers[0].email;
+          renderUserDetail(allUsers[0]);
+        }
+      }
+    } finally {
       refreshAllInFlight = false;
 
       if (elements.refreshUsersButton) {
