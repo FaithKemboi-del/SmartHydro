@@ -3,36 +3,45 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Smart Hydro | Grow with confidence</title>
+    <title>Welcome | Smart Hydro</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Sora:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body class="welcome-body">
-    <div class="welcome-media" aria-hidden="true">
-      <img
-        src="https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?auto=format&fit=crop&w=1920&q=80"
-        alt=""
-      />
-    </div>
-    <div class="welcome-veil" aria-hidden="true"></div>
-    <div class="welcome-glow" aria-hidden="true"></div>
+  <body class="auth-route-body">
+    <main class="auth-page">
+      <section class="auth-card welcome-auth-card">
+        <a class="brand auth-brand" href="welcome.html" aria-label="Smart Hydro home">
+          <span class="brand-leaf" aria-hidden="true"></span>
+          <span>
+            <strong>Smart Hydro</strong>
+          </span>
+        </a>
 
-    <main class="welcome-shell">
-      <p class="welcome-brand">Smart Hydro</p>
-      <h1 class="welcome-title">Track every drop. Harvest with confidence.</h1>
-      <p class="welcome-copy">
-        Live sensor insight for your hydroponic garden — so water, nutrients, and climate stay in
-        balance long before plants show stress.
-      </p>
-      <div class="welcome-actions">
-        <a class="button button-primary welcome-cta" href="sign-in.html">Get started</a>
-        <a class="welcome-secondary" href="sign-up.html">Create an account</a>
-      </div>
+        <span class="eyebrow">Welcome</span>
+        <h1>Grow smarter. Harvest better.</h1>
+        <p>
+          Track water, pH, temperature, and nutrients in real time so your hydroponic system stays
+          healthy — and every harvest gets a little better.
+        </p>
+
+        <ul class="welcome-auth-points">
+          <li>See live plant conditions at a glance</li>
+          <li>Catch problems before crops struggle</li>
+          <li>Get simple next steps for care</li>
+        </ul>
+
+        <a class="button button-primary auth-submit" href="sign-in.html">Get started</a>
+
+        <p class="auth-switch">
+          New here?
+          <a href="sign-up.html">Create an account</a>
+        </p>
+      </section>
     </main>
   </body>
 </html>
