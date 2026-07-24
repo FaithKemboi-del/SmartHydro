@@ -16,6 +16,9 @@ def build_seed_rows(count):
     temperature = random.uniform(20.0, 22.5)
     water_level = random.uniform(82.0, 96.0)
     now = datetime.now(timezone.utc)
+    faith_email = "faithkemboi21@gmail.com"
+    paul_email = "paulkevinkariuki@gmail.com"
+    faith_target = int(count * 0.62)
     rows = []
 
     for index in range(count):
@@ -31,6 +34,7 @@ def build_seed_rows(count):
                 "ph": round(ph, 2),
                 "temperature": round(temperature, 2),
                 "water_level": round(water_level, 2),
+                "user_email": faith_email if index < faith_target else paul_email,
                 "created_at": (now - timedelta(seconds=(count - index) * 5)).isoformat(),
             }
         )
@@ -59,8 +63,12 @@ def main():
     supabase = create_supabase_client()
     rows = build_seed_rows(row_count)
     inserted = insert_rows(supabase, rows)
+    faith_count = sum(1 for row in rows if row["user_email"] == "faithkemboi21@gmail.com")
+    paul_count = inserted - faith_count
 
     print(f"Inserted {inserted} sensor readings into public.sensor_readings.")
+    print(f"  Faith: {faith_count} records")
+    print(f"  Paul: {paul_count} records")
     print("Open Supabase Table Editor > sensor_readings to confirm the row count.")
 
 

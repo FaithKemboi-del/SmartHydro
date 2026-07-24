@@ -18,7 +18,8 @@
     alertsBody: document.querySelector("#alerts-body"),
     statActive: document.querySelector("#stat-active-users"),
     statInactive: document.querySelector("#stat-inactive-users"),
-    statRecords: document.querySelector("#stat-db-records"),
+    statFaithRecords: document.querySelector("#stat-faith-records"),
+    statPaulRecords: document.querySelector("#stat-paul-records"),
     statAlerts: document.querySelector("#stat-alert-count"),
     downloadWeeklyReportButton: document.querySelector("#download-weekly-report"),
     refreshRecordsButton: document.querySelector("#refresh-records"),
@@ -292,14 +293,17 @@
     return counts;
   }
 
-  function assignedRecordsTotal(counts) {
-    const adminEmail = auth().ADMIN_EMAIL;
-    return Object.entries(counts).reduce((sum, [email, value]) => {
-      if (email === adminEmail) {
-        return sum;
-      }
-      return sum + Number(value || 0);
-    }, 0);
+  function updateFaithPaulRecordStats(counts = recordCounts) {
+    const faithEmail = "faithkemboi21@gmail.com";
+    const paulEmail = "paulkevinkariuki@gmail.com";
+
+    if (elements.statFaithRecords) {
+      elements.statFaithRecords.textContent = String(counts[faithEmail] ?? 0);
+    }
+
+    if (elements.statPaulRecords) {
+      elements.statPaulRecords.textContent = String(counts[paulEmail] ?? 0);
+    }
   }
 
   async function loadRecordsForUser(email) {
@@ -563,7 +567,7 @@
     if (user) {
       recordCounts[user.email] = recordsResult.total;
       elements.detailRecordCount.textContent = String(recordsResult.total);
-      elements.statRecords.textContent = String(assignedRecordsTotal(recordCounts));
+      updateFaithPaulRecordStats(recordCounts);
       renderUserList(allUsers);
       updateDownloadButtonState(user.email);
     }
@@ -838,7 +842,7 @@
         const recordsResult = await loadRecordsForUser(selectedEmail);
         recordCounts[selectedEmail] = recordsResult.total;
         elements.detailRecordCount.textContent = String(recordsResult.total);
-        elements.statRecords.textContent = String(assignedRecordsTotal(recordCounts));
+        updateFaithPaulRecordStats(recordCounts);
         renderUserList(allUsers);
         renderRecords(recordsResult.records, user);
         updateDownloadButtonState(selectedEmail);
@@ -958,14 +962,13 @@
 
       allUsers = usersResult.users;
       recordCounts = await loadRecordCounts();
-      const totalRecords = assignedRecordsTotal(recordCounts);
+      updateFaithPaulRecordStats(recordCounts);
 
       const active = allUsers.filter((user) => user.displayStatus === "active");
       const inactive = allUsers.filter((user) => user.displayStatus === "inactive");
 
       elements.statActive.textContent = String(active.length);
       elements.statInactive.textContent = String(inactive.length);
-      elements.statRecords.textContent = String(totalRecords);
 
       if (!selectedEmail && allUsers.length) {
         selectedEmail = allUsers[0].email;
