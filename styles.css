@@ -2083,19 +2083,6 @@ body.onboarding-open {
   font-weight: 800;
 }
 
-.admin-detail-hash {
-  grid-column: 1 / -1;
-}
-
-.password-hash-value {
-  word-break: break-all;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.82rem;
-  font-weight: 600;
-  line-height: 1.45;
-  color: var(--gray-700);
-}
-
 .admin-detail-actions {
   margin-top: 8px;
 }
