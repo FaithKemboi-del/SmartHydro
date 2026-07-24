@@ -24,6 +24,7 @@
     downloadWeeklyReportButton: document.querySelector("#download-weekly-report"),
     refreshRecordsButton: document.querySelector("#refresh-records"),
     refreshUsersButton: document.querySelector("#refresh-users"),
+    seedFaithPaulButton: document.querySelector("#seed-faith-paul-records"),
     recordsReportMessage: document.querySelector("#records-report-message"),
     settingsMessage: document.querySelector("#settings-message"),
     recordsHeadingNote: document.querySelector("#records-heading-note"),
@@ -240,38 +241,31 @@
   }
 
   async function loadRecordCounts() {
-    const emails = auth().DEFAULT_USERS.map((user) => user.email);
+    const faithEmail = "faithkemboi21@gmail.com";
+    const paulEmail = "paulkevinkariuki@gmail.com";
     const adminEmail = auth().ADMIN_EMAIL;
+    const emails = [adminEmail, faithEmail, paulEmail];
     const client = supabase();
-    const counts = {};
-
-    emails.forEach((email) => {
-      counts[email] = 0;
-    });
+    const counts = {
+      [adminEmail]: 0,
+      [faithEmail]: 0,
+      [paulEmail]: 0,
+    };
 
     if (!client) {
       return counts;
     }
 
-    const { count: unassignedCount } = await client
+    const { count: unassignedCount, error: unassignedError } = await client
       .from("sensor_readings")
       .select("id", { count: "exact", head: true })
       .is("user_email", null);
 
-    if ((unassignedCount || 0) > 0 && !redistributionInFlight) {
-      redistributionInFlight = true;
-      redistributeAllReadingsUnevenly()
-        .then((redistributed) => {
-          if (redistributed) {
-            refreshAll();
-          }
-        })
-        .catch(() => {
-          // Assignment can be retried on the next refresh.
-        })
-        .finally(() => {
-          redistributionInFlight = false;
-        });
+    if (!unassignedError && (unassignedCount || 0) > 0) {
+      if (elements.dataSource) {
+        elements.dataSource.textContent = `Assigning ${unassignedCount} unassigned readings to Faith and Paul...`;
+      }
+      await redistributeAllReadingsUnevenly();
     }
 
     await Promise.all(
@@ -291,6 +285,136 @@
     );
 
     return counts;
+  }
+
+  function buildHistoryRows(email, joinedAtIso, intervalMinutes = 5) {
+    const rows = [];
+    const endAt = Date.now();
+    let stamp = new Date(joinedAtIso).getTime();
+    let ph = 6.0 + Math.random() * 0.3;
+    let temperature = 21 + Math.random() * 1.5;
+    let water = 85 + Math.random() * 8;
+    const stepMs = intervalMinutes * 60 * 1000;
+
+    while (stamp <= endAt) {
+      ph = Math.min(6.5, Math.max(5.5, ph + (Math.random() - 0.5) * 0.08));
+      temperature = Math.min(24, Math.max(19, temperature + (Math.random() - 0.5) * 0.35));
+      water = Math.max(8, water - (0.02 + Math.random() * 0.1));
+
+      if (water <= 12) {
+        water = 88 + Math.random() * 8;
+      }
+
+      rows.push({
+        ph: Number(ph.toFixed(2)),
+        temperature: Number(temperature.toFixed(2)),
+        water_level: Number(water.toFixed(2)),
+        user_email: email,
+        created_at: new Date(stamp).toISOString(),
+      });
+
+      stamp += stepMs;
+    }
+
+    return rows;
+  }
+
+  async function insertReadingBatches(client, rows, onProgress) {
+    const batchSize = 200;
+    let inserted = 0;
+
+    for (let index = 0; index < rows.length; index += batchSize) {
+      const batch = rows.slice(index, index + batchSize);
+      const { data, error } = await client.from("sensor_readings").insert(batch).select("id");
+
+      if (error) {
+        throw new Error(error.message || "Failed to insert sensor readings.");
+      }
+
+      inserted += data?.length || batch.length;
+      onProgress?.(inserted, rows.length);
+    }
+
+    return inserted;
+  }
+
+  async function seedFaithPaulHistories() {
+    const client = supabase();
+    const button = elements.seedFaithPaulButton;
+
+    if (!client) {
+      if (elements.dataSource) {
+        elements.dataSource.textContent =
+          "Supabase is not configured. Copy supabase-config.example.js to supabase-config.js and add your Project URL and anon key.";
+      }
+      return;
+    }
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = "Seeding records...";
+    }
+
+    try {
+      if (elements.dataSource) {
+        elements.dataSource.textContent = "Clearing old Faith/Paul readings...";
+      }
+
+      await client.from("sensor_readings").delete().eq("user_email", "faithkemboi21@gmail.com");
+      await client.from("sensor_readings").delete().eq("user_email", "paulkevinkariuki@gmail.com");
+
+      const faithRows = buildHistoryRows(
+        "faithkemboi21@gmail.com",
+        "2026-06-03T09:15:00.000Z",
+        5,
+      );
+      const paulRows = buildHistoryRows(
+        "paulkevinkariuki@gmail.com",
+        "2026-06-28T14:40:00.000Z",
+        5,
+      );
+      const allRows = [...faithRows, ...paulRows];
+
+      if (elements.dataSource) {
+        elements.dataSource.textContent = `Inserting ${allRows.length} readings (every 5 minutes from join date)...`;
+      }
+
+      await insertReadingBatches(client, allRows, (done, total) => {
+        if (elements.dataSource) {
+          elements.dataSource.textContent = `Inserting readings... ${done}/${total}`;
+        }
+        if (button) {
+          button.textContent = `Seeding ${done}/${total}`;
+        }
+      });
+
+      recordCounts = await loadRecordCounts();
+      updateFaithPaulRecordStats(recordCounts);
+
+      if (selectedEmail === "faithkemboi21@gmail.com" || selectedEmail === "paulkevinkariuki@gmail.com") {
+        const user = allUsers.find((entry) => entry.email === selectedEmail);
+        if (user) {
+          await selectUser(selectedEmail);
+        }
+      }
+
+      if (elements.dataSource) {
+        elements.dataSource.textContent = `Seeded Faith (${recordCounts["faithkemboi21@gmail.com"] || 0}) and Paul (${recordCounts["paulkevinkariuki@gmail.com"] || 0}) records from their join dates.`;
+      }
+    } catch (error) {
+      const message = String(error?.message || error);
+      if (elements.dataSource) {
+        elements.dataSource.textContent =
+          message.includes("row-level security") || message.includes("42501")
+            ? "Seeding blocked by RLS. Run fix_rls.sql in Supabase SQL Editor, then click Seed again."
+            : `Could not seed records: ${message}`;
+      }
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Seed Faith & Paul records";
+      }
+    }
   }
 
   function updateFaithPaulRecordStats(counts = recordCounts) {
@@ -983,10 +1107,21 @@
         await selectUser(selectedUser.email);
       }
 
-      const usingSupabase = [usersResult.source, alertsResult.source, settingsResult.source].includes("supabase");
-      elements.dataSource.textContent = usingSupabase
-        ? `Connected to Supabase.${added ? ` Added ${added} new live readings.` : ""}`
-        : "Using local admin storage. Configure Supabase to enable live increasing records.";
+      const usingSupabase = [usersResult.source, alertsResult.source, settingsResult.source].includes(
+        "supabase",
+      );
+      const faithCount = recordCounts["faithkemboi21@gmail.com"] || 0;
+      const paulCount = recordCounts["paulkevinkariuki@gmail.com"] || 0;
+
+      if (!usingSupabase) {
+        elements.dataSource.textContent =
+          "Supabase is not connected. Create supabase-config.js from supabase-config.example.js, then click Seed Faith & Paul records.";
+      } else if (faithCount === 0 && paulCount === 0) {
+        elements.dataSource.textContent =
+          "Connected to Supabase, but Faith and Paul have 0 readings. Click Seed Faith & Paul records (or run seed_faith_paul_records.sql).";
+      } else {
+        elements.dataSource.textContent = `Connected to Supabase. Faith: ${faithCount} records, Paul: ${paulCount} records.${added ? ` Added ${added} new live readings.` : ""}`;
+      }
     } catch (error) {
       elements.dataSource.textContent = `Refresh failed: ${String(error?.message || error)}`;
     } finally {
@@ -1082,6 +1217,10 @@
     const nextStatus = user.status === "active" ? "inactive" : "active";
     await setUserStatus(user.email, nextStatus);
     await refreshAll();
+  });
+
+  elements.seedFaithPaulButton?.addEventListener("click", () => {
+    seedFaithPaulHistories();
   });
 
   refreshAll().catch((error) => {

@@ -2005,6 +2005,18 @@ body.onboarding-open {
   font-size: 0.92rem;
 }
 
+.admin-records-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.admin-records-actions .admin-status-note {
+  margin: 0;
+}
+
 .admin-user-layout {
   display: grid;
   grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
