@@ -1714,6 +1714,26 @@ body.onboarding-open {
   box-shadow: var(--shadow);
 }
 
+.welcome-card {
+  display: flex;
+  min-height: 640px;
+  flex-direction: column;
+}
+
+.welcome-card-actions {
+  margin-top: auto;
+  padding-top: 28px;
+}
+
+.welcome-card .auth-submit {
+  width: 100%;
+  justify-content: center;
+}
+
+.welcome-card .auth-switch {
+  margin-top: 22px;
+}
+
 .route-card {
   text-align: center;
 }
