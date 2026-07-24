@@ -24,7 +24,6 @@
     downloadWeeklyReportButton: document.querySelector("#download-weekly-report"),
     refreshRecordsButton: document.querySelector("#refresh-records"),
     refreshUsersButton: document.querySelector("#refresh-users"),
-    seedFaithPaulButton: document.querySelector("#seed-faith-paul-records"),
     recordsReportMessage: document.querySelector("#records-report-message"),
     settingsMessage: document.querySelector("#settings-message"),
     recordsHeadingNote: document.querySelector("#records-heading-note"),
@@ -93,11 +92,7 @@
   }
 
   function defaultUsersSeed() {
-    return auth().DEFAULT_USERS.map((user) => ({
-      ...user,
-      last_seen: user.status === "inactive" ? new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() : new Date().toISOString(),
-      created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    }));
+    return auth().buildProjectUserRecords();
   }
 
   function ensureSeedUsers() {
@@ -114,23 +109,34 @@
   }
 
   async function loadUsers() {
-    await auth().ensureProjectUsers();
+    try {
+      await auth().ensureProjectUsers();
+    } catch (_error) {
+      // Continue with local defaults if upsert fails.
+    }
 
     const client = supabase();
+    const fallbackUsers = classifyUsers(auth().buildProjectUserRecords());
 
     if (client) {
-      const { data, error } = await client
-        .from("app_users")
-        .select("email, name, role, status, last_seen, created_at")
-        .order("created_at", { ascending: true });
+      try {
+        const { data, error } = await client
+          .from("app_users")
+          .select("email, name, role, status, last_seen, created_at")
+          .order("created_at", { ascending: true });
 
-      if (!error && Array.isArray(data)) {
-        return { users: classifyUsers(auth().mergeProjectUsers(data)), source: "supabase" };
+        if (!error && Array.isArray(data)) {
+          const merged = classifyUsers(auth().mergeProjectUsers(data));
+          return { users: merged.length ? merged : fallbackUsers, source: "supabase" };
+        }
+      } catch (_error) {
+        // Fall through to local users.
       }
     }
 
     const localUsers = readLocal(USERS_KEY, auth().buildProjectUserRecords());
-    return { users: classifyUsers(auth().mergeProjectUsers(localUsers)), source: "local" };
+    const mergedLocal = classifyUsers(auth().mergeProjectUsers(localUsers));
+    return { users: mergedLocal.length ? mergedLocal : fallbackUsers, source: "local" };
   }
 
 
@@ -287,135 +293,6 @@
     return counts;
   }
 
-  function buildHistoryRows(email, joinedAtIso, intervalMinutes = 5) {
-    const rows = [];
-    const endAt = Date.now();
-    let stamp = new Date(joinedAtIso).getTime();
-    let ph = 6.0 + Math.random() * 0.3;
-    let temperature = 21 + Math.random() * 1.5;
-    let water = 85 + Math.random() * 8;
-    const stepMs = intervalMinutes * 60 * 1000;
-
-    while (stamp <= endAt) {
-      ph = Math.min(6.5, Math.max(5.5, ph + (Math.random() - 0.5) * 0.08));
-      temperature = Math.min(24, Math.max(19, temperature + (Math.random() - 0.5) * 0.35));
-      water = Math.max(8, water - (0.02 + Math.random() * 0.1));
-
-      if (water <= 12) {
-        water = 88 + Math.random() * 8;
-      }
-
-      rows.push({
-        ph: Number(ph.toFixed(2)),
-        temperature: Number(temperature.toFixed(2)),
-        water_level: Number(water.toFixed(2)),
-        user_email: email,
-        created_at: new Date(stamp).toISOString(),
-      });
-
-      stamp += stepMs;
-    }
-
-    return rows;
-  }
-
-  async function insertReadingBatches(client, rows, onProgress) {
-    const batchSize = 200;
-    let inserted = 0;
-
-    for (let index = 0; index < rows.length; index += batchSize) {
-      const batch = rows.slice(index, index + batchSize);
-      const { data, error } = await client.from("sensor_readings").insert(batch).select("id");
-
-      if (error) {
-        throw new Error(error.message || "Failed to insert sensor readings.");
-      }
-
-      inserted += data?.length || batch.length;
-      onProgress?.(inserted, rows.length);
-    }
-
-    return inserted;
-  }
-
-  async function seedFaithPaulHistories() {
-    const client = supabase();
-    const button = elements.seedFaithPaulButton;
-
-    if (!client) {
-      if (elements.dataSource) {
-        elements.dataSource.textContent =
-          "Supabase is not configured. Copy supabase-config.example.js to supabase-config.js and add your Project URL and anon key.";
-      }
-      return;
-    }
-
-    if (button) {
-      button.disabled = true;
-      button.textContent = "Seeding records...";
-    }
-
-    try {
-      if (elements.dataSource) {
-        elements.dataSource.textContent = "Clearing old Faith/Paul readings...";
-      }
-
-      await client.from("sensor_readings").delete().eq("user_email", "faithkemboi21@gmail.com");
-      await client.from("sensor_readings").delete().eq("user_email", "paulkevinkariuki@gmail.com");
-
-      const faithRows = buildHistoryRows(
-        "faithkemboi21@gmail.com",
-        "2026-06-03T09:15:00.000Z",
-        5,
-      );
-      const paulRows = buildHistoryRows(
-        "paulkevinkariuki@gmail.com",
-        "2026-06-28T14:40:00.000Z",
-        5,
-      );
-      const allRows = [...faithRows, ...paulRows];
-
-      if (elements.dataSource) {
-        elements.dataSource.textContent = `Inserting ${allRows.length} readings (every 5 minutes from join date)...`;
-      }
-
-      await insertReadingBatches(client, allRows, (done, total) => {
-        if (elements.dataSource) {
-          elements.dataSource.textContent = `Inserting readings... ${done}/${total}`;
-        }
-        if (button) {
-          button.textContent = `Seeding ${done}/${total}`;
-        }
-      });
-
-      recordCounts = await loadRecordCounts();
-      updateFaithPaulRecordStats(recordCounts);
-
-      if (selectedEmail === "faithkemboi21@gmail.com" || selectedEmail === "paulkevinkariuki@gmail.com") {
-        const user = allUsers.find((entry) => entry.email === selectedEmail);
-        if (user) {
-          await selectUser(selectedEmail);
-        }
-      }
-
-      if (elements.dataSource) {
-        elements.dataSource.textContent = `Seeded Faith (${recordCounts["faithkemboi21@gmail.com"] || 0}) and Paul (${recordCounts["paulkevinkariuki@gmail.com"] || 0}) records from their join dates.`;
-      }
-    } catch (error) {
-      const message = String(error?.message || error);
-      if (elements.dataSource) {
-        elements.dataSource.textContent =
-          message.includes("row-level security") || message.includes("42501")
-            ? "Seeding blocked by RLS. Run fix_rls.sql in Supabase SQL Editor, then click Seed again."
-            : `Could not seed records: ${message}`;
-      }
-    } finally {
-      if (button) {
-        button.disabled = false;
-        button.textContent = "Seed Faith & Paul records";
-      }
-    }
-  }
 
   function updateFaithPaulRecordStats(counts = recordCounts) {
     const faithEmail = "faithkemboi21@gmail.com";
@@ -562,6 +439,20 @@
       heading.textContent = `All users (${users.length})`;
     }
 
+    if (!elements.userList) {
+      return;
+    }
+
+    if (!users.length) {
+      elements.userList.innerHTML = `
+        <article class="admin-user-card">
+          <strong>No users found</strong>
+          <span>Run seed_extra_users.sql in Supabase, then click Refresh.</span>
+        </article>
+      `;
+      return;
+    }
+
     elements.userList.innerHTML = users
       .map(
         (user) => `
@@ -570,9 +461,9 @@
             type="button"
             data-select-user="${user.email}"
           >
-            <strong>${user.name}</strong>
+            <strong>${user.name || "User"}</strong>
             <span>${user.email}</span>
-            <small>${user.displayStatus === "active" ? "Active" : "Inactive"} • ${user.role}</small>
+            <small>${user.displayStatus === "active" ? "Active" : "Inactive"} • ${user.role || "user"}</small>
             <em>${recordCounts[user.email] ?? 0} records</em>
           </button>
         `,
@@ -582,41 +473,63 @@
 
   function renderUserDetail(user) {
     if (!user) {
-      elements.detailName.textContent = "Select a user";
-      elements.detailEmail.textContent = "—";
-      elements.detailRole.textContent = "—";
-      elements.detailStatus.textContent = "—";
-      elements.detailRecordCount.textContent = "0";
-      elements.detailCreated.textContent = "—";
-      elements.toggleUserStatus.disabled = true;
-      elements.toggleUserStatus.textContent = "Mark inactive";
+      if (elements.detailName) elements.detailName.textContent = "Select a user";
+      if (elements.detailEmail) elements.detailEmail.textContent = "—";
+      if (elements.detailRole) elements.detailRole.textContent = "—";
+      if (elements.detailStatus) elements.detailStatus.textContent = "—";
+      if (elements.detailRecordCount) elements.detailRecordCount.textContent = "0";
+      if (elements.detailCreated) elements.detailCreated.textContent = "—";
+      if (elements.toggleUserStatus) {
+        elements.toggleUserStatus.disabled = true;
+        elements.toggleUserStatus.textContent = "Mark inactive";
+      }
       if (elements.downloadWeeklyReportButton) {
         elements.downloadWeeklyReportButton.disabled = true;
       }
       return;
     }
-    elements.detailName.textContent = user.name;
-    elements.detailEmail.textContent = user.email;
-    elements.detailRole.textContent = user.role;
-    elements.detailStatus.textContent = user.displayStatus === "active" ? "Active" : "Inactive";
-    elements.detailRecordCount.textContent = String(recordCounts[user.email] ?? 0);
-    elements.detailCreated.textContent = formatDate(user.created_at);
-    elements.toggleUserStatus.disabled = false;
-    elements.toggleUserStatus.textContent =
-      user.status === "active" ? "Mark inactive" : "Mark active";
+
+    if (elements.detailName) elements.detailName.textContent = user.name;
+    if (elements.detailEmail) elements.detailEmail.textContent = user.email;
+    if (elements.detailRole) elements.detailRole.textContent = user.role;
+    if (elements.detailStatus) {
+      elements.detailStatus.textContent = user.displayStatus === "active" ? "Active" : "Inactive";
+    }
+    if (elements.detailRecordCount) {
+      elements.detailRecordCount.textContent = String(recordCounts[user.email] ?? 0);
+    }
+    if (elements.detailCreated) elements.detailCreated.textContent = formatDate(user.created_at);
+    if (elements.toggleUserStatus) {
+      elements.toggleUserStatus.disabled = false;
+      elements.toggleUserStatus.textContent =
+        user.status === "active" ? "Mark inactive" : "Mark active";
+    }
     updateDownloadButtonState(user.email);
   }
 
   function renderRecords(records, user) {
+    if (!elements.recordsBody) {
+      return;
+    }
+
     if (!user) {
-      elements.recordsTableTitle.textContent = "sensor_readings";
-      elements.recordsHeadingNote.textContent = "Select a user above to filter their stored sensor records.";
+      if (elements.recordsTableTitle) {
+        elements.recordsTableTitle.textContent = "sensor_readings";
+      }
+      if (elements.recordsHeadingNote) {
+        elements.recordsHeadingNote.textContent =
+          "Select a user above to filter their stored sensor records.";
+      }
       elements.recordsBody.innerHTML = emptyRow(4, "No user selected.");
       return;
     }
 
-    elements.recordsTableTitle.textContent = `${user.name}'s sensor_readings`;
-    elements.recordsHeadingNote.textContent = `Showing records linked to ${user.name} (${user.email}).`;
+    if (elements.recordsTableTitle) {
+      elements.recordsTableTitle.textContent = `${user.name}'s sensor_readings`;
+    }
+    if (elements.recordsHeadingNote) {
+      elements.recordsHeadingNote.textContent = `Showing records linked to ${user.name} (${user.email}).`;
+    }
 
     elements.recordsBody.innerHTML = records.length
       ? records
@@ -635,7 +548,13 @@
   }
 
   function renderAlerts(alerts) {
-    elements.statAlerts.textContent = String(alerts.length);
+    if (elements.statAlerts) {
+      elements.statAlerts.textContent = String(alerts.length);
+    }
+
+    if (!elements.alertsBody) {
+      return;
+    }
 
     elements.alertsBody.innerHTML = alerts.length
       ? alerts
@@ -654,12 +573,24 @@
   }
 
   function renderSettings(settings) {
-    elements.settingMonitoring.checked = Boolean(settings.monitoring_enabled);
-    elements.settingPh.checked = Boolean(settings.ph_sensor_enabled);
-    elements.settingTemperature.checked = Boolean(settings.temperature_sensor_enabled);
-    elements.settingWater.checked = Boolean(settings.water_sensor_enabled);
-    elements.settingEc.checked = Boolean(settings.ec_sensor_enabled);
-    elements.settingAnomaly.checked = Boolean(settings.anomaly_detection_enabled);
+    if (elements.settingMonitoring) {
+      elements.settingMonitoring.checked = Boolean(settings.monitoring_enabled);
+    }
+    if (elements.settingPh) {
+      elements.settingPh.checked = Boolean(settings.ph_sensor_enabled);
+    }
+    if (elements.settingTemperature) {
+      elements.settingTemperature.checked = Boolean(settings.temperature_sensor_enabled);
+    }
+    if (elements.settingWater) {
+      elements.settingWater.checked = Boolean(settings.water_sensor_enabled);
+    }
+    if (elements.settingEc) {
+      elements.settingEc.checked = Boolean(settings.ec_sensor_enabled);
+    }
+    if (elements.settingAnomaly) {
+      elements.settingAnomaly.checked = Boolean(settings.anomaly_detection_enabled);
+    }
   }
 
   function collectSettings() {
@@ -1085,26 +1016,39 @@
       ]);
 
       allUsers = usersResult.users;
-      recordCounts = await loadRecordCounts();
+      renderUserList(allUsers);
+
+      try {
+        recordCounts = await loadRecordCounts();
+      } catch (_error) {
+        recordCounts = recordCounts || {};
+      }
       updateFaithPaulRecordStats(recordCounts);
 
       const active = allUsers.filter((user) => user.displayStatus === "active");
       const inactive = allUsers.filter((user) => user.displayStatus === "inactive");
 
-      elements.statActive.textContent = String(active.length);
-      elements.statInactive.textContent = String(inactive.length);
+      if (elements.statActive) {
+        elements.statActive.textContent = String(active.length);
+      }
+      if (elements.statInactive) {
+        elements.statInactive.textContent = String(inactive.length);
+      }
 
       if (!selectedEmail && allUsers.length) {
         selectedEmail = allUsers[0].email;
       }
 
-      renderUserList(allUsers);
-      renderAlerts(alertsResult.alerts);
-      renderSettings(settingsResult.settings);
+      renderAlerts(alertsResult.alerts || []);
+      renderSettings(settingsResult.settings || defaultSettings);
 
       const selectedUser = allUsers.find((user) => user.email === selectedEmail) || allUsers[0];
       if (selectedUser) {
-        await selectUser(selectedUser.email);
+        try {
+          await selectUser(selectedUser.email);
+        } catch (_error) {
+          renderUserDetail(selectedUser);
+        }
       }
 
       const usingSupabase = [usersResult.source, alertsResult.source, settingsResult.source].includes(
@@ -1113,18 +1057,25 @@
       const faithCount = recordCounts["faithkemboi21@gmail.com"] || 0;
       const paulCount = recordCounts["paulkevinkariuki@gmail.com"] || 0;
 
-      if (!usingSupabase) {
-        elements.dataSource.textContent =
-          "Supabase is not connected. Create supabase-config.js from supabase-config.example.js, then click Seed Faith & Paul records.";
-      } else if (faithCount === 0 && paulCount === 0) {
-        elements.dataSource.textContent =
-          "Connected to Supabase, but Faith and Paul have 0 readings. Click Seed Faith & Paul records (or run seed_faith_paul_records.sql).";
-      } else {
-        elements.dataSource.textContent = `Connected to Supabase. Faith: ${faithCount} records, Paul: ${paulCount} records.${added ? ` Added ${added} new live readings.` : ""}`;
+      if (elements.dataSource) {
+        if (!usingSupabase) {
+          elements.dataSource.textContent =
+            "Supabase is not connected. Add supabase-config.js, then run seed_faith_paul_records.sql in Supabase.";
+        } else if (faithCount === 0 && paulCount === 0) {
+          elements.dataSource.textContent =
+            "Connected to Supabase. Faith and Paul have 0 readings — run seed_faith_paul_records.sql in the SQL Editor.";
+        } else {
+          elements.dataSource.textContent = `Connected to Supabase. Faith: ${faithCount} records, Paul: ${paulCount} records.${added ? ` Added ${added} new live readings.` : ""}`;
+        }
       }
     } catch (error) {
-      elements.dataSource.textContent = `Refresh failed: ${String(error?.message || error)}`;
-    } finally {
+      if (elements.dataSource) {
+        elements.dataSource.textContent = `Refresh failed: ${String(error?.message || error)}`;
+      }
+      if (!allUsers.length) {
+        allUsers = classifyUsers(auth().buildProjectUserRecords());
+        renderUserList(allUsers);
+      } finally {
       refreshAllInFlight = false;
 
       if (elements.refreshUsersButton) {
@@ -1217,10 +1168,6 @@
     const nextStatus = user.status === "active" ? "inactive" : "active";
     await setUserStatus(user.email, nextStatus);
     await refreshAll();
-  });
-
-  elements.seedFaithPaulButton?.addEventListener("click", () => {
-    seedFaithPaulHistories();
   });
 
   refreshAll().catch((error) => {
