@@ -621,9 +621,8 @@
               <span class="severity ${answered ? "low" : "medium"}">${answered ? "Answered" : "Open"}</span>
               <time datetime="${escapeHtml(query.created_at)}">${escapeHtml(formatDate(query.created_at))}</time>
             </div>
-            <h3>${escapeHtml(query.subject)}</h3>
+            <h3>${escapeHtml(query.message)}</h3>
             <p class="query-meta">${escapeHtml(query.user_name || "User")} · ${escapeHtml(query.user_email)}</p>
-            <p>${escapeHtml(query.message)}</p>
             ${
               answered
                 ? `<div class="query-response">

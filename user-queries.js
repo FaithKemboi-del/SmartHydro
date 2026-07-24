@@ -1,6 +1,5 @@
 (function () {
   const form = document.querySelector("#user-query-form");
-  const subjectInput = document.querySelector("#query-subject");
   const messageInput = document.querySelector("#query-message");
   const submitButton = document.querySelector("#query-submit");
   const statusNote = document.querySelector("#query-status-note");
@@ -66,7 +65,6 @@
               <span class="severity ${answered ? "low" : "medium"}">${answered ? "Answered" : "Open"}</span>
               <time datetime="${escapeHtml(query.created_at)}">${escapeHtml(formatDate(query.created_at))}</time>
             </div>
-            <h3>${escapeHtml(query.subject)}</h3>
             <p>${escapeHtml(query.message)}</p>
             ${
               answered
@@ -104,11 +102,10 @@
       return;
     }
 
-    const subject = String(subjectInput?.value || "").trim();
     const message = String(messageInput?.value || "").trim();
 
-    if (!subject || !message) {
-      setNote("Add a subject and your question.");
+    if (!message) {
+      setNote("Type your question before sending.");
       return;
     }
 
@@ -121,7 +118,6 @@
       const result = await window.SmartHydroQueries.submitQuery({
         email: user.email,
         name: user.name || auth()?.getUserDisplayName?.(user.email) || "",
-        subject,
         message,
       });
 

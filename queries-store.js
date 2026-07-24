@@ -93,21 +93,27 @@
   }
 
   async function submitQuery({ email, name, subject, message }) {
+    const trimmedMessage = String(message || "").trim();
+    const autoSubject =
+      String(subject || "").trim() ||
+      (trimmedMessage.length > 80 ? `${trimmedMessage.slice(0, 77)}...` : trimmedMessage) ||
+      "User query";
+
     const entry = normalizeQuery({
       id: makeId(),
       created_at: new Date().toISOString(),
       user_email: email,
       user_name: name,
-      subject,
-      message,
+      subject: autoSubject,
+      message: trimmedMessage,
       status: "open",
       admin_response: "",
       responded_at: null,
       responded_by: "",
     });
 
-    if (!entry.user_email || !entry.subject || !entry.message) {
-      throw new Error("Email, subject, and message are required.");
+    if (!entry.user_email || !entry.message) {
+      throw new Error("Email and message are required.");
     }
 
     const client = supabase();
