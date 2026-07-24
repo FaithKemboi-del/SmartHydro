@@ -9,7 +9,7 @@ from postgrest.exceptions import APIError
 from supabase import create_client
 
 
-READ_INTERVAL_SECONDS = 5
+READ_INTERVAL_SECONDS = 5 * 60  # one reading every 5 minutes
 
 
 def clamp(value, minimum, maximum):

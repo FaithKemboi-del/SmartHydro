@@ -1,31 +1,40 @@
--- Assign / insert sensor readings for Faith and Paul
--- Run in Supabase SQL Editor after sensor_readings exists
+-- Seed Faith and Paul sensor readings from join date, every 5 minutes
+-- Run in Supabase SQL Editor after fix_rls.sql
+--
+-- Faith joined: 2026-06-03 09:15
+-- Paul joined:  2026-06-28 14:40
+-- Interval:     5 minutes
+--
+-- This creates thousands of rows (much more than 100).
 
--- 1) Reassign any unassigned rows (~62% Faith, ~38% Paul)
-with numbered as (
-  select
-    id,
-    row_number() over (order by created_at) as rn,
-    count(*) over () as total
-  from public.sensor_readings
-  where user_email is null
-)
-update public.sensor_readings as readings
-set user_email = case
-  when numbered.rn <= greatest(1, floor(numbered.total * 0.62))
-    then 'faithkemboi21@gmail.com'
-  else 'paulkevinkariuki@gmail.com'
-end
-from numbered
-where readings.id = numbered.id;
+-- Optional: clear previous Faith/Paul readings before reseed
+delete from public.sensor_readings
+where user_email in ('faithkemboi21@gmail.com', 'paulkevinkariuki@gmail.com');
 
--- 2) If the table is empty / low, insert sample rows for both users
+-- Faith: from join date to now, every 5 minutes
 insert into public.sensor_readings (ph, temperature, water_level, user_email, created_at)
 select
-  round((5.8 + random() * 0.6)::numeric, 2),
-  round((20 + random() * 3)::numeric, 2),
-  round((70 + random() * 25)::numeric, 2),
-  case when g <= 62 then 'faithkemboi21@gmail.com' else 'paulkevinkariuki@gmail.com' end,
-  now() - ((100 - g) * interval '5 seconds')
-from generate_series(1, 100) as g
-where (select count(*) from public.sensor_readings) < 60;
+  round((5.7 + random() * 0.8)::numeric, 2),
+  round((19.5 + random() * 4.0)::numeric, 2),
+  round((55 + random() * 40)::numeric, 2),
+  'faithkemboi21@gmail.com',
+  stamp
+from generate_series(
+  timestamptz '2026-06-03 09:15:00+00',
+  now(),
+  interval '5 minutes'
+) as stamp;
+
+-- Paul: from join date to now, every 5 minutes
+insert into public.sensor_readings (ph, temperature, water_level, user_email, created_at)
+select
+  round((5.7 + random() * 0.8)::numeric, 2),
+  round((19.5 + random() * 4.0)::numeric, 2),
+  round((55 + random() * 40)::numeric, 2),
+  'paulkevinkariuki@gmail.com',
+  stamp
+from generate_series(
+  timestamptz '2026-06-28 14:40:00+00',
+  now(),
+  interval '5 minutes'
+) as stamp;
