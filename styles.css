@@ -1716,7 +1716,7 @@ body.onboarding-open {
 
 .welcome-card {
   display: flex;
-  min-height: 640px;
+  min-height: 760px;
   flex-direction: column;
 }
 
