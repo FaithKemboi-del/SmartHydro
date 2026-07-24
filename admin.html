@@ -29,6 +29,7 @@
           <a href="profile.html">Profile</a>
           <a href="#users">Users</a>
           <a href="#records">Records</a>
+          <a href="#queries">Queries</a>
           <a href="#alerts-admin">Alerts</a>
           <a href="#settings">Settings</a>
           <button class="nav-action" id="sign-out-button" type="button">Sign Out</button>
@@ -67,6 +68,10 @@
           <article class="admin-stat-card">
             <span>Alert logs</span>
             <strong id="stat-alert-count">0</strong>
+          </article>
+          <article class="admin-stat-card">
+            <span>Open queries</span>
+            <strong id="stat-open-queries">0</strong>
           </article>
         </div>
         <p class="admin-status-note" id="admin-data-source" aria-live="polite"></p>
@@ -158,6 +163,26 @@
               <tbody id="records-body"></tbody>
             </table>
           </div>
+        </div>
+      </section>
+
+      <section id="queries" class="section-shell">
+        <div class="section-heading">
+          <span class="eyebrow">User Support</span>
+          <h2>User queries</h2>
+          <p>
+            Read questions submitted from the user dashboard and send a reply. Users see your
+            response under their query history.
+          </p>
+        </div>
+
+        <div class="admin-panel">
+          <div class="admin-panel-head">
+            <h3>Inbox</h3>
+            <button class="button button-ghost" type="button" id="refresh-queries">Refresh</button>
+          </div>
+          <p class="admin-status-note" id="queries-status-note" aria-live="polite"></p>
+          <div class="admin-query-list" id="admin-query-list"></div>
         </div>
       </section>
 
@@ -311,6 +336,7 @@
     <script src="auth.js?v=admin-fix-1"></script>
     <script src="password-store.js?v=admin-fix-1"></script>
     <script src="auth-guard.js"></script>
-    <script src="admin.js?v=admin-fix-2"></script>
+    <script src="queries-store.js"></script>
+    <script src="admin.js?v=admin-queries-1"></script>
   </body>
 </html>

@@ -38,6 +38,7 @@
             <span>Alerts</span>
             <span class="nav-alert-badge" id="nav-alert-badge" hidden>0</span>
           </a>
+          <a href="#ask-query">Ask a query</a>
           <a href="profile.html">Profile</a>
           <a href="admin.html">Admin Panel</a>
           <button class="nav-action" id="sign-out-button" type="button">Sign Out</button>
@@ -382,6 +383,58 @@
         </div>
       </section>
 
+      <section id="ask-query" class="section-shell query-section">
+        <div class="section-heading">
+          <span class="eyebrow">Support</span>
+          <h2>Submit a query</h2>
+          <p>
+            Ask the admin about sensor readings, alerts, or system setup. Replies show up here once
+            an admin responds.
+          </p>
+        </div>
+
+        <div class="admin-panel query-submit-panel">
+          <form class="user-query-form" id="user-query-form">
+            <label for="query-subject">
+              Subject
+              <input
+                id="query-subject"
+                name="subject"
+                type="text"
+                maxlength="120"
+                placeholder="Example: Water level keeps dropping"
+                required
+              />
+            </label>
+
+            <label for="query-message" class="user-query-message">
+              Your question
+              <textarea
+                id="query-message"
+                name="message"
+                rows="4"
+                maxlength="1000"
+                placeholder="Describe what you noticed and what help you need."
+                required
+              ></textarea>
+            </label>
+
+            <div class="user-query-actions">
+              <button class="button button-primary" type="submit" id="query-submit">
+                Send query
+              </button>
+              <p class="admin-status-note" id="query-status-note" aria-live="polite"></p>
+            </div>
+          </form>
+        </div>
+
+        <div class="section-heading query-history-heading">
+          <h3>Your queries</h3>
+          <p>Track open questions and admin replies.</p>
+        </div>
+        <div class="user-query-list" id="user-query-list"></div>
+      </section>
+
     </main>
 
     <div class="onboarding-overlay" id="onboarding-overlay" hidden>
@@ -432,5 +485,7 @@
     <script src="alerts-panel.js"></script>
     <script src="onboarding-tour.js"></script>
     <script src="weekly-report.js"></script>
+    <script src="queries-store.js"></script>
+    <script src="user-queries.js"></script>
   </body>
 </html>

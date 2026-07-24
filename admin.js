@@ -21,6 +21,10 @@
     statFaithRecords: document.querySelector("#stat-faith-records"),
     statPaulRecords: document.querySelector("#stat-paul-records"),
     statAlerts: document.querySelector("#stat-alert-count"),
+    statOpenQueries: document.querySelector("#stat-open-queries"),
+    queryList: document.querySelector("#admin-query-list"),
+    queriesStatusNote: document.querySelector("#queries-status-note"),
+    refreshQueriesButton: document.querySelector("#refresh-queries"),
     downloadWeeklyReportButton: document.querySelector("#download-weekly-report"),
     refreshRecordsButton: document.querySelector("#refresh-records"),
     refreshUsersButton: document.querySelector("#refresh-users"),
@@ -572,6 +576,86 @@
       : emptyRow(4, "No alert logs yet.");
   }
 
+  function escapeHtml(value) {
+    return String(value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+
+  function renderQueries(queries, source) {
+    const openCount = (queries || []).filter((query) => query.status !== "answered").length;
+
+    if (elements.statOpenQueries) {
+      elements.statOpenQueries.textContent = String(openCount);
+    }
+
+    if (elements.queriesStatusNote) {
+      if (!queries.length) {
+        elements.queriesStatusNote.textContent = "No user queries yet.";
+      } else if (source === "supabase") {
+        elements.queriesStatusNote.textContent = `${queries.length} quer${queries.length === 1 ? "y" : "ies"} from Supabase · ${openCount} open`;
+      } else {
+        elements.queriesStatusNote.textContent = `${queries.length} quer${queries.length === 1 ? "y" : "ies"} stored on this browser · ${openCount} open`;
+      }
+    }
+
+    if (!elements.queryList) {
+      return;
+    }
+
+    if (!queries.length) {
+      elements.queryList.innerHTML =
+        '<article class="query-card query-card-empty"><p>When users submit questions from the dashboard, they appear here.</p></article>';
+      return;
+    }
+
+    elements.queryList.innerHTML = queries
+      .map((query) => {
+        const answered = query.status === "answered" && query.admin_response;
+        return `
+          <article class="query-card admin-query-card ${answered ? "query-card-answered" : "query-card-open"}" data-query-id="${escapeHtml(query.id)}">
+            <div class="query-card-top">
+              <span class="severity ${answered ? "low" : "medium"}">${answered ? "Answered" : "Open"}</span>
+              <time datetime="${escapeHtml(query.created_at)}">${escapeHtml(formatDate(query.created_at))}</time>
+            </div>
+            <h3>${escapeHtml(query.subject)}</h3>
+            <p class="query-meta">${escapeHtml(query.user_name || "User")} · ${escapeHtml(query.user_email)}</p>
+            <p>${escapeHtml(query.message)}</p>
+            ${
+              answered
+                ? `<div class="query-response">
+                    <strong>Your reply</strong>
+                    <p>${escapeHtml(query.admin_response)}</p>
+                    <small>${escapeHtml(formatDate(query.responded_at))}</small>
+                  </div>`
+                : `<form class="admin-query-reply-form" data-reply-form="${escapeHtml(query.id)}">
+                    <label>
+                      Reply
+                      <textarea name="response" rows="3" maxlength="1000" placeholder="Write a helpful reply for this user." required></textarea>
+                    </label>
+                    <button class="button button-primary" type="submit">Send reply</button>
+                  </form>`
+            }
+          </article>
+        `;
+      })
+      .join("");
+  }
+
+  async function refreshQueries() {
+    if (!window.SmartHydroQueries) {
+      renderQueries([], "local");
+      return { queries: [], source: "local" };
+    }
+
+    const result = await window.SmartHydroQueries.listQueries();
+    renderQueries(result.queries || [], result.source || "local");
+    return result;
+  }
+
   function renderSettings(settings) {
     if (elements.settingMonitoring) {
       elements.settingMonitoring.checked = Boolean(settings.monitoring_enabled);
@@ -1011,10 +1095,11 @@
     try {
       const added = await appendLiveReadings(forceLive);
 
-      const [usersResult, alertsResult, settingsResult] = await Promise.all([
+      const [usersResult, alertsResult, settingsResult, queriesResult] = await Promise.all([
         loadUsers(),
         loadAlerts(),
         loadSettings(),
+        refreshQueries(),
       ]);
 
       allUsers = usersResult.users;
@@ -1043,6 +1128,7 @@
 
       renderAlerts(alertsResult.alerts || []);
       renderSettings(settingsResult.settings || defaultSettings);
+      renderQueries(queriesResult.queries || [], queriesResult.source || "local");
 
       const selectedUser = allUsers.find((user) => user.email === selectedEmail) || allUsers[0];
       if (selectedUser) {
@@ -1104,6 +1190,60 @@
   window.setInterval(() => {
     refreshAll();
   }, LIVE_APPEND_INTERVAL_MS);
+
+  elements.refreshQueriesButton?.addEventListener("click", () => {
+    refreshQueries().catch(() => {});
+  });
+
+  elements.queryList?.addEventListener("submit", async (event) => {
+    const form = event.target.closest("[data-reply-form]");
+    if (!form) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const queryId = form.getAttribute("data-reply-form");
+    const response = String(form.response?.value || "").trim();
+    const submitButton = form.querySelector('button[type="submit"]');
+    const adminSession = auth()?.getAdminSession?.();
+
+    if (!queryId || !response) {
+      if (elements.queriesStatusNote) {
+        elements.queriesStatusNote.textContent = "Write a reply before sending.";
+      }
+      return;
+    }
+
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Sending...";
+    }
+
+    try {
+      await window.SmartHydroQueries.respondToQuery({
+        id: queryId,
+        response,
+        adminEmail: adminSession?.email || "admin",
+      });
+      if (elements.queriesStatusNote) {
+        elements.queriesStatusNote.textContent = "Reply sent. The user can see it on their dashboard.";
+      }
+      await refreshQueries();
+    } catch (error) {
+      if (elements.queriesStatusNote) {
+        elements.queriesStatusNote.textContent = `Reply failed: ${String(error?.message || error)}`;
+      }
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = "Send reply";
+      }
+    }
+  });
+
+  window.addEventListener("smartHydro:queriesChanged", () => {
+    refreshQueries().catch(() => {});
+  });
 
   elements.refreshUsersButton?.addEventListener("click", () => {
     refreshAll(true);
