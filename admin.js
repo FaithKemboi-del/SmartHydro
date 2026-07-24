@@ -1001,7 +1001,7 @@
 
       const usingSupabase = [usersResult.source, alertsResult.source, settingsResult.source].includes("supabase");
       elements.dataSource.textContent = usingSupabase
-        ? `Connected to Supabase. ${added ? `Added ${added} new live readings. ` : ""}Total shown is Faith + Paul only (Admin stays at 0).`
+        ? `Connected to Supabase.${added ? ` Added ${added} new live readings.` : ""}`
         : "Using local admin storage. Configure Supabase to enable live increasing records.";
     } catch (error) {
       elements.dataSource.textContent = `Refresh failed: ${String(error?.message || error)}`;
