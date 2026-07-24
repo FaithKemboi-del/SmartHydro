@@ -26,10 +26,8 @@ python3 -m http.server 8000
 Then visit:
 
 ```text
-http://localhost:8000/welcome.html
+http://localhost:8000/sign-in.html
 ```
-
-Use **Get started** to open sign-in.
 
 ## Admin override
 
