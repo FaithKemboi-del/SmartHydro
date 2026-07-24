@@ -85,7 +85,10 @@ def upsert_users(supabase):
         if "row-level security" in message or "42501" in message:
             raise SystemExit(
                 "\nSupabase blocked the insert because Row Level Security is still enabled on app_users.\n"
-                "Run the RLS fix SQL in Supabase SQL Editor, then try again.\n"
+                "Fix:\n"
+                "1. Open Supabase → SQL Editor → New query\n"
+                "2. Paste and run everything in fix_rls.sql\n"
+                "3. Run this command again: python seed_users.py\n"
             ) from error
         raise
 

@@ -3,6 +3,7 @@ import random
 from datetime import datetime, timedelta, timezone
 
 from dotenv import load_dotenv
+from postgrest.exceptions import APIError
 
 from simulator import create_supabase_client, drift
 
@@ -47,7 +48,20 @@ def insert_rows(supabase, rows):
 
     for start in range(0, len(rows), BATCH_SIZE):
         batch = rows[start : start + BATCH_SIZE]
-        response = supabase.table("sensor_readings").insert(batch).execute()
+        try:
+            response = supabase.table("sensor_readings").insert(batch).execute()
+        except APIError as error:
+            message = str(error)
+            if "row-level security" in message or "42501" in message:
+                raise SystemExit(
+                    "\nSupabase blocked the insert because Row Level Security is still enabled "
+                    "on sensor_readings.\n"
+                    "Fix:\n"
+                    "1. Open Supabase → SQL Editor → New query\n"
+                    "2. Paste and run everything in fix_rls.sql\n"
+                    "3. Run this command again: python seed_database.py\n"
+                ) from error
+            raise
         inserted += len(response.data or batch)
 
     return inserted

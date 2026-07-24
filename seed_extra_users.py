@@ -74,7 +74,7 @@ def main():
         if "row-level security" in message or "42501" in message:
             raise SystemExit(
                 "\nSupabase blocked the insert because RLS is enabled on app_users.\n"
-                "Run supabase_schema.sql in the SQL Editor, then try again.\n"
+                "Fix: run fix_rls.sql in the Supabase SQL Editor, then try again.\n"
             ) from error
         raise
 
