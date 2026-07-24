@@ -1186,7 +1186,17 @@
   });
 
   refreshAll().catch((error) => {
-    elements.dataSource.textContent = `Load error: ${String(error?.message || error)}`;
+    if (elements.dataSource) {
+      elements.dataSource.textContent = `Load error: ${String(error?.message || error)}`;
+    }
+    if (!allUsers.length) {
+      allUsers = classifyUsers(auth().buildProjectUserRecords());
+      renderUserList(allUsers);
+      const active = allUsers.filter((user) => user.displayStatus === "active");
+      const inactive = allUsers.filter((user) => user.displayStatus === "inactive");
+      if (elements.statActive) elements.statActive.textContent = String(active.length);
+      if (elements.statInactive) elements.statInactive.textContent = String(inactive.length);
+    }
   });
 
   window.SmartHydroPasswordStore?.ensureDemoHashedUsers?.()
