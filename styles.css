@@ -1481,6 +1481,37 @@ td {
   font-weight: 700;
 }
 
+.alerts-subsection {
+  margin-top: 18px;
+}
+
+.alerts-subsection-closed {
+  margin-top: 28px;
+}
+
+.alerts-subsection-title {
+  margin: 0 0 12px;
+  color: var(--green-900);
+  font-size: 1.05rem;
+}
+
+.alerts-subsection-copy {
+  margin: -4px 0 14px;
+  color: var(--gray-700);
+}
+
+.alert-card-closed {
+  border-color: rgba(120, 140, 150, 0.35);
+  border-left-color: var(--gray-700);
+  background: rgba(248, 250, 251, 0.96);
+  animation: none;
+  opacity: 0.92;
+}
+
+.alert-card-closed h3 {
+  color: var(--gray-800);
+}
+
 @keyframes alert-tick-pulse {
   0%,
   100% {

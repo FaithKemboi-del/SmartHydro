@@ -350,14 +350,33 @@
           </p>
         </div>
 
-        <div class="alerts-grid" id="alerts-grid">
-          <article class="alert-card alert-card-empty">
-            <div>
-              <span class="severity">Info</span>
-              <h3>Loading alerts...</h3>
-            </div>
-            <p>Checking for warnings and critical sensor alerts.</p>
-          </article>
+        <div class="alerts-subsection">
+          <h3 class="alerts-subsection-title">Recent warnings</h3>
+          <div class="alerts-grid" id="alerts-grid-recent">
+            <article class="alert-card alert-card-empty">
+              <div>
+                <span class="severity">Info</span>
+                <h3>Loading recent alerts...</h3>
+              </div>
+              <p>Checking for warnings that still need action.</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="alerts-subsection alerts-subsection-closed">
+          <h3 class="alerts-subsection-title">Closed warnings</h3>
+          <p class="alerts-subsection-copy">
+            Older warnings stay here once an action has been taken.
+          </p>
+          <div class="alerts-grid" id="alerts-grid-closed">
+            <article class="alert-card alert-card-empty">
+              <div>
+                <span class="severity">Info</span>
+                <h3>Loading closed alerts...</h3>
+              </div>
+              <p>Resolved warnings will appear here.</p>
+            </article>
+          </div>
         </div>
       </section>
 
