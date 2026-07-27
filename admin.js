@@ -1091,7 +1091,8 @@
       }
 
       if (!selectedEmail && allUsers.length) {
-        selectedEmail = allUsers[0].email;
+        const faithUser = allUsers.find((user) => user.email === "faithkemboi21@gmail.com");
+        selectedEmail = faithUser?.email || allUsers[0].email;
       }
 
       renderAlerts(alertsResult.alerts || []);
