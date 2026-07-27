@@ -88,6 +88,7 @@
 
   async function fetchAlerts() {
     const client = window.SmartHydroAuth?.getSupabaseClient?.();
+    let remoteAlerts = [];
 
     if (client) {
       try {
@@ -98,7 +99,7 @@
           .limit(24);
 
         if (!error && data?.length) {
-          return data;
+          remoteAlerts = data;
         }
       } catch (_error) {
         // Fall back to local alerts.
@@ -106,7 +107,22 @@
     }
 
     const localAlerts = readLocalAlerts();
-    return localAlerts.length ? localAlerts : DEMO_ALERTS;
+    const baseAlerts = remoteAlerts.length
+      ? remoteAlerts
+      : localAlerts.length
+        ? localAlerts
+        : DEMO_ALERTS;
+
+    const { recent } = splitAlerts(baseAlerts);
+
+    // If stored/remote alerts are all older (e.g. from July 20), keep those as
+    // closed and surface the recent demo warnings as the active set.
+    if (!recent.length && baseAlerts !== DEMO_ALERTS) {
+      const recentDemos = DEMO_ALERTS.filter((alert) => !isClosed(alert));
+      return [...recentDemos, ...baseAlerts];
+    }
+
+    return baseAlerts;
   }
 
   function isRecent(alert) {
