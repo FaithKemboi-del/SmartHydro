@@ -7,7 +7,6 @@
     status: document.querySelector("#weekly-report-status"),
     intro: document.querySelector("#weekly-report-intro"),
     nextPrediction: document.querySelector("#weekly-next-prediction"),
-    nextActions: document.querySelector("#weekly-next-actions"),
     generateButton: document.querySelector("#generate-weekly-report"),
   };
 
@@ -164,7 +163,6 @@
       nextWeek: {
         forecast: nextWeekForecast,
         summary: dashboard.formatNextWeekPredictionText(nextWeekForecast),
-        actions: dashboard.formatNextWeekRecommendationText(nextWeekForecast.recommendations),
       },
     };
   }
@@ -282,13 +280,11 @@
         </article>
       `;
       elements.nextPrediction.textContent = "Add more sensor readings, then generate the report again.";
-      elements.nextActions.textContent = "Keep monitoring daily so the model can learn your system pattern.";
       return;
     }
 
     elements.grid.innerHTML = report.weeks.map((week, index) => renderWeekCard(week, index)).join("");
     elements.nextPrediction.textContent = report.nextWeek.summary;
-    elements.nextActions.textContent = report.nextWeek.actions;
 
     if (elements.intro) {
       elements.intro.textContent = `Weekly report for ${getUserDisplayName(email)}. ${sourceLabel}`;
@@ -346,7 +342,6 @@
 
     y = writePdfLine(doc, "Next week outlook", y, { size: 13, bold: true });
     y = writePdfLine(doc, report.nextWeek.summary, y);
-    y = writePdfLine(doc, report.nextWeek.actions, y);
 
     const safeEmail = String(email).replace(/[^a-z0-9]+/gi, "-").toLowerCase();
     const fileName = `weekly-user-report-${safeEmail}.pdf`;
