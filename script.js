@@ -535,21 +535,6 @@ window.SmartHydroDashboard = {
 
 startLiveMonitoringButton.addEventListener("click", startLiveMonitoring);
 
-(function showColabConnection() {
-  const note = document.querySelector("#ml-colab-connection");
-  if (!note) {
-    return;
-  }
-
-  if (window.SmartHydroMlBridge?.connectionSummary) {
-    note.textContent = window.SmartHydroMlBridge.connectionSummary();
-    return;
-  }
-
-  note.textContent =
-    "ML bridge missing. Add ml-colab-bridge.js from the Colab export so Detect Anomaly stays connected.";
-})();
-
 function formatPredictionText(forecast) {
   const { predicted, state } = forecast;
   const condition =

@@ -228,46 +228,7 @@
             The model learns from system readings and predicts the condition one day ahead, so the
             user can act early or confirm that the hydroponic environment is okay.
           </p>
-          <p class="model-note" id="ml-colab-connection">
-            Loading Colab ML bridge...
-          </p>
         </div>
-
-        <!-- Proof only: shows Colab bridge is loaded. Does not change Detect Anomaly. -->
-        <aside
-          class="ml-bridge-proof"
-          id="ml-bridge-proof"
-          aria-label="Colab ML bridge proof"
-        >
-          <span class="eyebrow">ML Colab bridge proof</span>
-          <p id="ml-bridge-proof-status">Checking ml-colab-bridge.js...</p>
-          <dl class="ml-bridge-proof-grid" id="ml-bridge-proof-details" hidden>
-            <div>
-              <dt>Source</dt>
-              <dd id="ml-bridge-proof-source">—</dd>
-            </div>
-            <div>
-              <dt>Model</dt>
-              <dd id="ml-bridge-proof-model">—</dd>
-            </div>
-            <div>
-              <dt>File</dt>
-              <dd>ml-colab-bridge.js</dd>
-            </div>
-            <div>
-              <dt>Used by</dt>
-              <dd>Detect Anomaly (script.js)</dd>
-            </div>
-            <div>
-              <dt>Test accuracy</dt>
-              <dd id="ml-bridge-proof-accuracy">—</dd>
-            </div>
-            <div>
-              <dt>Status</dt>
-              <dd id="ml-bridge-proof-flag">—</dd>
-            </div>
-          </dl>
-        </aside>
 
         <div class="ml-layout">
           <figure class="ml-photo">
@@ -524,56 +485,6 @@
     <script src="auth.js"></script>
     <script src="auth-guard.js"></script>
     <script src="ml-colab-bridge.js"></script>
-    <!-- Proof only: reads SmartHydroMlBridge. Does not change Detect Anomaly or other app logic. -->
-    <script>
-      (function showMlColabBridgeProof() {
-        var proof = document.getElementById("ml-bridge-proof");
-        var statusEl = document.getElementById("ml-bridge-proof-status");
-        var details = document.getElementById("ml-bridge-proof-details");
-        if (!proof || !statusEl) {
-          return;
-        }
-
-        var bridge = window.SmartHydroMlBridge;
-        var config = bridge && bridge.config;
-
-        if (!bridge || !config || !config.connected) {
-          proof.classList.add("is-missing");
-          statusEl.textContent =
-            "Proof failed: ml-colab-bridge.js did not load SmartHydroMlBridge.";
-          return;
-        }
-
-        proof.classList.add("is-connected");
-        statusEl.textContent =
-          "Proof passed: Detect Anomaly uses SmartHydroMlBridge from ml-colab-bridge.js (exported from Google Colab).";
-
-        if (details) {
-          details.hidden = false;
-        }
-
-        var sourceEl = document.getElementById("ml-bridge-proof-source");
-        var modelEl = document.getElementById("ml-bridge-proof-model");
-        var accuracyEl = document.getElementById("ml-bridge-proof-accuracy");
-        var flagEl = document.getElementById("ml-bridge-proof-flag");
-
-        if (sourceEl) {
-          sourceEl.textContent = String(config.source || "Google Colab");
-        }
-        if (modelEl) {
-          modelEl.textContent = String(config.modelName || "RandomForestClassifier");
-        }
-        if (accuracyEl) {
-          accuracyEl.textContent =
-            typeof config.testAccuracy === "number"
-              ? (config.testAccuracy * 100).toFixed(1) + "% (Colab test split)"
-              : "—";
-        }
-        if (flagEl) {
-          flagEl.textContent = "connected = true";
-        }
-      })();
-    </script>
     <script src="script.js"></script>
     <script src="live-data.js"></script>
     <script src="readings-trends.js"></script>

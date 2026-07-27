@@ -1101,67 +1101,6 @@ p {
   background: var(--green-50);
 }
 
-.ml-bridge-proof {
-  margin: 0 0 22px;
-  border: 1px dashed rgba(46, 125, 50, 0.45);
-  border-radius: var(--radius-lg);
-  padding: 16px 18px;
-  background: rgba(232, 245, 233, 0.55);
-}
-
-.ml-bridge-proof.is-connected {
-  border-style: solid;
-  border-color: rgba(46, 125, 50, 0.55);
-}
-
-.ml-bridge-proof.is-missing {
-  border-color: rgba(217, 83, 79, 0.55);
-  background: rgba(255, 241, 240, 0.7);
-}
-
-.ml-bridge-proof .eyebrow {
-  display: inline-block;
-  margin-bottom: 8px;
-}
-
-.ml-bridge-proof p {
-  margin: 0;
-  color: var(--green-900);
-  font-weight: 700;
-}
-
-.ml-bridge-proof-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px 16px;
-  margin: 14px 0 0;
-}
-
-.ml-bridge-proof-grid div {
-  min-width: 0;
-}
-
-.ml-bridge-proof-grid dt {
-  color: var(--gray-700);
-  font-size: 0.78rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.ml-bridge-proof-grid dd {
-  margin: 4px 0 0;
-  color: var(--green-900);
-  font-weight: 800;
-  word-break: break-word;
-}
-
-@media (max-width: 720px) {
-  .ml-bridge-proof-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
 .analysis-form,
 .analysis-result {
   display: flex;
