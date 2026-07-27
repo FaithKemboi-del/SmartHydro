@@ -7,7 +7,6 @@
   let allUsers = [];
   let selectedEmail = null;
   let recordCounts = {};
-  let redistributionInFlight = false;
   let refreshAllInFlight = false;
   let refreshRecordsInFlight = false;
 
@@ -145,60 +144,6 @@
 
 
 
-  async function redistributeAllReadingsUnevenly() {
-    const client = supabase();
-
-    if (!client) {
-      return false;
-    }
-
-    const faithEmail = "faithkemboi21@gmail.com";
-    const paulEmail = "paulkevinkariuki@gmail.com";
-    const pageSize = 1000;
-    let start = 0;
-    const ids = [];
-
-    while (true) {
-      const { data, error } = await client
-        .from("sensor_readings")
-        .select("id")
-        .order("created_at", { ascending: true })
-        .range(start, start + pageSize - 1);
-
-      if (error || !data?.length) {
-        break;
-      }
-
-      ids.push(...data.map((row) => row.id));
-
-      if (data.length < pageSize) {
-        break;
-      }
-
-      start += pageSize;
-    }
-
-    if (!ids.length) {
-      return false;
-    }
-
-    const faithTarget = Math.floor(ids.length * 0.62);
-    const faithIds = ids.slice(0, faithTarget);
-    const paulIds = ids.slice(faithTarget);
-
-    for (let index = 0; index < faithIds.length; index += 100) {
-      const chunk = faithIds.slice(index, index + 100);
-      await client.from("sensor_readings").update({ user_email: faithEmail }).in("id", chunk);
-    }
-
-    for (let index = 0; index < paulIds.length; index += 100) {
-      const chunk = paulIds.slice(index, index + 100);
-      await client.from("sensor_readings").update({ user_email: paulEmail }).in("id", chunk);
-    }
-
-    return true;
-  }
-
   function randomBetween(min, max, decimals = 2) {
     const value = Math.random() * (max - min) + min;
     return Number(value.toFixed(decimals));
@@ -266,18 +211,6 @@
       return counts;
     }
 
-    const { count: unassignedCount, error: unassignedError } = await client
-      .from("sensor_readings")
-      .select("id", { count: "exact", head: true })
-      .is("user_email", null);
-
-    if (!unassignedError && (unassignedCount || 0) > 0) {
-      if (elements.dataSource) {
-        elements.dataSource.textContent = `Assigning ${unassignedCount} unassigned readings to Faith and Paul...`;
-      }
-      await redistributeAllReadingsUnevenly();
-    }
-
     await Promise.all(
       emails.map(async (email) => {
         if (email === adminEmail) {
@@ -290,7 +223,13 @@
           .select("id", { count: "exact", head: true })
           .eq("user_email", email);
 
-        counts[email] = error ? 0 : count || 0;
+        if (error) {
+          console.warn(`Could not count sensor records for ${email}:`, error.message || error);
+          counts[email] = 0;
+          return;
+        }
+
+        counts[email] = count || 0;
       }),
     );
 
@@ -313,25 +252,55 @@
 
   async function loadRecordsForUser(email) {
     const client = supabase();
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    if (!client || !email) {
-      return { records: [], total: recordCounts[email] || 0 };
+    if (!client || !normalizedEmail) {
+      return { records: [], total: recordCounts[normalizedEmail] || 0 };
     }
 
-    const { data, error, count } = await client
+    const { count: totalCount, error: countError } = await client
       .from("sensor_readings")
-      .select("created_at, ph, temperature, water_level, user_email", { count: "exact" })
-      .eq("user_email", email)
-      .order("created_at", { ascending: false })
-      .limit(50);
+      .select("id", { count: "exact", head: true })
+      .eq("user_email", normalizedEmail);
 
-    if (error) {
-      return { records: [], total: recordCounts[email] || 0 };
+    if (countError) {
+      console.warn(`Could not count records for ${normalizedEmail}:`, countError.message || countError);
+      return { records: [], total: recordCounts[normalizedEmail] || 0 };
+    }
+
+    const pageSize = 1000;
+    const all = [];
+    let offset = 0;
+    const total = Number(totalCount || 0);
+
+    while (offset < total) {
+      const { data, error } = await client
+        .from("sensor_readings")
+        .select("created_at, ph, temperature, water_level, user_email")
+        .eq("user_email", normalizedEmail)
+        .order("created_at", { ascending: false })
+        .range(offset, offset + pageSize - 1);
+
+      if (error) {
+        console.warn(`Could not load records for ${normalizedEmail}:`, error.message || error);
+        break;
+      }
+
+      if (!data?.length) {
+        break;
+      }
+
+      all.push(...data);
+      offset += data.length;
+
+      if (data.length < pageSize) {
+        break;
+      }
     }
 
     return {
-      records: data || [],
-      total: count ?? recordCounts[email] ?? data?.length ?? 0,
+      records: all.slice(0, 100),
+      total,
     };
   }
 
@@ -548,7 +517,7 @@
             `,
           )
           .join("")
-      : emptyRow(4, `No sensor records linked to ${user.name} yet. Run seed_users.py to assign records.`);
+      : emptyRow(4, `No sensor records linked to ${user.name} yet. Run seed_database.py or seed_faith_paul_records.sql in Supabase.`);
   }
 
   function renderAlerts(alerts) {

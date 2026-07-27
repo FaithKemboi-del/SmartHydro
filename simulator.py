@@ -9,7 +9,10 @@ from postgrest.exceptions import APIError
 from supabase import create_client
 
 
-READ_INTERVAL_SECONDS = 5 * 60  # one reading every 5 minutes
+READ_INTERVAL_SECONDS = 10  # demo: one reading every 10 seconds (use 5 * 60 for normal)
+
+FAITH_EMAIL = "faithkemboi21@gmail.com"
+PAUL_EMAIL = "paulkevinkariuki@gmail.com"
 
 
 def clamp(value, minimum, maximum):
@@ -64,6 +67,7 @@ def main():
     ph = random.uniform(5.8, 6.2)
     temperature = random.uniform(20.0, 22.5)
     water_level = random.uniform(82.0, 96.0)
+    reading_index = 0
 
     print("Smart Hydro ESP32 simulator started. Press Ctrl+C to stop.")
 
@@ -76,10 +80,14 @@ def main():
             water_level = random.uniform(88.0, 96.0)
             print("Reservoir refill simulated; water level restored.")
 
+        user_email = FAITH_EMAIL if reading_index % 2 == 0 else PAUL_EMAIL
+        reading_index += 1
+
         reading = {
             "ph": round(ph, 2),
             "temperature": round(temperature, 2),
             "water_level": round(water_level, 2),
+            "user_email": user_email,
         }
 
         try:
@@ -98,6 +106,7 @@ def main():
 
         print(
             f"{datetime.now(timezone.utc).isoformat()} | "
+            f"{user_email} | "
             f"pH={inserted['ph']} | "
             f"temperature={inserted['temperature']}C | "
             f"water_level={inserted['water_level']}%"
