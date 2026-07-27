@@ -57,6 +57,10 @@ function randomBetween(min, max, decimals = 1) {
 }
 
 function classifyMetric(metric, value) {
+  if (window.SmartHydroMlBridge?.classifyMetric) {
+    return window.SmartHydroMlBridge.classifyMetric(metric, value);
+  }
+
   const ranges = {
     ph: {
       healthy: value >= 5.8 && value <= 6.5,
@@ -102,6 +106,10 @@ function classifyMetric(metric, value) {
 }
 
 function calculateAnomalyScore(readings) {
+  if (window.SmartHydroMlBridge?.calculateAnomalyScore) {
+    return window.SmartHydroMlBridge.calculateAnomalyScore(readings);
+  }
+
   const deviations = [
     Math.abs(readings.ph - 6.2) / 1.5,
     readings.water < 70 ? (70 - readings.water) / 70 : 0,
@@ -114,6 +122,10 @@ function calculateAnomalyScore(readings) {
 }
 
 function getOverallState(metricStates, anomalyScore) {
+  if (window.SmartHydroMlBridge?.getOverallState) {
+    return window.SmartHydroMlBridge.getOverallState(metricStates, anomalyScore);
+  }
+
   const levels = metricStates.map((state) => state.level);
 
   if (levels.includes("critical") || anomalyScore >= 0.72) {
@@ -516,9 +528,27 @@ window.SmartHydroDashboard = {
   weekStateFromReadings,
   classifyMetric,
   calculateAnomalyScore,
+  getMlBridge() {
+    return window.SmartHydroMlBridge || null;
+  },
 };
 
 startLiveMonitoringButton.addEventListener("click", startLiveMonitoring);
+
+(function showColabConnection() {
+  const note = document.querySelector("#ml-colab-connection");
+  if (!note) {
+    return;
+  }
+
+  if (window.SmartHydroMlBridge?.connectionSummary) {
+    note.textContent = window.SmartHydroMlBridge.connectionSummary();
+    return;
+  }
+
+  note.textContent =
+    "ML bridge missing. Add ml-colab-bridge.js from the Colab export so Detect Anomaly stays connected.";
+})();
 
 function formatPredictionText(forecast) {
   const { predicted, state } = forecast;

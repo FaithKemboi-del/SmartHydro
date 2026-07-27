@@ -1,6 +1,10 @@
 # Smart Hydro - Google Colab ML Notebook
 # Paste each "# CELL X" block into its own Colab cell, top to bottom.
 # This matches the dashboard AI logic: normal / warning / anomaly.
+#
+# Connection to VS Code / website:
+#   Train here → CELL 11b exports ml-colab-bridge.json →
+#   copy into ml-colab-bridge.js → script.js Detect Anomaly uses that bridge.
 
 # ============================================================
 # CELL 1 — Install libraries
@@ -239,6 +243,65 @@ plt.show()
 # import joblib
 # joblib.dump(model, "smart_hydro_anomaly_model.pkl")
 # print("Model saved as smart_hydro_anomaly_model.pkl")
+
+
+# ============================================================
+# CELL 11b — Export bridge for VS Code (connects Colab → website)
+# Run after Cells 7–10. Downloads ml-colab-bridge.json.
+# Copy the printed values into ml-colab-bridge.js in VS Code,
+# or replace the config block so Detect Anomaly uses Colab results.
+# ============================================================
+from datetime import datetime, timezone
+import json
+
+bridge_payload = {
+    "connected": True,
+    "source": "Google Colab",
+    "notebook": "smart_hydro_ml_colab.py",
+    "modelName": "RandomForestClassifier",
+    "modelParams": {
+        "n_estimators": 150,
+        "random_state": 42,
+        "class_weight": "balanced",
+    },
+    "features": ["ph", "temperature", "water_level", "ec"],
+    "labels": ["normal", "warning", "anomaly"],
+    "testAccuracy": float(accuracy),
+    "featureImportance": {
+        feature: float(importance[feature]) for feature in importance.index
+    },
+    "exportedAt": datetime.now(timezone.utc).isoformat(),
+    "thresholds": {
+        "ph": {"healthyMin": 5.8, "healthyMax": 6.5, "warningMin": 5.4, "warningMax": 6.9},
+        "water": {"healthyMin": 60, "warningMin": 40},
+        "temperature": {"healthyMin": 20, "healthyMax": 28, "warningMin": 18, "warningMax": 31},
+        "nutrient": {"healthyMin": 1.4, "healthyMax": 2.4, "warningMin": 1.0, "warningMax": 2.8},
+    },
+    "anomalyCenters": {
+        "ph": 6.2,
+        "phScale": 1.5,
+        "waterSoftFloor": 70,
+        "temperature": 24.5,
+        "temperatureScale": 10,
+        "nutrientLow": 1.8,
+        "nutrientHigh": 2.2,
+        "scoreMin": 0.03,
+        "scoreMax": 0.98,
+        "warningScore": 0.38,
+        "anomalyScore": 0.72,
+    },
+}
+
+with open("ml-colab-bridge.json", "w", encoding="utf-8") as handle:
+    json.dump(bridge_payload, handle, indent=2)
+
+print("Exported ml-colab-bridge.json for VS Code.")
+print("Connection path: Colab train → export JSON → ml-colab-bridge.js → script.js Detect Anomaly")
+print(json.dumps(bridge_payload, indent=2))
+
+# In Google Colab, also offer a browser download:
+# from google.colab import files
+# files.download("ml-colab-bridge.json")
 
 
 # ============================================================

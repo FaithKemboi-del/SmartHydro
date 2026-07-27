@@ -1,0 +1,59 @@
+{
+  "connected": true,
+  "source": "Google Colab",
+  "notebook": "smart_hydro_ml_colab.py",
+  "modelName": "RandomForestClassifier",
+  "modelParams": {
+    "n_estimators": 150,
+    "random_state": 42,
+    "class_weight": "balanced"
+  },
+  "features": ["ph", "temperature", "water_level", "ec"],
+  "labels": ["normal", "warning", "anomaly"],
+  "testAccuracy": 0.9967,
+  "featureImportance": {
+    "water_level": 0.3124,
+    "ph": 0.2681,
+    "temperature": 0.2215,
+    "ec": 0.198
+  },
+  "exportedAt": "2026-07-27T06:00:00.000Z",
+  "thresholds": {
+    "ph": {
+      "healthyMin": 5.8,
+      "healthyMax": 6.5,
+      "warningMin": 5.4,
+      "warningMax": 6.9
+    },
+    "water": {
+      "healthyMin": 60,
+      "warningMin": 40
+    },
+    "temperature": {
+      "healthyMin": 20,
+      "healthyMax": 28,
+      "warningMin": 18,
+      "warningMax": 31
+    },
+    "nutrient": {
+      "healthyMin": 1.4,
+      "healthyMax": 2.4,
+      "warningMin": 1.0,
+      "warningMax": 2.8
+    }
+  },
+  "anomalyCenters": {
+    "ph": 6.2,
+    "phScale": 1.5,
+    "waterSoftFloor": 70,
+    "temperature": 24.5,
+    "temperatureScale": 10,
+    "nutrientLow": 1.8,
+    "nutrientHigh": 2.2,
+    "scoreMin": 0.03,
+    "scoreMax": 0.98,
+    "warningScore": 0.38,
+    "anomalyScore": 0.72
+  },
+  "connectionPath": "Colab train → ml-colab-bridge.json → ml-colab-bridge.js → script.js Detect Anomaly"
+}
