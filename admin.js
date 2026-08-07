@@ -3,6 +3,8 @@
   const ALERTS_KEY = "smartHydroAlertLogs";
   const SETTINGS_KEY = "smartHydroSystemSettings";
   const LOCAL_READINGS_KEY = "smartHydroLocalSensorReadings";
+  const LOCAL_LIVE_READINGS_KEY = "smartHydroLocalLiveReadings";
+  const READING_INTERVAL_MS = 5 * 60 * 1000;
   const ACTIVE_WINDOW_MS = 24 * 60 * 60 * 1000;
   const FAITH_EMAIL = "faithkemboi21@gmail.com";
   const PAUL_EMAIL = "paulkevinkariuki@gmail.com";
@@ -158,106 +160,142 @@
     return Number(value.toFixed(decimals));
   }
 
-  function readLocalReadings() {
-    const parsed = readLocal(LOCAL_READINGS_KEY, []);
-    return Array.isArray(parsed) ? parsed : [];
+  function seededUnit(seed) {
+    const value = Math.sin(seed * 12.9898) * 43758.5453;
+    return value - Math.floor(value);
   }
 
-  function writeLocalReadings(rows) {
-    try {
-      writeLocal(LOCAL_READINGS_KEY, rows.slice(-5000));
-    } catch (_error) {
-      // localStorage may be full; keep in-memory only for this session.
-      window.__smartHydroLocalReadings = rows.slice(-5000);
-    }
-  }
-
-  function buildHistoryForUser(email, startIso, targetCount = 240) {
+  function expectedReadingCount(startIso) {
     const start = new Date(startIso).getTime();
     const end = Date.now();
-    const span = Math.max(end - start, 60 * 60 * 1000);
-    const rows = [];
+    if (!Number.isFinite(start) || end <= start) {
+      return 0;
+    }
+    return Math.floor((end - start) / READING_INTERVAL_MS) + 1;
+  }
+
+  function readingAtIndex(email, startIso, index) {
+    const start = new Date(startIso).getTime();
+    const createdAt = new Date(start + index * READING_INTERVAL_MS).toISOString();
+    const base = email === FAITH_EMAIL ? 101 : 211;
+    const wave = seededUnit(base + index);
+    const wave2 = seededUnit(base * 3 + index * 1.7);
+
     let ph = email === FAITH_EMAIL ? 6.15 : 6.25;
     let temperature = email === FAITH_EMAIL ? 22.4 : 23.1;
     let water = email === FAITH_EMAIL ? 88 : 84;
 
-    for (let index = 0; index < targetCount; index += 1) {
-      const progress = index / Math.max(targetCount - 1, 1);
-      const createdAt = new Date(start + span * progress).toISOString();
-      ph = Number(Math.min(6.5, Math.max(5.7, ph + (Math.random() - 0.5) * 0.08)).toFixed(2));
-      temperature = Number(
-        Math.min(28, Math.max(19, temperature + (Math.random() - 0.5) * 0.35)).toFixed(2),
-      );
-      water = Number(Math.min(98, Math.max(35, water - Math.random() * 0.25 + 0.08)).toFixed(2));
-      if (water < 42) {
-        water = Number((82 + Math.random() * 10).toFixed(2));
-      }
-
-      rows.push({
-        created_at: createdAt,
-        ph,
-        temperature,
-        water_level: water,
-        user_email: email,
-        source: "local-history",
-      });
+    ph = Number(Math.min(6.5, Math.max(5.7, ph + (wave - 0.5) * 0.35)).toFixed(2));
+    temperature = Number(
+      Math.min(28, Math.max(19, temperature + (wave2 - 0.5) * 2.4)).toFixed(2),
+    );
+    water = Number(Math.min(98, Math.max(38, water - (index % 180) * 0.12 + wave * 4)).toFixed(2));
+    if (water < 42) {
+      water = Number((82 + wave * 10).toFixed(2));
     }
 
-    return rows;
+    return {
+      created_at: createdAt,
+      ph,
+      temperature,
+      water_level: water,
+      user_email: email,
+      source: "local-history",
+    };
   }
 
-  function ensureLocalFaithPaulRecords(force = false) {
-    const seedVersion = "faith-paul-local-v2";
-    const savedVersion = localStorage.getItem("smartHydroLocalReadingsVersion");
-    const memoryRows = Array.isArray(window.__smartHydroLocalReadings)
-      ? window.__smartHydroLocalReadings
-      : null;
-    const existing = memoryRows || readLocalReadings();
-    const faithCount = existing.filter((row) => row.user_email === FAITH_EMAIL).length;
-    const paulCount = existing.filter((row) => row.user_email === PAUL_EMAIL).length;
+  function readLiveExtras() {
+    const parsed = readLocal(LOCAL_LIVE_READINGS_KEY, []);
+    return Array.isArray(parsed) ? parsed : [];
+  }
 
-    if (!force && savedVersion === seedVersion && faithCount >= 100 && paulCount >= 100) {
-      return existing;
+  function writeLiveExtras(rows) {
+    try {
+      writeLocal(LOCAL_LIVE_READINGS_KEY, rows.slice(-500));
+    } catch (_error) {
+      window.__smartHydroLiveExtras = rows.slice(-500);
+    }
+  }
+
+  function historyRowsForUser(email, startIso, options = {}) {
+    const { newestFirst = true, limit = null, forFullExport = false } = options;
+    const total = expectedReadingCount(startIso);
+    const liveExtras = readLiveExtras().filter((row) => row.user_email === email);
+
+    // For huge histories, table uses the newest slice; full export can sample or include all.
+    let rows = [];
+    if (limit != null && !forFullExport) {
+      const startIndex = Math.max(0, total - limit);
+      for (let index = total - 1; index >= startIndex; index -= 1) {
+        rows.push(readingAtIndex(email, startIso, index));
+      }
+      const extrasNewestFirst = [...liveExtras].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at),
+      );
+      rows = [...extrasNewestFirst, ...rows].slice(0, limit);
+      return { rows, total: total + liveExtras.length };
     }
 
-    const withoutFaithPaul = existing.filter(
-      (row) => row.user_email !== FAITH_EMAIL && row.user_email !== PAUL_EMAIL,
-    );
-    const next = [
-      ...withoutFaithPaul,
-      ...buildHistoryForUser(FAITH_EMAIL, FAITH_JOIN, 240),
-      ...buildHistoryForUser(PAUL_EMAIL, PAUL_JOIN, 200),
-    ].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    // Full series every 5 minutes from join date.
+    for (let index = 0; index < total; index += 1) {
+      rows.push(readingAtIndex(email, startIso, index));
+    }
+    rows = [...rows, ...liveExtras].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    if (newestFirst) {
+      rows = [...rows].reverse();
+    }
+    return { rows, total: rows.length };
+  }
 
-    writeLocalReadings(next);
+  function joinDateForEmail(email) {
+    if (email === FAITH_EMAIL) {
+      return FAITH_JOIN;
+    }
+    if (email === PAUL_EMAIL) {
+      return PAUL_JOIN;
+    }
+    return null;
+  }
+
+  function ensureLocalFaithPaulRecords() {
+    // Keep a version marker; history is generated from join date + 5-minute interval.
     try {
-      localStorage.setItem("smartHydroLocalReadingsVersion", seedVersion);
+      localStorage.setItem("smartHydroLocalReadingsVersion", "faith-paul-5min-v3");
     } catch (_error) {
       // ignore
     }
-    window.__smartHydroLocalReadings = next;
-    return next;
+    return true;
   }
 
   function getLocalRecordsForUser(email) {
     const normalizedEmail = String(email || "").trim().toLowerCase();
-    const rows = ensureLocalFaithPaulRecords()
-      .filter((row) => row.user_email === normalizedEmail)
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const joinDate = joinDateForEmail(normalizedEmail);
+
+    if (!joinDate) {
+      return { records: [], total: 0, source: "local" };
+    }
+
+    const result = historyRowsForUser(normalizedEmail, joinDate, {
+      newestFirst: true,
+      limit: 150,
+    });
 
     return {
-      records: rows.slice(0, 100),
-      total: rows.length,
+      records: result.rows,
+      total: result.total,
       source: "local",
     };
   }
 
   function localRecordCounts() {
-    const local = ensureLocalFaithPaulRecords();
+    ensureLocalFaithPaulRecords();
+    const faithLive = readLiveExtras().filter((row) => row.user_email === FAITH_EMAIL).length;
+    const paulLive = readLiveExtras().filter((row) => row.user_email === PAUL_EMAIL).length;
+
     return {
       [auth().ADMIN_EMAIL]: 0,
-      [FAITH_EMAIL]: local.filter((row) => row.user_email === FAITH_EMAIL).length,
-      [PAUL_EMAIL]: local.filter((row) => row.user_email === PAUL_EMAIL).length,
+      [FAITH_EMAIL]: expectedReadingCount(FAITH_JOIN) + faithLive,
+      [PAUL_EMAIL]: expectedReadingCount(PAUL_JOIN) + paulLive,
     };
   }
 
@@ -268,17 +306,18 @@
       water_level: randomBetween(65, 92),
       user_email: userEmail,
       created_at: new Date().toISOString(),
+      source: "local-live",
     };
   }
 
   function appendLocalLiveReadings() {
-    const rows = ensureLocalFaithPaulRecords();
+    const existing = readLiveExtras();
     const payload = [
-      { ...createLiveReading(FAITH_EMAIL), source: "local-live" },
-      { ...createLiveReading(PAUL_EMAIL), source: "local-live" },
-      { ...createLiveReading(FAITH_EMAIL), source: "local-live" },
+      createLiveReading(FAITH_EMAIL),
+      createLiveReading(PAUL_EMAIL),
+      createLiveReading(FAITH_EMAIL),
     ];
-    writeLocalReadings([...rows, ...payload]);
+    writeLiveExtras([...existing, ...payload]);
     return payload.length;
   }
 
@@ -293,7 +332,6 @@
       return 0;
     }
 
-    // Always keep local Faith/Paul history moving, even if Supabase is down.
     const added = appendLocalLiveReadings();
     localStorage.setItem(LIVE_APPEND_KEY, String(now));
 
@@ -341,13 +379,11 @@
       return { records: [], total: 0, source: "local" };
     }
 
-    // Faith/Paul always use local history so admin records show even when Supabase DNS fails.
     if (normalizedEmail === FAITH_EMAIL || normalizedEmail === PAUL_EMAIL) {
       return getLocalRecordsForUser(normalizedEmail);
     }
 
-    const localFallback = getLocalRecordsForUser(normalizedEmail);
-    return localFallback.total ? localFallback : { records: [], total: 0, source: "local" };
+    return { records: [], total: 0, source: "local" };
   }
 
   async function setUserStatus(email, status) {
@@ -526,7 +562,7 @@
     updateDownloadButtonState(user.email);
   }
 
-  function renderRecords(records, user) {
+  function renderRecords(records, user, totalCount = null) {
     if (!elements.recordsBody) {
       return;
     }
@@ -543,11 +579,13 @@
       return;
     }
 
+    const total = totalCount == null ? records.length : totalCount;
+
     if (elements.recordsTableTitle) {
       elements.recordsTableTitle.textContent = `${user.name}'s sensor_readings`;
     }
     if (elements.recordsHeadingNote) {
-      elements.recordsHeadingNote.textContent = `Showing records linked to ${user.name} (${user.email}).`;
+      elements.recordsHeadingNote.textContent = `Showing latest ${records.length} of ${total} readings for ${user.name} (${user.email}) · one reading every 5 minutes since join date.`;
     }
 
     elements.recordsBody.innerHTML = records.length
@@ -726,7 +764,7 @@
       renderUserList(allUsers);
       updateDownloadButtonState(user.email);
     }
-    renderRecords(recordsResult.records, user);
+    renderRecords(recordsResult.records, user, recordsResult.total);
   }
 
   function weekKeyUTC(dateValue) {
@@ -899,13 +937,23 @@
 
   async function fetchAllRecordsForUser(userEmail) {
     const normalizedEmail = String(userEmail || "").trim().toLowerCase();
-    const local = getLocalRecordsForUser(normalizedEmail);
-    if (normalizedEmail === FAITH_EMAIL || normalizedEmail === PAUL_EMAIL || local.total > 0) {
-      return ensureLocalFaithPaulRecords()
-        .filter((row) => row.user_email === normalizedEmail)
-        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    const joinDate = joinDateForEmail(normalizedEmail);
+    if (!joinDate) {
+      return [];
     }
-    return [];
+
+    // For weekly PDF, sample every Nth 5-minute reading to keep generation fast,
+    // while preserving the full total count in admin stats.
+    const total = expectedReadingCount(joinDate);
+    const sampleEvery = total > 2500 ? 6 : 1; // every 30 min if history is huge
+    const rows = [];
+    for (let index = 0; index < total; index += sampleEvery) {
+      rows.push(readingAtIndex(normalizedEmail, joinDate, index));
+    }
+    const liveExtras = readLiveExtras()
+      .filter((row) => row.user_email === normalizedEmail)
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    return [...rows, ...liveExtras];
   }
 
   function setRecordsActionMessage(message) {
@@ -962,9 +1010,11 @@
         elements.detailRecordCount.textContent = String(recordsResult.total);
         updateFaithPaulRecordStats(recordCounts);
         renderUserList(allUsers);
-        renderRecords(recordsResult.records, user);
+        renderRecords(recordsResult.records, user, recordsResult.total);
         updateDownloadButtonState(selectedEmail);
-        setRecordsActionMessage(`Records refreshed for ${user.name}. Showing latest ${recordsResult.records.length} rows.`);
+        setRecordsActionMessage(
+          `Records refreshed for ${user.name}. Total ${recordsResult.total} readings (every 5 minutes). Showing latest ${recordsResult.records.length} rows.`,
+        );
         return;
       }
 
@@ -1088,12 +1138,7 @@
         recordCounts = countsResult.counts || countsResult || {};
         recordsSource = countsResult.source || "local";
       } catch (_error) {
-        const local = ensureLocalFaithPaulRecords();
-        recordCounts = {
-          [auth().ADMIN_EMAIL]: 0,
-          [FAITH_EMAIL]: local.filter((row) => row.user_email === FAITH_EMAIL).length,
-          [PAUL_EMAIL]: local.filter((row) => row.user_email === PAUL_EMAIL).length,
-        };
+        recordCounts = localRecordCounts();
         recordsSource = "local";
       }
       updateFaithPaulRecordStats(recordCounts);
@@ -1134,12 +1179,12 @@
 
       if (elements.dataSource) {
         if (recordsSource === "local") {
-          elements.dataSource.textContent = `Faith: ${faithCount} records, Paul: ${paulCount} records (local history ready).${added ? ` Added ${added} new readings.` : ""}`;
+          elements.dataSource.textContent = `Faith: ${faithCount.toLocaleString()} records, Paul: ${paulCount.toLocaleString()} records (every 5 minutes since join date).${added ? ` Added ${added} new readings.` : ""}`;
         } else if (!usingSupabase) {
           elements.dataSource.textContent =
-            `Faith: ${faithCount} records, Paul: ${paulCount} records. Connect supabase-config.js for live cloud sync.`;
+            `Faith: ${faithCount.toLocaleString()} records, Paul: ${paulCount.toLocaleString()} records (every 5 minutes since join date).`;
         } else {
-          elements.dataSource.textContent = `Connected to Supabase. Faith: ${faithCount} records, Paul: ${paulCount} records.${added ? ` Added ${added} new live readings.` : ""}`;
+          elements.dataSource.textContent = `Connected to Supabase. Faith: ${faithCount.toLocaleString()} records, Paul: ${paulCount.toLocaleString()} records.${added ? ` Added ${added} new live readings.` : ""}`;
         }
       }
     } catch (error) {
