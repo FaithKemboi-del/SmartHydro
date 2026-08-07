@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile Overview | Smart Hydro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=brand-text-1" />
+    <script>
+      document.documentElement.classList.add("auth-pending");
+    </script>
+  </head>
+  <body class="profile-route-body">
+    <header class="site-header profile-site-header">
+      <nav class="nav profile-nav" aria-label="Profile navigation">
+        <a class="brand" href="index.html" aria-label="Smart Hydroponics home">
+          <span>
+            <strong>Smart Hydro</strong>
+            <small class="profile-brand-tag">Profile</small>
+          </span>
+        </a>
+        <div class="nav-links profile-nav-links" aria-label="Profile actions">
+          <a href="index.html">Dashboard</a>
+          <a href="admin.html">Admin Panel</a>
+          <button class="nav-action" id="sign-out-button" type="button">Sign Out</button>
+        </div>
+      </nav>
+    </header>
+
+    <main class="profile-page" id="top">
+      <nav class="profile-subnav" id="profile-subnav" aria-label="Profile sections"></nav>
+
+      <section class="profile-card profile-region-card">
+        <div class="profile-card-icon" aria-hidden="true">📍</div>
+        <div>
+          <span class="profile-card-label">Monitoring region</span>
+          <h1 id="profile-region">Loading region...</h1>
+          <p class="profile-region-note" id="profile-county-display"></p>
+        </div>
+      </section>
+
+      <div class="profile-hub-grid">
+        <a class="profile-hub-card" href="profile-account.html">
+          <span class="profile-card-icon-inline" aria-hidden="true">👤</span>
+          <div>
+            <span class="profile-card-label">My profile</span>
+            <h2>Edit your details</h2>
+            <p>Update your name, county, and monitoring region.</p>
+          </div>
+        </a>
+
+        <a class="profile-hub-card" href="profile-plants.html">
+          <span class="profile-card-icon-inline" aria-hidden="true">🌿</span>
+          <div>
+            <span class="profile-card-label">Active crops</span>
+            <h2>What you are monitoring</h2>
+            <p>View herbs, lettuce, and other crops assigned to your setup.</p>
+          </div>
+        </a>
+      </div>
+    </main>
+
+    <footer class="footer profile-footer">
+      <p>Copyright 2026</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      window.SMART_HYDRO_SUPABASE = window.SMART_HYDRO_SUPABASE || {};
+    </script>
+    <script src="supabase-config.js?v=profile-split"></script>
+    <script src="auth.js?v=profile-split"></script>
+    <script src="auth-guard.js"></script>
+    <script src="profile-shared.js?v=profile-split"></script>
+    <script src="profile-hub.js?v=profile-split"></script>
+  </body>
+</html>

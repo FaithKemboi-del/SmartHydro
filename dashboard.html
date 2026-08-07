@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en" class="auth-pending">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard | Smart Hydro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=brand-text-1" />
+  </head>
+  <body class="auth-route-body">
+    <main class="auth-page">
+      <section class="auth-card route-card" aria-live="polite">
+        <a class="brand auth-brand" href="sign-in.html" aria-label="Smart Hydro sign in">
+          <span>
+            <strong>Smart Hydro</strong>
+          </span>
+        </a>
+        <span class="eyebrow">Protected route</span>
+        <h1>Opening dashboard</h1>
+        <p>Checking admin access before loading the hydroponics dashboard.</p>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="auth-guard.js"></script>
+  </body>
+</html>

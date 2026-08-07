@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up | Smart Hydro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=brand-text-1" />
+  </head>
+  <body class="auth-route-body">
+    <main class="auth-page">
+      <section class="auth-card">
+        <a class="brand auth-brand" href="welcome.html" aria-label="Smart Hydro home">
+          <span>
+            <strong>Smart Hydro</strong>
+          </span>
+        </a>
+
+        <span class="eyebrow">Create account</span>
+        <h1>Sign up</h1>
+        <p>
+          Register today to get real-time sensor updates, smart alerts, and simple care tips for
+          your hydroponic system.
+        </p>
+
+        <form class="auth-form" id="sign-up-form">
+          <label for="email">
+            Email
+            <input id="email" name="email" type="email" autocomplete="email" required />
+          </label>
+
+          <label for="password">
+            Password
+            <input id="password" name="password" type="password" autocomplete="new-password" required />
+          </label>
+
+          <label for="confirm-password">
+            Confirm Password
+            <input
+              id="confirm-password"
+              name="confirm-password"
+              type="password"
+              autocomplete="new-password"
+              required
+            />
+          </label>
+
+          <button class="button button-primary auth-submit" id="sign-up-submit" type="submit">
+            Create Account
+          </button>
+
+          <p class="auth-message" id="auth-message" aria-live="polite"></p>
+        </form>
+
+        <p class="auth-switch">
+          Already have an account?
+          <a href="sign-in.html">Sign in</a>
+        </p>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="password-store.js"></script>
+    <script src="sign-up.js"></script>
+  </body>
+</html>

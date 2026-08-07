@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Profile | Smart Hydro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=brand-text-1" />
+    <script>
+      document.documentElement.classList.add("auth-pending");
+    </script>
+  </head>
+  <body class="profile-route-body">
+    <header class="site-header profile-site-header">
+      <nav class="nav profile-nav" aria-label="Profile navigation">
+        <a class="brand" href="index.html" aria-label="Smart Hydroponics home">
+          <span>
+            <strong>Smart Hydro</strong>
+            <small class="profile-brand-tag">Profile</small>
+          </span>
+        </a>
+        <div class="nav-links profile-nav-links" aria-label="Profile actions">
+          <a href="index.html">Dashboard</a>
+          <a href="admin.html">Admin Panel</a>
+          <button class="nav-action" id="sign-out-button" type="button">Sign Out</button>
+        </div>
+      </nav>
+    </header>
+
+    <main class="profile-page" id="top">
+      <nav class="profile-subnav" id="profile-subnav" aria-label="Profile sections"></nav>
+
+      <div class="profile-toast" id="profile-toast" role="status" aria-live="polite" hidden>
+        <span id="profile-toast-message">Profile updated successfully</span>
+        <button class="profile-toast-close" type="button" id="profile-toast-close" aria-label="Dismiss">
+          ×
+        </button>
+      </div>
+
+      <section class="profile-card profile-region-card">
+        <div class="profile-card-icon" aria-hidden="true">📍</div>
+        <div>
+          <span class="profile-card-label">Monitoring region</span>
+          <h1 id="profile-region">Loading region...</h1>
+          <p class="profile-region-note" id="profile-county-display"></p>
+        </div>
+      </section>
+
+      <section class="profile-card profile-edit-card">
+        <div class="profile-section-head">
+          <span class="profile-card-icon-inline" aria-hidden="true">👤</span>
+          <div>
+            <span class="profile-card-label">My profile</span>
+            <h2>Edit your details</h2>
+          </div>
+        </div>
+
+        <form class="profile-form" id="profile-form">
+          <label class="profile-field">
+            <span>Full name</span>
+            <input id="profile-name" name="fullName" type="text" autocomplete="name" required />
+          </label>
+
+          <label class="profile-field">
+            <span>County</span>
+            <input id="profile-county" name="county" type="text" autocomplete="address-level1" />
+          </label>
+
+          <label class="profile-field">
+            <span>Monitoring region</span>
+            <input
+              id="profile-region-input"
+              name="region"
+              type="text"
+              placeholder="e.g. Nairobi, Nairobi County, Kenya"
+            />
+          </label>
+
+          <p class="profile-email" id="profile-email">Loading email...</p>
+
+          <button class="button button-primary profile-submit" type="submit" id="profile-submit">
+            Update profile
+          </button>
+        </form>
+      </section>
+    </main>
+
+    <footer class="footer profile-footer">
+      <p>Copyright 2026</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      window.SMART_HYDRO_SUPABASE = window.SMART_HYDRO_SUPABASE || {};
+    </script>
+    <script src="supabase-config.js?v=profile-split"></script>
+    <script src="auth.js?v=profile-split"></script>
+    <script src="auth-guard.js"></script>
+    <script src="profile-shared.js?v=profile-split"></script>
+    <script src="profile-account.js?v=profile-split"></script>
+  </body>
+</html>

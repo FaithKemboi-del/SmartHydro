@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Hydroponics Monitoring and Anomaly Detection System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=brand-text-1" />
+    <script>
+      document.documentElement.classList.add("auth-pending");
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="nav" aria-label="Main navigation">
+        <a class="brand" href="#top" aria-label="Smart Hydroponics home">
+          <span>
+            <strong>Smart Hydro</strong>
+          </span>
+        </a>
+        <div class="nav-links" aria-label="Page sections">
+          <a href="#status">Live Status</a>
+          <a href="#ml-output">ML Output</a>
+          <a href="#alerts" class="nav-alert-link" id="nav-alerts-link">
+            <span class="nav-bell" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path
+                  d="M12 2a5 5 0 0 0-5 5v2.1c0 .9-.3 1.8-.9 2.5L4.4 14.2A1.8 1.8 0 0 0 6 17h12a1.8 1.8 0 0 0 1.6-2.8l-1.7-2.6a4 4 0 0 1-.9-2.5V7a5 5 0 0 0-5-5zm0 20a2.4 2.4 0 0 0 2.3-1.8H9.7A2.4 2.4 0 0 0 12 22z"
+                />
+              </svg>
+            </span>
+            <span>Alerts</span>
+            <span class="nav-alert-badge" id="nav-alert-badge" hidden>0</span>
+          </a>
+          <a href="#ask-query">Ask a query</a>
+          <a href="profile.html">Profile</a>
+          <a href="admin.html">Admin Panel</a>
+          <button class="nav-action" id="sign-out-button" type="button">Sign Out</button>
+        </div>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero section-shell">
+        <div class="hero-heading">
+          <span class="eyebrow">Smart Hydroponics System</span>
+          <h1>Smart Hydroponics Monitoring and Anomaly Detection System</h1>
+        </div>
+
+        <div class="hero-copy">
+          <p>
+            An IoT and Machine Learning-based system for monitoring hydroponic environments and
+            detecting abnormal plant conditions in real time.
+          </p>
+          <div class="hero-actions" aria-label="Primary actions">
+            <a class="button button-primary button-wide" href="#status">View Live Status</a>
+            <a class="button button-secondary button-wide" href="#ml-output">Analyze System Data</a>
+          </div>
+        </div>
+
+        <div class="hero-visual" aria-label="Smart Hydro project photos">
+          <div class="sensor-node sensor-node-left">
+            <span class="icon">pH</span>
+            <strong>6.3</strong>
+            <small>Balanced</small>
+          </div>
+          <div class="sensor-node sensor-node-right">
+            <span class="icon">EC</span>
+            <strong>1.8</strong>
+            <small>mS/cm</small>
+          </div>
+          <div class="hero-media-stack">
+            <div class="photo-showcase">
+              <figure class="project-photo project-photo-large">
+                <img
+                  src="assets/hydroponics-tray.jpg"
+                  alt="Hydroponic plant tray prototype with multiple seedlings"
+                />
+                <figcaption>Prototype plant tray</figcaption>
+              </figure>
+              <figure class="project-photo project-photo-small">
+                <img
+                  src="assets/hydroponics-buckets.jpg"
+                  alt="Hydroponic bucket system with pepper plants"
+                />
+                <figcaption>Bucket hydroponic system</figcaption>
+              </figure>
+            </div>
+            <article class="model-review-card">
+              <span class="eyebrow">Past 5 Days</span>
+              <h3>Model review and next-day prediction</h3>
+              <ul>
+                <li>Day 1-2: stable pH and water level.</li>
+                <li>Day 3-4: nutrient level slowly declined.</li>
+                <li>Day 5: model predicts warning risk for tomorrow.</li>
+              </ul>
+              <p>Notification: add nutrient solution today to prevent plant stress.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="status" class="section-shell">
+        <div class="section-heading">
+          <span class="eyebrow">Live System Status</span>
+          <h2>Real-time hydroponic environment dashboard</h2>
+          <p>
+            Sensor data is organized into an academic dashboard layout to demonstrate plant health,
+            water availability, and nutrient balance.
+          </p>
+        </div>
+
+        <div class="status-layout">
+          <article class="status-card overall-health">
+            <figure class="dashboard-photo">
+              <img
+                src="assets/hydroponics-buckets.jpg"
+                alt="Bucket hydroponic system with healthy pepper plants"
+              />
+            </figure>
+            <div class="health-summary-panel">
+              <div class="card-topline">
+                <span class="status-icon healthy" id="overall-health-dot"></span>
+                <span>Overall Plant Health</span>
+              </div>
+              <strong id="overall-health">Healthy</strong>
+              <p id="system-summary">
+                AI summary: Conditions are stable. pH, water level, temperature, and nutrient values
+                are within recommended hydroponic operating ranges.
+              </p>
+            </div>
+          </article>
+
+          <div class="metric-grid" aria-label="Current sensor readings">
+            <article class="metric-card" data-metric="ph">
+              <div>
+                <span class="metric-icon">pH</span>
+                <span class="metric-label">pH Level</span>
+              </div>
+              <strong id="ph-value">6.3</strong>
+              <span class="trend-indicator steady" id="ph-trend">Stable</span>
+              <span class="metric-status healthy" id="ph-status">Optimal</span>
+              <div class="progress-track" aria-label="pH level progress">
+                <span id="ph-progress" style="width: 72%"></span>
+              </div>
+            </article>
+
+            <article class="metric-card" data-metric="water">
+              <div>
+                <span class="metric-icon">💧</span>
+                <span class="metric-label">Water Level</span>
+              </div>
+              <strong><span id="water-value">78</span>%</strong>
+              <span class="trend-indicator steady" id="water-trend">Stable</span>
+              <span class="metric-status healthy" id="water-status">Sufficient</span>
+              <div class="progress-track" aria-label="Water level progress">
+                <span id="water-progress" style="width: 78%"></span>
+              </div>
+            </article>
+
+            <article class="metric-card" data-metric="temperature">
+              <div>
+                <span class="metric-icon">°C</span>
+                <span class="metric-label">Temperature</span>
+              </div>
+              <strong><span id="temperature-value">24.6</span>°C</strong>
+              <span class="trend-indicator steady" id="temperature-trend">Stable</span>
+              <span class="metric-status healthy" id="temperature-status">Stable</span>
+              <div class="progress-track" aria-label="Temperature progress">
+                <span id="temperature-progress" style="width: 61%"></span>
+              </div>
+            </article>
+
+            <article class="metric-card" data-metric="nutrient">
+              <div>
+                <span class="metric-icon">EC</span>
+                <span class="metric-label">Nutrient Level</span>
+              </div>
+              <strong><span id="nutrient-value">1.8</span> EC</strong>
+              <span class="trend-indicator steady" id="nutrient-trend">Stable</span>
+              <span class="metric-status healthy" id="nutrient-status">Balanced</span>
+              <div class="progress-track" aria-label="Nutrient level progress">
+                <span id="nutrient-progress" style="width: 68%"></span>
+              </div>
+            </article>
+            <div class="monitoring-control-card">
+              <div>
+                <span class="eyebrow">Live monitoring</span>
+                <h3>Start real-time sensor tracking</h3>
+                <p id="monitoring-state">
+                  Click start to simulate live readings. Values will fluctuate slightly, then stabilize after one minute.
+                </p>
+              </div>
+              <button class="button button-primary" id="start-live-monitoring" type="button">
+                Start Live Monitoring
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="remedy-panel" aria-label="Suggested dashboard remedies">
+          <article>
+            <strong>Temperature:</strong> Move to shade when hot; move to light when cold.
+          </article>
+          <article>
+            <strong>Nutrients:</strong> Add nutrient solution when EC is low; dilute when EC is high.
+          </article>
+          <article>
+            <strong>Water:</strong> Add water when low; reduce flow or inspect drainage when high.
+          </article>
+          <article>
+            <strong>pH:</strong> Add pH Up when low; add pH Down when high.
+          </article>
+        </div>
+      </section>
+
+      <section id="ml-output" class="section-shell">
+        <div class="section-heading">
+          <span class="eyebrow">AI Prediction / ML Output</span>
+          <h2>Machine learning anomaly classification</h2>
+          <p>
+            The model learns from system readings and predicts the condition one day ahead, so the
+            user can act early or confirm that the hydroponic environment is okay.
+          </p>
+        </div>
+
+        <div class="ml-layout">
+          <figure class="ml-photo">
+            <img
+              src="assets/hydroponics-buckets.jpg"
+              alt="Bucket hydroponic system with healthy pepper plants"
+            />
+            <figcaption>Bucket hydroponic system</figcaption>
+          </figure>
+
+          <div class="ml-detection-panel">
+            <div class="score-ring" aria-label="Anomaly score">
+              <span id="anomaly-score">0.18</span>
+              <small>Anomaly Score</small>
+            </div>
+            <button class="button button-primary" type="button" id="ml-detect-anomaly">
+              Detect Anomaly
+            </button>
+          </div>
+
+          <article class="ml-result-panel" id="ml-result-panel">
+            <span class="eyebrow">Detection Result</span>
+            <h3>Tomorrow's system forecast</h3>
+            <p id="next-day-prediction">
+              Click Detect Anomaly to read recent sensor data and predict tomorrow's plant
+              condition.
+            </p>
+            <p class="model-note" id="next-day-remedy">
+              Simple care tips will appear here after detection.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="readings" class="section-shell">
+        <div class="section-heading">
+          <span class="eyebrow">Detailed Sensor Readings</span>
+          <h2>Readable time-series data</h2>
+          <p>
+            A simple table and bar-style trend chart show recent pH history, temperature trend,
+            water level changes, and nutrient fluctuations.
+          </p>
+        </div>
+
+        <div class="readings-layout" id="readings-trends-panel">
+          <div class="trend-card">
+            <h3>Recent sensor trends</h3>
+            <div class="mini-chart" aria-label="Simple trend chart">
+              <div class="trend-bar" id="trend-bar-ph" style="--height: 40%"><span>pH</span></div>
+              <div class="trend-bar" id="trend-bar-temp" style="--height: 55%"><span>Temp</span></div>
+              <div class="trend-bar" id="trend-bar-water" style="--height: 62%"><span>Water</span></div>
+              <div class="trend-bar" id="trend-bar-ec" style="--height: 50%"><span>EC</span></div>
+              <div class="trend-bar warning-bar" id="trend-bar-ec-drop" style="--height: 38%">
+                <span>EC drop</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-card">
+            <table>
+              <caption>
+                Last five sensor samples
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Time</th>
+                  <th scope="col">pH</th>
+                  <th scope="col">Temp</th>
+                  <th scope="col">Water</th>
+                  <th scope="col">EC</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody id="sensor-samples-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="weekly-report-shell" id="weekly-report">
+          <div class="section-heading weekly-report-heading">
+            <span class="eyebrow">Weekly Report</span>
+            <h2>Your last 2 weeks and next-week outlook</h2>
+            <p id="weekly-report-intro">
+              Review weekly averages, see what the model predicted, and get simple care steps for the
+              coming week.
+            </p>
+          </div>
+
+          <div class="weekly-report-actions">
+            <button class="button button-primary" type="button" id="generate-weekly-report">
+              Generate weekly report
+            </button>
+            <p class="weekly-report-status" id="weekly-report-status" aria-live="polite"></p>
+          </div>
+
+          <div class="weekly-report-grid" id="weekly-report-grid">
+            <article class="weekly-report-card">
+              <span class="eyebrow">Loading</span>
+              <h3>Preparing your report...</h3>
+              <p>Fetching your sensor history and weekly predictions.</p>
+            </article>
+          </div>
+
+          <article class="weekly-report-next card-surface" id="weekly-report-next">
+            <span class="eyebrow">Next week</span>
+            <h3>What to expect next week</h3>
+            <p id="weekly-next-prediction">Loading next-week prediction...</p>
+            <p class="model-note" id="weekly-next-actions">What to do before next week will appear here.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="alerts" class="section-shell alerts-section">
+        <div class="section-heading">
+          <span class="eyebrow">Alert System</span>
+          <h2>Actionable warnings and suggested responses</h2>
+          <p class="alerts-section-note" id="alerts-section-note" hidden>
+            Active alerts need your attention.
+          </p>
+        </div>
+
+        <div class="alerts-subsection">
+          <h3 class="alerts-subsection-title">Recent warnings</h3>
+          <div class="alerts-grid" id="alerts-grid-recent">
+            <article class="alert-card alert-card-empty">
+              <div>
+                <span class="severity">Info</span>
+                <h3>Loading recent alerts...</h3>
+              </div>
+              <p>Checking for warnings that still need action.</p>
+            </article>
+          </div>
+        </div>
+
+        <div class="alerts-subsection alerts-subsection-closed">
+          <h3 class="alerts-subsection-title">Closed warnings</h3>
+          <p class="alerts-subsection-copy">
+            Older warnings stay here once an action has been taken.
+          </p>
+          <div class="alerts-grid" id="alerts-grid-closed">
+            <article class="alert-card alert-card-empty">
+              <div>
+                <span class="severity">Info</span>
+                <h3>Loading closed alerts...</h3>
+              </div>
+              <p>Resolved warnings will appear here.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="workflow" class="section-shell workflow-section-compact">
+        <div class="section-heading">
+          <span class="eyebrow">How It Works</span>
+          <h2>Four-step IoT and machine learning workflow</h2>
+          <p>
+            New here? A quick guided tour walks you through sensor collection, transmission, ML
+            analysis, and alerts. It appears automatically on your first three sign-ins.
+          </p>
+        </div>
+
+        <div class="workflow-replay-card">
+          <span class="workflow-icon" aria-hidden="true">🌱</span>
+          <div>
+            <h3>Replay the guided tour</h3>
+            <p>Step through the four parts of the Smart Hydro system anytime.</p>
+          </div>
+          <button class="button button-secondary" type="button" id="replay-onboarding-tour">
+            Start tour
+          </button>
+        </div>
+      </section>
+
+      <section id="ask-query" class="section-shell query-section">
+        <div class="section-heading">
+          <span class="eyebrow">Support</span>
+          <h2>Submit a query</h2>
+          <p>
+            Ask the admin about sensor readings, alerts, or system setup. Replies show up here once
+            an admin responds.
+          </p>
+        </div>
+
+        <div class="admin-panel query-submit-panel">
+          <form class="user-query-form" id="user-query-form">
+            <textarea
+              id="query-message"
+              name="message"
+              rows="4"
+              maxlength="1000"
+              placeholder="Type your question here..."
+              aria-label="Query"
+              required
+            ></textarea>
+
+            <div class="user-query-actions">
+              <button class="button button-primary" type="submit" id="query-submit">
+                Send query
+              </button>
+              <p class="admin-status-note" id="query-status-note" aria-live="polite"></p>
+            </div>
+          </form>
+        </div>
+
+        <div class="section-heading query-history-heading">
+          <h3>Your queries</h3>
+          <p>Track open questions and admin replies.</p>
+        </div>
+        <div class="user-query-list" id="user-query-list"></div>
+      </section>
+
+    </main>
+
+    <div class="onboarding-overlay" id="onboarding-overlay" hidden>
+      <div
+        class="onboarding-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="onboarding-title"
+        aria-describedby="onboarding-copy"
+      >
+        <div class="onboarding-top">
+          <span class="eyebrow" id="onboarding-eyebrow">How it works</span>
+          <p class="onboarding-progress" id="onboarding-progress" aria-live="polite">Step 1 of 4</p>
+        </div>
+
+        <div class="onboarding-step" id="onboarding-step">
+          <span class="workflow-icon onboarding-icon" id="onboarding-icon" aria-hidden="true">🌱</span>
+          <h2 id="onboarding-title">1. Sensor collection</h2>
+          <p id="onboarding-copy">
+            IoT sensors collect pH, temperature, water level, and EC nutrient data.
+          </p>
+        </div>
+
+        <div class="onboarding-actions">
+          <button class="button button-ghost onboarding-skip" type="button" id="onboarding-skip">
+            Skip for now
+          </button>
+          <button class="button button-primary" type="button" id="onboarding-next">Next</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>Copyright 2026</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+    <script>
+      window.SMART_HYDRO_SUPABASE = window.SMART_HYDRO_SUPABASE || {};
+    </script>
+    <script src="supabase-config.js"></script>
+    <script src="auth.js"></script>
+    <script src="auth-guard.js"></script>
+    <!--
+      ML Colab bridge (code-only connection, not shown in UI):
+      Google Colab (smart_hydro_ml_colab.py) → ml-colab-bridge.js → Detect Anomaly in script.js
+      via window.SmartHydroMlBridge (classifyMetric / calculateAnomalyScore / getOverallState).
+    -->
+    <script src="ml-colab-bridge.js"></script>
+    <script src="script.js"></script>
+    <script src="live-data.js"></script>
+    <script src="readings-trends.js"></script>
+    <script src="alerts-panel.js"></script>
+    <script src="onboarding-tour.js"></script>
+    <script src="weekly-report.js?v=weekly-local-2"></script>
+    <script src="queries-store.js"></script>
+    <script src="user-queries.js"></script>
+  </body>
+</html>

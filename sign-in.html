@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In | Smart Hydro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=brand-text-1" />
+  </head>
+  <body class="auth-route-body">
+    <main class="auth-page">
+      <section class="auth-card">
+        <a class="brand auth-brand" href="welcome.html" aria-label="Smart Hydro home">
+          <span>
+            <strong>Smart Hydro</strong>
+          </span>
+        </a>
+
+        <span class="eyebrow" id="sign-in-eyebrow">User access</span>
+        <h1 id="sign-in-title">Sign in</h1>
+        <p id="sign-in-description">
+          Sign in to open the hydroponics monitoring dashboard and review live sensor data.
+        </p>
+
+        <form class="auth-form" id="sign-in-form">
+          <label for="email">
+            Email
+            <input id="email" name="email" type="email" autocomplete="email" required />
+          </label>
+
+          <label for="password">
+            Password
+            <input id="password" name="password" type="password" autocomplete="current-password" required />
+          </label>
+
+          <button class="button button-primary auth-submit" id="sign-in-submit" type="submit">
+            Sign In
+          </button>
+
+          <p class="auth-message" id="auth-message" aria-live="polite"></p>
+        </form>
+
+        <p class="auth-switch">
+          Need an account?
+          <a href="sign-up.html">Create one</a>
+        </p>
+
+        <div class="auth-admin-footer">
+          <button class="button button-ghost auth-admin-toggle" id="admin-login-toggle" type="button">
+            Login as admin
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="auth.js?v=paul-active-1"></script>
+    <script src="password-store.js?v=awuor-login-3"></script>
+    <script src="sign-in.js?v=awuor-login-3"></script>
+  </body>
+</html>
