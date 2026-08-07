@@ -145,6 +145,12 @@
         role: "user",
         password: "chep2005..",
       },
+      {
+        email: auth?.AWUOR_EMAIL || "awuor053@gmail.com",
+        name: "Awuor",
+        role: "user",
+        password: auth?.AWUOR_PASSWORD || "lavender2026",
+      },
     ];
 
     for (const user of defaults) {

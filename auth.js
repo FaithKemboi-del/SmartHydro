@@ -2,11 +2,18 @@
   const ADMIN_EMAIL = "fyugalbox21@gmail.com";
   const ADMIN_PASSWORD = "chep2005..";
   const FAITH_EMAIL = "faithkemboi21@gmail.com";
+  const AWUOR_EMAIL = "awuor053@gmail.com";
   const USER_OVERRIDE_PASSWORD = "chep2005..";
+  const AWUOR_PASSWORD = "lavender2026";
   const ADMIN_SESSION_KEY = "smartHydroAdminSession";
   const USER_SESSION_KEY = "smartHydroUserSession";
   const AUTH_RETURN_KEY = "smartHydroReturnTo";
   const USER_PROFILES_KEY = "smartHydroUserProfiles";
+
+  const USER_LOGIN_OVERRIDES = {
+    [FAITH_EMAIL]: USER_OVERRIDE_PASSWORD,
+    [AWUOR_EMAIL]: AWUOR_PASSWORD,
+  };
 
   const DEFAULT_PROFILES = {
     "faithkemboi21@gmail.com": {
@@ -20,6 +27,12 @@
       county: "Nairobi County",
       region: "Nairobi, Kenya",
       plants: [{ group: "Plants", name: "Lettuce" }],
+    },
+    "awuor053@gmail.com": {
+      fullName: "Awuor",
+      county: "Kisumu County",
+      region: "Kisumu, Kenya",
+      plants: [{ group: "Plants", name: "Spinach" }],
     },
     "fyugalbox21@gmail.com": {
       fullName: "Admin",
@@ -52,6 +65,14 @@
       role: "user",
       status: "inactive",
       created_at: "2026-06-28T14:40:00.000Z",
+      last_seen: null,
+    },
+    {
+      email: "awuor053@gmail.com",
+      name: "Awuor",
+      role: "user",
+      status: "active",
+      created_at: "2026-08-07T10:00:00.000Z",
       last_seen: null,
     },
   ];
@@ -431,10 +452,9 @@
   }
 
   function isUserOverride(email, password) {
-    return (
-      normalizeAuthEmail(email) === FAITH_EMAIL &&
-      normalizeAuthPassword(password) === USER_OVERRIDE_PASSWORD
-    );
+    const normalizedEmail = normalizeAuthEmail(email);
+    const expectedPassword = USER_LOGIN_OVERRIDES[normalizedEmail];
+    return Boolean(expectedPassword) && normalizeAuthPassword(password) === expectedPassword;
   }
 
   function completeUserOverrideLogin(email) {
@@ -591,7 +611,10 @@
     ADMIN_EMAIL,
     ADMIN_PASSWORD,
     FAITH_EMAIL,
+    AWUOR_EMAIL,
     USER_OVERRIDE_PASSWORD,
+    AWUOR_PASSWORD,
+    USER_LOGIN_OVERRIDES,
     DEFAULT_USERS,
     EXTRA_DEMO_USERS,
     ADMIN_SESSION_KEY,
