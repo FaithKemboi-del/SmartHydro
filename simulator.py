@@ -55,6 +55,19 @@ def create_supabase_client():
     if not supabase_url or not supabase_key:
         raise RuntimeError("SUPABASE_URL and SUPABASE_KEY must be set in .env")
 
+    if (
+        "your-project-ref" in supabase_url
+        or "your-supabase" in supabase_key
+        or "example" in supabase_url
+    ):
+        raise RuntimeError(
+            "Your .env still has placeholder Supabase values.\n"
+            "Open Supabase → Project Settings → API and put the real Project URL and anon/service_role key into .env.\n"
+            "Example:\n"
+            "  SUPABASE_URL=https://abcdefghijk.supabase.co\n"
+            "  SUPABASE_KEY=eyJhbGciOi..."
+        )
+
     supabase_url = normalize_supabase_url(supabase_url)
     supabase_key = supabase_key.strip().removeprefix("Bearer ").strip()
 
@@ -62,7 +75,16 @@ def create_supabase_client():
 
 
 def main():
-    supabase = create_supabase_client()
+    try:
+        supabase = create_supabase_client()
+    except Exception as error:
+        print("\nCould not start the simulator.")
+        print(str(error))
+        print("\nAlso check:")
+        print("1. Internet connection is on")
+        print("2. .env is inside C:\\Users\\Faith\\Desktop\\SmartHydro\\.env")
+        print("3. SUPABASE_URL is the Project URL (ends with .supabase.co), not the dashboard link")
+        raise SystemExit(1) from error
 
     ph = random.uniform(5.8, 6.2)
     temperature = random.uniform(20.0, 22.5)
@@ -98,8 +120,16 @@ def main():
             print("1. SUPABASE_URL is exactly https://your-project-ref.supabase.co")
             print("2. SUPABASE_URL does not include /rest/v1 or a dashboard path")
             print("3. SUPABASE_KEY is your anon public key or service_role key")
-            print("4. The SQL in supabase_schema.sql has been run successfully")
+            print("4. The SQL in fix_rls.sql / supabase_schema.sql has been run successfully")
             print(f"Supabase error: {error}")
+            raise SystemExit(1) from error
+        except Exception as error:
+            message = str(error)
+            print("\nCould not reach Supabase.")
+            if "getaddrinfo" in message or "ConnectError" in message or "Name or service" in message:
+                print("DNS/network failed. Your SUPABASE_URL is wrong or not reachable.")
+                print("Fix .env with the real Project URL from Supabase → Project Settings → API.")
+            print(f"Error: {error}")
             raise SystemExit(1) from error
 
         inserted = response.data[0] if response.data else reading
