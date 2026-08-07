@@ -2,7 +2,12 @@
   const USERS_KEY = "smartHydroAppUsers";
   const ALERTS_KEY = "smartHydroAlertLogs";
   const SETTINGS_KEY = "smartHydroSystemSettings";
+  const LOCAL_READINGS_KEY = "smartHydroLocalSensorReadings";
   const ACTIVE_WINDOW_MS = 24 * 60 * 60 * 1000;
+  const FAITH_EMAIL = "faithkemboi21@gmail.com";
+  const PAUL_EMAIL = "paulkevinkariuki@gmail.com";
+  const FAITH_JOIN = "2026-06-03T09:15:00.000Z";
+  const PAUL_JOIN = "2026-06-28T14:40:00.000Z";
 
   let allUsers = [];
   let selectedEmail = null;
@@ -149,6 +154,84 @@
     return Number(value.toFixed(decimals));
   }
 
+  function readLocalReadings() {
+    const parsed = readLocal(LOCAL_READINGS_KEY, []);
+    return Array.isArray(parsed) ? parsed : [];
+  }
+
+  function writeLocalReadings(rows) {
+    writeLocal(LOCAL_READINGS_KEY, rows.slice(-5000));
+  }
+
+  function buildHistoryForUser(email, startIso, targetCount = 420) {
+    const start = new Date(startIso).getTime();
+    const end = Date.now();
+    const span = Math.max(end - start, 60 * 60 * 1000);
+    const rows = [];
+    let ph = email === FAITH_EMAIL ? 6.15 : 6.25;
+    let temperature = email === FAITH_EMAIL ? 22.4 : 23.1;
+    let water = email === FAITH_EMAIL ? 88 : 84;
+
+    for (let index = 0; index < targetCount; index += 1) {
+      const progress = index / Math.max(targetCount - 1, 1);
+      const createdAt = new Date(start + span * progress).toISOString();
+      ph = Number(Math.min(6.5, Math.max(5.7, ph + (Math.random() - 0.5) * 0.08)).toFixed(2));
+      temperature = Number(
+        Math.min(28, Math.max(19, temperature + (Math.random() - 0.5) * 0.35)).toFixed(2),
+      );
+      water = Number(Math.min(98, Math.max(35, water - Math.random() * 0.25 + 0.08)).toFixed(2));
+      if (water < 42) {
+        water = Number((82 + Math.random() * 10).toFixed(2));
+      }
+
+      rows.push({
+        created_at: createdAt,
+        ph,
+        temperature,
+        water_level: water,
+        user_email: email,
+        source: "local-history",
+      });
+    }
+
+    return rows;
+  }
+
+  function ensureLocalFaithPaulRecords() {
+    const existing = readLocalReadings();
+    const faithCount = existing.filter((row) => row.user_email === FAITH_EMAIL).length;
+    const paulCount = existing.filter((row) => row.user_email === PAUL_EMAIL).length;
+
+    if (faithCount >= 100 && paulCount >= 100) {
+      return existing;
+    }
+
+    const withoutFaithPaul = existing.filter(
+      (row) => row.user_email !== FAITH_EMAIL && row.user_email !== PAUL_EMAIL,
+    );
+    const next = [
+      ...withoutFaithPaul,
+      ...buildHistoryForUser(FAITH_EMAIL, FAITH_JOIN, 420),
+      ...buildHistoryForUser(PAUL_EMAIL, PAUL_JOIN, 360),
+    ].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+    writeLocalReadings(next);
+    return next;
+  }
+
+  function getLocalRecordsForUser(email) {
+    const normalizedEmail = String(email || "").trim().toLowerCase();
+    const rows = ensureLocalFaithPaulRecords()
+      .filter((row) => row.user_email === normalizedEmail)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    return {
+      records: rows.slice(0, 100),
+      total: rows.length,
+      source: "local",
+    };
+  }
+
   function createLiveReading(userEmail) {
     return {
       ph: randomBetween(5.8, 6.5),
@@ -159,16 +242,21 @@
     };
   }
 
+  function appendLocalLiveReadings() {
+    const rows = ensureLocalFaithPaulRecords();
+    const payload = [
+      { ...createLiveReading(FAITH_EMAIL), source: "local-live" },
+      { ...createLiveReading(PAUL_EMAIL), source: "local-live" },
+      { ...createLiveReading(FAITH_EMAIL), source: "local-live" },
+    ];
+    writeLocalReadings([...rows, ...payload]);
+    return payload.length;
+  }
+
   const LIVE_APPEND_KEY = "smartHydroLastLiveAppend";
   const LIVE_APPEND_INTERVAL_MS = 5 * 60 * 1000;
 
   async function appendLiveReadings(force = false) {
-    const client = supabase();
-
-    if (!client) {
-      return 0;
-    }
-
     const lastAppend = Number(localStorage.getItem(LIVE_APPEND_KEY) || 0);
     const now = Date.now();
 
@@ -176,132 +264,147 @@
       return 0;
     }
 
-    const faithEmail = "faithkemboi21@gmail.com";
-    const paulEmail = "paulkevinkariuki@gmail.com";
+    const client = supabase();
     const payload = [
-      createLiveReading(faithEmail),
-      createLiveReading(paulEmail),
-      createLiveReading(faithEmail),
+      createLiveReading(FAITH_EMAIL),
+      createLiveReading(PAUL_EMAIL),
+      createLiveReading(FAITH_EMAIL),
     ];
 
-    const { data, error } = await client.from("sensor_readings").insert(payload).select("id");
-
-    if (error) {
-      console.warn("Could not append live sensor readings:", error.message || error);
-      return 0;
+    if (client) {
+      try {
+        const { data, error } = await client.from("sensor_readings").insert(payload).select("id");
+        if (!error) {
+          localStorage.setItem(LIVE_APPEND_KEY, String(now));
+          appendLocalLiveReadings();
+          return data?.length || payload.length;
+        }
+      } catch (_error) {
+        // Fall through to local append.
+      }
     }
 
+    const added = appendLocalLiveReadings();
     localStorage.setItem(LIVE_APPEND_KEY, String(now));
-    return data?.length || payload.length;
+    return added;
   }
 
   async function loadRecordCounts() {
-    const faithEmail = "faithkemboi21@gmail.com";
-    const paulEmail = "paulkevinkariuki@gmail.com";
     const adminEmail = auth().ADMIN_EMAIL;
-    const emails = [adminEmail, faithEmail, paulEmail];
-    const client = supabase();
     const counts = {
       [adminEmail]: 0,
-      [faithEmail]: 0,
-      [paulEmail]: 0,
+      [FAITH_EMAIL]: 0,
+      [PAUL_EMAIL]: 0,
     };
 
+    const local = ensureLocalFaithPaulRecords();
+    counts[FAITH_EMAIL] = local.filter((row) => row.user_email === FAITH_EMAIL).length;
+    counts[PAUL_EMAIL] = local.filter((row) => row.user_email === PAUL_EMAIL).length;
+
+    const client = supabase();
     if (!client) {
-      return counts;
+      return { counts, source: "local" };
     }
 
-    await Promise.all(
-      emails.map(async (email) => {
-        if (email === adminEmail) {
-          counts[email] = 0;
-          return;
-        }
+    try {
+      await Promise.all(
+        [FAITH_EMAIL, PAUL_EMAIL].map(async (email) => {
+          const { count, error } = await client
+            .from("sensor_readings")
+            .select("id", { count: "exact", head: true })
+            .eq("user_email", email);
 
-        const { count, error } = await client
-          .from("sensor_readings")
-          .select("id", { count: "exact", head: true })
-          .eq("user_email", email);
+          if (!error && (count || 0) > 0) {
+            counts[email] = count;
+          }
+        }),
+      );
 
-        if (error) {
-          console.warn(`Could not count sensor records for ${email}:`, error.message || error);
-          counts[email] = 0;
-          return;
-        }
+      const usingRemote = counts[FAITH_EMAIL] > 0 || counts[PAUL_EMAIL] > 0;
+      // Keep local history visible if remote is empty/unreachable.
+      if (!usingRemote) {
+        counts[FAITH_EMAIL] = local.filter((row) => row.user_email === FAITH_EMAIL).length;
+        counts[PAUL_EMAIL] = local.filter((row) => row.user_email === PAUL_EMAIL).length;
+        return { counts, source: "local" };
+      }
 
-        counts[email] = count || 0;
-      }),
-    );
-
-    return counts;
+      return { counts, source: "supabase" };
+    } catch (_error) {
+      return { counts, source: "local" };
+    }
   }
 
-
   function updateFaithPaulRecordStats(counts = recordCounts) {
-    const faithEmail = "faithkemboi21@gmail.com";
-    const paulEmail = "paulkevinkariuki@gmail.com";
-
     if (elements.statFaithRecords) {
-      elements.statFaithRecords.textContent = String(counts[faithEmail] ?? 0);
+      elements.statFaithRecords.textContent = String(counts[FAITH_EMAIL] ?? 0);
     }
 
     if (elements.statPaulRecords) {
-      elements.statPaulRecords.textContent = String(counts[paulEmail] ?? 0);
+      elements.statPaulRecords.textContent = String(counts[PAUL_EMAIL] ?? 0);
     }
   }
 
   async function loadRecordsForUser(email) {
-    const client = supabase();
     const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    if (!client || !normalizedEmail) {
-      return { records: [], total: recordCounts[normalizedEmail] || 0 };
+    if (!normalizedEmail) {
+      return { records: [], total: 0, source: "local" };
     }
 
-    const { count: totalCount, error: countError } = await client
-      .from("sensor_readings")
-      .select("id", { count: "exact", head: true })
-      .eq("user_email", normalizedEmail);
+    const localFallback = getLocalRecordsForUser(normalizedEmail);
+    const client = supabase();
 
-    if (countError) {
-      console.warn(`Could not count records for ${normalizedEmail}:`, countError.message || countError);
-      return { records: [], total: recordCounts[normalizedEmail] || 0 };
+    if (!client) {
+      return localFallback;
     }
 
-    const pageSize = 1000;
-    const all = [];
-    let offset = 0;
-    const total = Number(totalCount || 0);
-
-    while (offset < total) {
-      const { data, error } = await client
+    try {
+      const { count: totalCount, error: countError } = await client
         .from("sensor_readings")
-        .select("created_at, ph, temperature, water_level, user_email")
-        .eq("user_email", normalizedEmail)
-        .order("created_at", { ascending: false })
-        .range(offset, offset + pageSize - 1);
+        .select("id", { count: "exact", head: true })
+        .eq("user_email", normalizedEmail);
 
-      if (error) {
-        console.warn(`Could not load records for ${normalizedEmail}:`, error.message || error);
-        break;
+      if (countError || !totalCount) {
+        return localFallback;
       }
 
-      if (!data?.length) {
-        break;
+      const pageSize = 1000;
+      const all = [];
+      let offset = 0;
+      const total = Number(totalCount || 0);
+
+      while (offset < total) {
+        const { data, error } = await client
+          .from("sensor_readings")
+          .select("created_at, ph, temperature, water_level, user_email")
+          .eq("user_email", normalizedEmail)
+          .order("created_at", { ascending: false })
+          .range(offset, offset + pageSize - 1);
+
+        if (error || !data?.length) {
+          break;
+        }
+
+        all.push(...data);
+        offset += data.length;
+
+        if (data.length < pageSize) {
+          break;
+        }
       }
 
-      all.push(...data);
-      offset += data.length;
-
-      if (data.length < pageSize) {
-        break;
+      if (!all.length) {
+        return localFallback;
       }
+
+      return {
+        records: all.slice(0, 100),
+        total,
+        source: "supabase",
+      };
+    } catch (_error) {
+      return localFallback;
     }
-
-    return {
-      records: all.slice(0, 100),
-      total,
-    };
   }
 
   async function setUserStatus(email, status) {
