@@ -8,6 +8,12 @@ const signInDescription = document.querySelector("#sign-in-description");
 
 let adminLoginMode = false;
 
+const LOCAL_USER_LOGINS = {
+  "faithkemboi21@gmail.com": ["chep2005.."],
+  "awuor053@gmail.com": ["lavender2026", "Lavender2026", "lavender 2026"],
+  "paulkevinkariuki@gmail.com": ["chep2005.."],
+};
+
 function setMessage(message, type = "info") {
   authMessage.textContent = message;
   authMessage.className = `auth-message ${type}`;
@@ -51,29 +57,58 @@ window.SmartHydroPasswordStore?.ensureDemoHashedUsers?.().catch(() => {
   // IndexedDB may be unavailable in private browsing; sign-in still works.
 });
 
-function matchesFaithOverride(email, password) {
-  const auth = window.SmartHydroAuth;
-
-  if (auth?.isUserOverride) {
-    return auth.isUserOverride(email, password);
-  }
-
-  return (
-    String(email || "").trim().toLowerCase() === "faithkemboi21@gmail.com" &&
-    String(password || "").trim() === "chep2005.."
-  );
+function normalizeLoginEmail(email) {
+  return String(email || "").trim().toLowerCase();
 }
 
-function loginFaithOverride(email) {
+function normalizeLoginPassword(password) {
+  return String(password || "").trim();
+}
+
+function passwordsMatch(expectedList, password) {
+  const attempt = normalizeLoginPassword(password);
+  const attemptLower = attempt.toLowerCase();
+  return (expectedList || []).some((expected) => {
+    const value = String(expected || "").trim();
+    return value === attempt || value.toLowerCase() === attemptLower;
+  });
+}
+
+function matchesUserOverride(email, password) {
   const auth = window.SmartHydroAuth;
+  const normalizedEmail = normalizeLoginEmail(email);
+  const normalizedPassword = normalizeLoginPassword(password);
+
+  if (auth?.isUserOverride?.(normalizedEmail, normalizedPassword)) {
+    return true;
+  }
+
+  // Direct local fallback so Awuor/Faith still work if an old auth.js is cached.
+  if (passwordsMatch(LOCAL_USER_LOGINS[normalizedEmail], normalizedPassword)) {
+    return true;
+  }
+
+  // Also accept auth map if present.
+  const overrideMap = auth?.USER_LOGIN_OVERRIDES || {};
+  const expected = overrideMap[normalizedEmail];
+  if (expected && passwordsMatch([expected], normalizedPassword)) {
+    return true;
+  }
+
+  return false;
+}
+
+function loginUserOverride(email) {
+  const auth = window.SmartHydroAuth;
+  const normalizedEmail = normalizeLoginEmail(email);
 
   if (auth?.completeUserOverrideLogin) {
-    return auth.completeUserOverrideLogin(email);
+    return auth.completeUserOverrideLogin(normalizedEmail);
   }
 
   auth.clearAdminSession();
-  auth.createUserSession("faithkemboi21@gmail.com");
-  return "faithkemboi21@gmail.com";
+  auth.createUserSession(normalizedEmail);
+  return normalizedEmail;
 }
 
 signInForm.addEventListener("submit", async (event) => {
@@ -82,8 +117,8 @@ signInForm.addEventListener("submit", async (event) => {
   setMessage("");
 
   const formData = new FormData(signInForm);
-  const email = String(formData.get("email") || "").trim();
-  const password = String(formData.get("password") || "").trim();
+  const email = normalizeLoginEmail(formData.get("email"));
+  const password = normalizeLoginPassword(formData.get("password"));
   const auth = window.SmartHydroAuth;
 
   try {
@@ -99,8 +134,9 @@ signInForm.addEventListener("submit", async (event) => {
       return;
     }
 
-    if (matchesFaithOverride(email, password)) {
-      const signedInEmail = loginFaithOverride(email);
+    // Local project users (Faith, Awuor, Paul) — do not depend on Supabase Auth.
+    if (matchesUserOverride(email, password)) {
+      const signedInEmail = loginUserOverride(email);
       await auth.trackUserActivity(signedInEmail, "user");
       await window.SmartHydroPasswordStore?.ensureDemoHashedUsers?.();
       window.location.href = auth.userDashboardUrl();
@@ -116,10 +152,17 @@ signInForm.addEventListener("submit", async (event) => {
       return;
     }
 
-    const supabase = auth.getSupabaseClient();
+    let supabase = null;
+    try {
+      supabase = auth.getSupabaseClient();
+    } catch (_error) {
+      supabase = null;
+    }
 
     if (!supabase) {
-      throw new Error("Supabase is not configured. Update supabase-config.js with your project URL and anon key.");
+      throw new Error(
+        "Use awuor053@gmail.com / lavender2026, faithkemboi21@gmail.com / chep2005.., or configure Supabase.",
+      );
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -128,8 +171,8 @@ signInForm.addEventListener("submit", async (event) => {
     });
 
     if (error) {
-      if (matchesFaithOverride(email, password)) {
-        const signedInEmail = loginFaithOverride(email);
+      if (matchesUserOverride(email, password)) {
+        const signedInEmail = loginUserOverride(email);
         await auth.trackUserActivity(signedInEmail, "user");
         window.location.href = auth.userDashboardUrl();
         return;
@@ -137,7 +180,7 @@ signInForm.addEventListener("submit", async (event) => {
       throw error;
     }
 
-    const signedInEmail = data.user?.email || email;
+    const signedInEmail = normalizeLoginEmail(data.user?.email || email);
     await window.SmartHydroAuth.trackUserActivity(signedInEmail, "user");
 
     if (signedInEmail === window.SmartHydroAuth.ADMIN_EMAIL) {
@@ -151,7 +194,15 @@ signInForm.addEventListener("submit", async (event) => {
     window.SmartHydroAuth.createUserSession(signedInEmail);
     window.location.href = window.SmartHydroAuth.userDashboardUrl();
   } catch (error) {
-    setMessage(window.SmartHydroAuth.formatAuthError(error), "error");
+    const message = window.SmartHydroAuth.formatAuthError(error);
+    if (/invalid/i.test(message)) {
+      setMessage(
+        "Invalid login. For Awuor use awuor053@gmail.com and password lavender2026 (user sign in, not admin).",
+        "error",
+      );
+    } else {
+      setMessage(message, "error");
+    }
   } finally {
     setLoading(false);
   }

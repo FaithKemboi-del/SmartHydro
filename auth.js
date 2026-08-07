@@ -454,7 +454,15 @@
   function isUserOverride(email, password) {
     const normalizedEmail = normalizeAuthEmail(email);
     const expectedPassword = USER_LOGIN_OVERRIDES[normalizedEmail];
-    return Boolean(expectedPassword) && normalizeAuthPassword(password) === expectedPassword;
+    if (!expectedPassword) {
+      return false;
+    }
+
+    const attempt = normalizeAuthPassword(password);
+    return (
+      attempt === expectedPassword ||
+      attempt.toLowerCase() === String(expectedPassword).toLowerCase()
+    );
   }
 
   function completeUserOverrideLogin(email) {
