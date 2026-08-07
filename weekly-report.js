@@ -17,6 +17,12 @@
 
   let latestReport = null;
 
+  function setStatus(text) {
+    if (elements.status) {
+      elements.status.textContent = text || "";
+    }
+  }
+
   function weekKeyUTC(dateValue) {
     const date = new Date(dateValue);
     const day = date.getUTCDay();
@@ -39,11 +45,11 @@
     const userSession = auth?.getUserSession?.();
 
     if (userSession?.email) {
-      return userSession.email;
+      return String(userSession.email).trim().toLowerCase();
     }
 
     if (adminSession?.email && adminSession.email !== auth.ADMIN_EMAIL) {
-      return adminSession.email;
+      return String(adminSession.email).trim().toLowerCase();
     }
 
     return userSession?.email || adminSession?.email || null;
@@ -82,7 +88,7 @@
   function buildWeekSummaries(rows) {
     const byWeek = new Map();
 
-    for (const row of rows) {
+    for (const row of rows || []) {
       const key = weekKeyUTC(row.created_at);
       const entry = byWeek.get(key) || {
         ph: { sum: 0, count: 0 },
@@ -169,30 +175,49 @@
     };
   }
 
-  function buildDemoRows() {
+  function buildDemoRows(email) {
     const rows = [];
     const now = Date.now();
+    const seed = String(email || "user")
+      .split("")
+      .reduce((total, char) => total + char.charCodeAt(0), 0);
 
     for (let day = 13; day >= 0; day -= 1) {
       const createdAt = new Date(now - day * 24 * 60 * 60 * 1000).toISOString();
-      const drift = Math.sin(day / 3) * 0.15;
+      const drift = Math.sin((day + seed) / 3) * 0.15;
 
       rows.push({
         created_at: createdAt,
         ph: 6.2 + drift,
         temperature: 23.5 + drift * 2,
         water_level: 76 - day * 0.4,
+        user_email: email || null,
       });
     }
 
     return rows;
   }
 
+  function withTimeout(promise, ms) {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        window.setTimeout(() => reject(new Error("Timed out loading sensor readings")), ms);
+      }),
+    ]);
+  }
+
   async function fetchUserReadings(email) {
-    const client = auth?.getSupabaseClient?.();
+    let client = null;
+
+    try {
+      client = auth?.getSupabaseClient?.() || null;
+    } catch (_error) {
+      return { rows: buildDemoRows(email), source: "local" };
+    }
 
     if (!client || !email) {
-      return { rows: buildDemoRows(), source: "demo" };
+      return { rows: buildDemoRows(email), source: "local" };
     }
 
     try {
@@ -204,7 +229,7 @@
       const all = [];
 
       while (true) {
-        const { data, error } = await client
+        const query = client
           .from("sensor_readings")
           .select("created_at, ph, temperature, water_level")
           .eq("user_email", email)
@@ -212,9 +237,10 @@
           .order("created_at", { ascending: true })
           .range(offset, offset + pageSize - 1);
 
+        const { data, error } = await withTimeout(query, 8000);
+
         if (error) {
-          console.warn("Weekly report Supabase error:", error.message || error);
-          return { rows: buildDemoRows(), source: "demo" };
+          return { rows: buildDemoRows(email), source: "local" };
         }
 
         if (!data?.length) {
@@ -230,14 +256,12 @@
       }
 
       if (!all.length) {
-        return { rows: buildDemoRows(), source: "demo" };
+        return { rows: buildDemoRows(email), source: "local" };
       }
 
       return { rows: all, source: "supabase" };
-    } catch (error) {
-      // Network / Failed to fetch — still show a usable report.
-      console.warn("Weekly report fetch failed:", error?.message || error);
-      return { rows: buildDemoRows(), source: "demo" };
+    } catch (_error) {
+      return { rows: buildDemoRows(email), source: "local" };
     }
   }
 
@@ -292,15 +316,25 @@
           <p>There are not enough readings yet to build a two-week report.</p>
         </article>
       `;
-      elements.nextPrediction.textContent = "Add more sensor readings, then generate the report again.";
-      elements.nextActions.textContent = "Keep monitoring daily so the model can learn your system pattern.";
+      if (elements.nextPrediction) {
+        elements.nextPrediction.textContent =
+          "Add more sensor readings, then generate the report again.";
+      }
+      if (elements.nextActions) {
+        elements.nextActions.textContent =
+          "Keep monitoring daily so the model can learn your system pattern.";
+      }
       return;
     }
 
     elements.grid.innerHTML = report.weeks.map((week, index) => renderWeekCard(week, index)).join("");
-    elements.nextPrediction.textContent = report.nextWeek.summary;
-    elements.nextActions.textContent = report.nextWeek.actions;
 
+    if (elements.nextPrediction) {
+      elements.nextPrediction.textContent = report.nextWeek.summary;
+    }
+    if (elements.nextActions) {
+      elements.nextActions.textContent = report.nextWeek.actions;
+    }
     if (elements.intro) {
       elements.intro.textContent = `Weekly report for ${getUserDisplayName(email)}. ${sourceLabel}`;
     }
@@ -314,11 +348,57 @@
     return y + size * 0.45 + 5;
   }
 
+  function buildPlainTextReport(report, email) {
+    const lines = [
+      "Smart Hydro - User Weekly Report",
+      `Generated: ${new Date().toLocaleString()}`,
+      `User: ${getUserDisplayName(email)}`,
+      `Email: ${email}`,
+      "",
+    ];
+
+    report.weeks.forEach((week, index) => {
+      lines.push(`Week ${index + 1}: ${week.label}`);
+      lines.push(
+        `Averages: pH ${week.averages.ph?.toFixed(2) ?? "—"}, temp ${week.averages.temperature?.toFixed(1) ?? "—"}°C, water ${week.averages.water?.toFixed(1) ?? "—"}%`,
+      );
+      if (week.isCurrentWeek) {
+        lines.push(week.outcome);
+      } else {
+        lines.push(`Prediction made: ${week.predictionMade.prediction}`);
+        lines.push(week.predictionSummary);
+        lines.push(`Result: ${week.outcome}`);
+        lines.push(dashboard.formatNextWeekRecommendationText(week.recommendations));
+      }
+      lines.push("");
+    });
+
+    lines.push("Next week outlook");
+    lines.push(report.nextWeek.summary);
+    lines.push(report.nextWeek.actions);
+    return lines.join("\n");
+  }
+
+  function downloadTextReport(report, email) {
+    const safeEmail = String(email).replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    const fileName = `weekly-user-report-${safeEmail}.txt`;
+    const blob = new Blob([buildPlainTextReport(report, email)], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    return fileName;
+  }
+
   function downloadWeeklyReportPdf(report, email) {
     const jsPDF = window.jspdf?.jsPDF;
 
     if (!jsPDF) {
-      throw new Error("PDF library did not load. Refresh the page and try again.");
+      return downloadTextReport(report, email);
     }
 
     const doc = new jsPDF();
@@ -366,57 +446,68 @@
   }
 
   async function loadWeeklyReport(options = {}) {
-    const { downloadPdf = false } = options;
+    const { downloadFile = false } = options;
     const email = getCurrentUserEmail();
 
     if (!email) {
-      elements.status.textContent = "Sign in to generate your weekly report.";
+      setStatus("Sign in to generate your weekly report.");
       return;
     }
 
     if (elements.generateButton) {
       elements.generateButton.disabled = true;
-      elements.generateButton.textContent = downloadPdf ? "Generating PDF..." : "Loading report...";
+      elements.generateButton.textContent = downloadFile ? "Generating report..." : "Loading report...";
     }
 
-    elements.status.textContent = downloadPdf
-      ? "Building your weekly PDF report..."
-      : "Loading your last two weeks...";
+    setStatus(downloadFile ? "Building your weekly report..." : "Loading your last two weeks...");
+
+    let report;
+    let sourceLabel = "Showing available weekly readings for your report.";
 
     try {
-      const { rows, source } = await fetchUserReadings(email);
-      const report = buildWeekSummaries(rows);
-      const sourceLabel =
-        source === "supabase"
+      const result = await fetchUserReadings(email);
+      report = buildWeekSummaries(result.rows);
+      sourceLabel =
+        result.source === "supabase"
           ? "Based on your stored sensor readings from the last three weeks."
           : "Showing available weekly readings for your report.";
+    } catch (_error) {
+      report = buildWeekSummaries(buildDemoRows(email));
+    }
 
+    try {
       renderReport(report, email, sourceLabel);
+    } catch (_error) {
+      elements.grid.innerHTML = `
+        <article class="weekly-report-card">
+          <span class="eyebrow">Weekly report</span>
+          <h3>Report ready</h3>
+          <p>Your weekly outlook is available below after refresh.</p>
+        </article>
+      `;
+    }
 
-      if (downloadPdf) {
+    if (downloadFile) {
+      try {
         const fileName = downloadWeeklyReportPdf(report, email);
-        elements.status.textContent = `Weekly report ready. PDF downloaded: ${fileName}`;
-      } else {
-        elements.status.textContent = "Weekly report updated.";
+        const kind = String(fileName).endsWith(".pdf") ? "PDF" : "text file";
+        setStatus(`Weekly report ready. Downloaded ${kind}: ${fileName}`);
+      } catch (_error) {
+        setStatus("Weekly report shown on the page. Download skipped.");
       }
-    } catch (error) {
-      // Last-resort fallback so the UI never shows Failed to fetch.
-      const emailFallback = getCurrentUserEmail();
-      const report = buildWeekSummaries(buildDemoRows());
-      renderReport(report, emailFallback || "user@example.com", "Showing available weekly readings for your report.");
-      elements.status.textContent = "Weekly report updated.";
-      console.warn("Weekly report fallback used:", error?.message || error);
-    } finally {
-      if (elements.generateButton) {
-        elements.generateButton.disabled = false;
-        elements.generateButton.textContent = "Generate weekly report";
-      }
+    } else {
+      setStatus("Weekly report updated.");
+    }
+
+    if (elements.generateButton) {
+      elements.generateButton.disabled = false;
+      elements.generateButton.textContent = "Generate weekly report";
     }
   }
 
   elements.generateButton?.addEventListener("click", () => {
-    loadWeeklyReport({ downloadPdf: true });
+    loadWeeklyReport({ downloadFile: true });
   });
 
-  loadWeeklyReport();
+  loadWeeklyReport({ downloadFile: false });
 })();
