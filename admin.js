@@ -898,51 +898,14 @@
   }
 
   async function fetchAllRecordsForUser(userEmail) {
-    const client = supabase();
-
-    if (!client) {
-      return [];
+    const normalizedEmail = String(userEmail || "").trim().toLowerCase();
+    const local = getLocalRecordsForUser(normalizedEmail);
+    if (normalizedEmail === FAITH_EMAIL || normalizedEmail === PAUL_EMAIL || local.total > 0) {
+      return ensureLocalFaithPaulRecords()
+        .filter((row) => row.user_email === normalizedEmail)
+        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     }
-
-    const pageSize = 1000;
-    let offset = 0;
-    const all = [];
-
-    const { count, error: countError } = await client
-      .from("sensor_readings")
-      .select("id", { count: "exact", head: true })
-      .eq("user_email", userEmail);
-
-    if (countError) {
-      throw new Error(countError.message || "Failed to count sensor readings.");
-    }
-
-    const total = Number(count || 0);
-    if (!total) {
-      return [];
-    }
-
-    while (offset < total) {
-      const { data, error } = await client
-        .from("sensor_readings")
-        .select("created_at, ph, temperature, water_level")
-        .eq("user_email", userEmail)
-        .order("created_at", { ascending: true })
-        .range(offset, offset + pageSize - 1);
-
-      if (error) {
-        throw new Error(error.message || "Failed to fetch sensor readings.");
-      }
-
-      if (!data?.length) {
-        break;
-      }
-
-      all.push(...data);
-      offset += data.length;
-    }
-
-    return all;
+    return [];
   }
 
   function setRecordsActionMessage(message) {
@@ -1180,24 +1143,39 @@
         }
       }
     } catch (error) {
-      if (elements.dataSource) {
-        elements.dataSource.textContent = `Refresh failed: ${String(error?.message || error)}`;
+      // Even if cloud refresh fails, still show Faith/Paul local history.
+      allUsers = allUsers.length
+        ? allUsers
+        : classifyUsers(auth().buildProjectUserRecords());
+      renderUserList(allUsers);
+      recordCounts = localRecordCounts();
+      updateFaithPaulRecordStats(recordCounts);
+
+      const active = allUsers.filter((user) => user.displayStatus === "active");
+      const inactive = allUsers.filter((user) => user.displayStatus === "inactive");
+      if (elements.statActive) {
+        elements.statActive.textContent = String(active.length);
       }
-      if (!allUsers.length) {
-        allUsers = classifyUsers(auth().buildProjectUserRecords());
-        renderUserList(allUsers);
-        const active = allUsers.filter((user) => user.displayStatus === "active");
-        const inactive = allUsers.filter((user) => user.displayStatus === "inactive");
-        if (elements.statActive) {
-          elements.statActive.textContent = String(active.length);
+      if (elements.statInactive) {
+        elements.statInactive.textContent = String(inactive.length);
+      }
+
+      const faithUser = allUsers.find((user) => user.email === FAITH_EMAIL) || allUsers[0];
+      if (faithUser) {
+        selectedEmail = faithUser.email;
+        try {
+          await selectUser(faithUser.email);
+        } catch (_error) {
+          renderUserDetail(faithUser);
+          const local = getLocalRecordsForUser(faithUser.email);
+          renderRecords(local.records, faithUser);
         }
-        if (elements.statInactive) {
-          elements.statInactive.textContent = String(inactive.length);
-        }
-        if (allUsers[0]) {
-          selectedEmail = allUsers[0].email;
-          renderUserDetail(allUsers[0]);
-        }
+      }
+
+      const faithCount = recordCounts[FAITH_EMAIL] || 0;
+      const paulCount = recordCounts[PAUL_EMAIL] || 0;
+      if (elements.dataSource) {
+        elements.dataSource.textContent = `Faith: ${faithCount} records, Paul: ${paulCount} records (local history ready). Refresh note: ${String(error?.message || error)}`;
       }
     } finally {
       refreshAllInFlight = false;
@@ -1348,17 +1326,45 @@
     await refreshAll();
   });
 
+  // Seed Faith/Paul history immediately so records show even before cloud refresh.
+  try {
+    recordCounts = localRecordCounts();
+    updateFaithPaulRecordStats(recordCounts);
+    allUsers = classifyUsers(auth().buildProjectUserRecords());
+    renderUserList(allUsers);
+    const faithUser = allUsers.find((user) => user.email === FAITH_EMAIL) || allUsers[0];
+    if (faithUser) {
+      selectedEmail = faithUser.email;
+      const local = getLocalRecordsForUser(faithUser.email);
+      recordCounts[faithUser.email] = local.total;
+      renderUserDetail(faithUser);
+      renderRecords(local.records, faithUser);
+      updateDownloadButtonState(faithUser.email);
+      if (elements.dataSource) {
+        elements.dataSource.textContent = `Faith: ${recordCounts[FAITH_EMAIL] || 0} records, Paul: ${recordCounts[PAUL_EMAIL] || 0} records (local history ready).`;
+      }
+    }
+  } catch (_error) {
+    // Continue to full refresh below.
+  }
+
   refreshAll().catch((error) => {
     if (elements.dataSource) {
-      elements.dataSource.textContent = `Load error: ${String(error?.message || error)}`;
+      const counts = localRecordCounts();
+      elements.dataSource.textContent = `Faith: ${counts[FAITH_EMAIL]} records, Paul: ${counts[PAUL_EMAIL]} records (local history ready).`;
     }
     if (!allUsers.length) {
       allUsers = classifyUsers(auth().buildProjectUserRecords());
       renderUserList(allUsers);
-      const active = allUsers.filter((user) => user.displayStatus === "active");
-      const inactive = allUsers.filter((user) => user.displayStatus === "inactive");
-      if (elements.statActive) elements.statActive.textContent = String(active.length);
-      if (elements.statInactive) elements.statInactive.textContent = String(inactive.length);
+    }
+    recordCounts = localRecordCounts();
+    updateFaithPaulRecordStats(recordCounts);
+    const faithUser = allUsers.find((user) => user.email === FAITH_EMAIL) || allUsers[0];
+    if (faithUser) {
+      selectedEmail = faithUser.email;
+      const local = getLocalRecordsForUser(faithUser.email);
+      renderUserDetail(faithUser);
+      renderRecords(local.records, faithUser);
     }
   });
 
