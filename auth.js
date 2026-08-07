@@ -63,7 +63,7 @@
       email: "paulkevinkariuki@gmail.com",
       name: "Paul",
       role: "user",
-      status: "inactive",
+      status: "active",
       created_at: "2026-06-28T14:40:00.000Z",
       last_seen: null,
     },
@@ -500,18 +500,27 @@
       [...DEFAULT_USERS, ...EXTRA_DEMO_USERS].map((user) => user.email.toLowerCase()),
     );
 
+    const coreEmails = new Set(DEFAULT_USERS.map((user) => user.email.toLowerCase()));
+
     const mergedDefaults = buildProjectUserRecords().map((user) => {
-      const existing = map.get(user.email.toLowerCase());
+      const emailKey = user.email.toLowerCase();
+      const existing = map.get(emailKey);
 
       if (!existing) {
         return user;
       }
 
+      // Core demo accounts keep their seed status so local/Supabase
+      // leftovers (e.g. Paul inactive) do not stick around.
+      const status = coreEmails.has(emailKey)
+        ? user.status || existing.status || "active"
+        : existing.status || user.status || "active";
+
       return {
         email: user.email,
         name: existing.name || user.name,
         role: existing.role || user.role,
-        status: existing.status || user.status,
+        status,
         last_seen: existing.last_seen || user.last_seen,
         created_at: user.created_at,
       };

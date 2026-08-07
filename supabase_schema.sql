@@ -63,7 +63,7 @@ insert into public.app_users (email, name, role, status, last_seen, created_at)
 values
   ('fyugalbox21@gmail.com', 'Admin', 'admin', 'active', now(), '2026-06-01 08:00:00+00'),
   ('faithkemboi21@gmail.com', 'Faith', 'user', 'active', now() - interval '2 hours', '2026-06-03 09:15:00+00'),
-  ('paulkevinkariuki@gmail.com', 'Paul', 'user', 'inactive', now() - interval '3 days', '2026-06-28 14:40:00+00'),
+  ('paulkevinkariuki@gmail.com', 'Paul', 'user', 'active', now() - interval '1 hour', '2026-06-28 14:40:00+00'),
   ('awuor053@gmail.com', 'Awuor', 'user', 'active', now() - interval '30 minutes', '2026-08-07 10:00:00+00'),
   ('amani.wambui@example.com', 'Amani Wambui', 'user', 'inactive', now() - interval '2 hours', '2026-06-04 10:00:00+00'),
   ('brian.otieno@example.com', 'Brian Otieno', 'user', 'inactive', now() - interval '5 hours', '2026-06-05 11:20:00+00'),
