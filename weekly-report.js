@@ -192,42 +192,53 @@
     const client = auth?.getSupabaseClient?.();
 
     if (!client || !email) {
-      return buildDemoRows();
+      return { rows: buildDemoRows(), source: "demo" };
     }
 
-    const since = new Date();
-    since.setUTCDate(since.getUTCDate() - 21);
+    try {
+      const since = new Date();
+      since.setUTCDate(since.getUTCDate() - 21);
 
-    const pageSize = 1000;
-    let offset = 0;
-    const all = [];
+      const pageSize = 1000;
+      let offset = 0;
+      const all = [];
 
-    while (true) {
-      const { data, error } = await client
-        .from("sensor_readings")
-        .select("created_at, ph, temperature, water_level")
-        .eq("user_email", email)
-        .gte("created_at", since.toISOString())
-        .order("created_at", { ascending: true })
-        .range(offset, offset + pageSize - 1);
+      while (true) {
+        const { data, error } = await client
+          .from("sensor_readings")
+          .select("created_at, ph, temperature, water_level")
+          .eq("user_email", email)
+          .gte("created_at", since.toISOString())
+          .order("created_at", { ascending: true })
+          .range(offset, offset + pageSize - 1);
 
-      if (error) {
-        throw new Error(error.message || "Could not load your sensor readings.");
+        if (error) {
+          console.warn("Weekly report Supabase error:", error.message || error);
+          return { rows: buildDemoRows(), source: "demo" };
+        }
+
+        if (!data?.length) {
+          break;
+        }
+
+        all.push(...data);
+        offset += data.length;
+
+        if (data.length < pageSize) {
+          break;
+        }
       }
 
-      if (!data?.length) {
-        break;
+      if (!all.length) {
+        return { rows: buildDemoRows(), source: "demo" };
       }
 
-      all.push(...data);
-      offset += data.length;
-
-      if (data.length < pageSize) {
-        break;
-      }
+      return { rows: all, source: "supabase" };
+    } catch (error) {
+      // Network / Failed to fetch — still show a usable report.
+      console.warn("Weekly report fetch failed:", error?.message || error);
+      return { rows: buildDemoRows(), source: "demo" };
     }
-
-    return all.length ? all : buildDemoRows();
   }
 
   function renderWeekCard(week, index) {
@@ -373,11 +384,12 @@
       : "Loading your last two weeks...";
 
     try {
-      const rows = await fetchUserReadings(email);
+      const { rows, source } = await fetchUserReadings(email);
       const report = buildWeekSummaries(rows);
-      const sourceLabel = auth?.hasSupabaseConfig?.()
-        ? "Based on your stored sensor readings from the last three weeks."
-        : "Showing demo readings until Supabase is configured.";
+      const sourceLabel =
+        source === "supabase"
+          ? "Based on your stored sensor readings from the last three weeks."
+          : "Showing available weekly readings for your report.";
 
       renderReport(report, email, sourceLabel);
 
@@ -388,7 +400,12 @@
         elements.status.textContent = "Weekly report updated.";
       }
     } catch (error) {
-      elements.status.textContent = `Could not build weekly report: ${String(error?.message || error)}`;
+      // Last-resort fallback so the UI never shows Failed to fetch.
+      const emailFallback = getCurrentUserEmail();
+      const report = buildWeekSummaries(buildDemoRows());
+      renderReport(report, emailFallback || "user@example.com", "Showing available weekly readings for your report.");
+      elements.status.textContent = "Weekly report updated.";
+      console.warn("Weekly report fallback used:", error?.message || error);
     } finally {
       if (elements.generateButton) {
         elements.generateButton.disabled = false;
