@@ -620,7 +620,7 @@
             `,
           )
           .join("")
-      : emptyRow(4, `No sensor records linked to ${user.name} yet. Run seed_database.py or seed_faith_paul_records.sql in Supabase.`);
+      : emptyRow(4, `No sensor records linked to ${user.name} yet.`);
   }
 
   function renderAlerts(alerts) {
@@ -1176,10 +1176,19 @@
       allUsers = usersResult.users;
       renderUserList(allUsers);
 
+      let recordsSource = "local";
       try {
-        recordCounts = await loadRecordCounts();
+        const countsResult = await loadRecordCounts();
+        recordCounts = countsResult.counts || countsResult || {};
+        recordsSource = countsResult.source || "local";
       } catch (_error) {
-        recordCounts = recordCounts || {};
+        const local = ensureLocalFaithPaulRecords();
+        recordCounts = {
+          [auth().ADMIN_EMAIL]: 0,
+          [FAITH_EMAIL]: local.filter((row) => row.user_email === FAITH_EMAIL).length,
+          [PAUL_EMAIL]: local.filter((row) => row.user_email === PAUL_EMAIL).length,
+        };
+        recordsSource = "local";
       }
       updateFaithPaulRecordStats(recordCounts);
 
@@ -1194,7 +1203,7 @@
       }
 
       if (!selectedEmail && allUsers.length) {
-        const faithUser = allUsers.find((user) => user.email === "faithkemboi21@gmail.com");
+        const faithUser = allUsers.find((user) => user.email === FAITH_EMAIL);
         selectedEmail = faithUser?.email || allUsers[0].email;
       }
 
@@ -1211,19 +1220,18 @@
         }
       }
 
-      const usingSupabase = [usersResult.source, alertsResult.source, settingsResult.source].includes(
+      const usingSupabase = [usersResult.source, alertsResult.source, settingsResult.source, recordsSource].includes(
         "supabase",
       );
-      const faithCount = recordCounts["faithkemboi21@gmail.com"] || 0;
-      const paulCount = recordCounts["paulkevinkariuki@gmail.com"] || 0;
+      const faithCount = recordCounts[FAITH_EMAIL] || 0;
+      const paulCount = recordCounts[PAUL_EMAIL] || 0;
 
       if (elements.dataSource) {
-        if (!usingSupabase) {
+        if (recordsSource === "local") {
+          elements.dataSource.textContent = `Faith: ${faithCount} records, Paul: ${paulCount} records (local history ready).${added ? ` Added ${added} new readings.` : ""}`;
+        } else if (!usingSupabase) {
           elements.dataSource.textContent =
-            "Supabase is not connected. Add supabase-config.js, then run seed_faith_paul_records.sql in Supabase.";
-        } else if (faithCount === 0 && paulCount === 0) {
-          elements.dataSource.textContent =
-            "Connected to Supabase. Faith and Paul have 0 readings — run seed_faith_paul_records.sql in the SQL Editor.";
+            `Faith: ${faithCount} records, Paul: ${paulCount} records. Connect supabase-config.js for live cloud sync.`;
         } else {
           elements.dataSource.textContent = `Connected to Supabase. Faith: ${faithCount} records, Paul: ${paulCount} records.${added ? ` Added ${added} new live readings.` : ""}`;
         }
