@@ -70,44 +70,11 @@ a {
   gap: 12px;
 }
 
-.brand-leaf {
-  position: relative;
-  display: inline-block;
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  background: var(--green-100);
-  box-shadow: 0 10px 24px rgba(46, 139, 87, 0.16);
-}
-
-.brand-leaf::before,
-.brand-leaf::after {
-  position: absolute;
-  width: 18px;
-  height: 24px;
-  border-radius: 18px 18px 4px 18px;
-  background: linear-gradient(135deg, var(--green-700), #8bd9a6);
-  content: "";
-}
-
-.brand-leaf::before {
-  top: 6px;
-  left: 7px;
-  transform: rotate(-28deg);
-}
-
-.brand-leaf::after {
-  top: 8px;
-  right: 6px;
-  transform: scaleX(-1) rotate(-28deg);
-}
-
 .brand strong {
   display: block;
-}
-
-.brand strong {
   color: var(--green-900);
+  font-size: 1.22rem;
+  letter-spacing: -0.02em;
 }
 
 .nav-links {
