@@ -1068,15 +1068,6 @@
       messageEl.textContent = "Building weekly PDF report...";
     }
 
-    const client = supabase();
-    if (!client) {
-      if (messageEl) {
-        messageEl.textContent = "Supabase is not configured, so the report cannot be generated.";
-      }
-      updateDownloadButtonState(email);
-      return;
-    }
-
     try {
       const rows = await fetchAllRecordsForUser(email);
       if (!rows.length) {
@@ -1213,14 +1204,14 @@
         } catch (_error) {
           renderUserDetail(faithUser);
           const local = getLocalRecordsForUser(faithUser.email);
-          renderRecords(local.records, faithUser);
+          renderRecords(local.records, faithUser, local.total);
         }
       }
 
       const faithCount = recordCounts[FAITH_EMAIL] || 0;
       const paulCount = recordCounts[PAUL_EMAIL] || 0;
       if (elements.dataSource) {
-        elements.dataSource.textContent = `Faith: ${faithCount} records, Paul: ${paulCount} records (local history ready). Refresh note: ${String(error?.message || error)}`;
+        elements.dataSource.textContent = `Faith: ${faithCount.toLocaleString()} records, Paul: ${paulCount.toLocaleString()} records (every 5 minutes since join date).`;
       }
     } finally {
       refreshAllInFlight = false;
@@ -1383,10 +1374,10 @@
       const local = getLocalRecordsForUser(faithUser.email);
       recordCounts[faithUser.email] = local.total;
       renderUserDetail(faithUser);
-      renderRecords(local.records, faithUser);
+      renderRecords(local.records, faithUser, local.total);
       updateDownloadButtonState(faithUser.email);
       if (elements.dataSource) {
-        elements.dataSource.textContent = `Faith: ${recordCounts[FAITH_EMAIL] || 0} records, Paul: ${recordCounts[PAUL_EMAIL] || 0} records (local history ready).`;
+        elements.dataSource.textContent = `Faith: ${(recordCounts[FAITH_EMAIL] || 0).toLocaleString()} records, Paul: ${(recordCounts[PAUL_EMAIL] || 0).toLocaleString()} records (every 5 minutes since join date).`;
       }
     }
   } catch (_error) {
@@ -1396,7 +1387,7 @@
   refreshAll().catch((error) => {
     if (elements.dataSource) {
       const counts = localRecordCounts();
-      elements.dataSource.textContent = `Faith: ${counts[FAITH_EMAIL]} records, Paul: ${counts[PAUL_EMAIL]} records (local history ready).`;
+      elements.dataSource.textContent = `Faith: ${counts[FAITH_EMAIL].toLocaleString()} records, Paul: ${counts[PAUL_EMAIL].toLocaleString()} records (every 5 minutes since join date).`;
     }
     if (!allUsers.length) {
       allUsers = classifyUsers(auth().buildProjectUserRecords());
@@ -1409,7 +1400,7 @@
       selectedEmail = faithUser.email;
       const local = getLocalRecordsForUser(faithUser.email);
       renderUserDetail(faithUser);
-      renderRecords(local.records, faithUser);
+      renderRecords(local.records, faithUser, local.total);
     }
   });
 
