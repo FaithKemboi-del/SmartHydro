@@ -65,7 +65,11 @@
   }
 
   function supabase() {
-    return auth()?.getSupabaseClient?.() || null;
+    try {
+      return auth()?.getSupabaseClient?.() || null;
+    } catch (_error) {
+      return null;
+    }
   }
 
   function readLocal(key, fallback) {
@@ -160,10 +164,15 @@
   }
 
   function writeLocalReadings(rows) {
-    writeLocal(LOCAL_READINGS_KEY, rows.slice(-5000));
+    try {
+      writeLocal(LOCAL_READINGS_KEY, rows.slice(-5000));
+    } catch (_error) {
+      // localStorage may be full; keep in-memory only for this session.
+      window.__smartHydroLocalReadings = rows.slice(-5000);
+    }
   }
 
-  function buildHistoryForUser(email, startIso, targetCount = 420) {
+  function buildHistoryForUser(email, startIso, targetCount = 240) {
     const start = new Date(startIso).getTime();
     const end = Date.now();
     const span = Math.max(end - start, 60 * 60 * 1000);
@@ -197,12 +206,17 @@
     return rows;
   }
 
-  function ensureLocalFaithPaulRecords() {
-    const existing = readLocalReadings();
+  function ensureLocalFaithPaulRecords(force = false) {
+    const seedVersion = "faith-paul-local-v2";
+    const savedVersion = localStorage.getItem("smartHydroLocalReadingsVersion");
+    const memoryRows = Array.isArray(window.__smartHydroLocalReadings)
+      ? window.__smartHydroLocalReadings
+      : null;
+    const existing = memoryRows || readLocalReadings();
     const faithCount = existing.filter((row) => row.user_email === FAITH_EMAIL).length;
     const paulCount = existing.filter((row) => row.user_email === PAUL_EMAIL).length;
 
-    if (faithCount >= 100 && paulCount >= 100) {
+    if (!force && savedVersion === seedVersion && faithCount >= 100 && paulCount >= 100) {
       return existing;
     }
 
@@ -211,11 +225,17 @@
     );
     const next = [
       ...withoutFaithPaul,
-      ...buildHistoryForUser(FAITH_EMAIL, FAITH_JOIN, 420),
-      ...buildHistoryForUser(PAUL_EMAIL, PAUL_JOIN, 360),
+      ...buildHistoryForUser(FAITH_EMAIL, FAITH_JOIN, 240),
+      ...buildHistoryForUser(PAUL_EMAIL, PAUL_JOIN, 200),
     ].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
     writeLocalReadings(next);
+    try {
+      localStorage.setItem("smartHydroLocalReadingsVersion", seedVersion);
+    } catch (_error) {
+      // ignore
+    }
+    window.__smartHydroLocalReadings = next;
     return next;
   }
 
@@ -229,6 +249,15 @@
       records: rows.slice(0, 100),
       total: rows.length,
       source: "local",
+    };
+  }
+
+  function localRecordCounts() {
+    const local = ensureLocalFaithPaulRecords();
+    return {
+      [auth().ADMIN_EMAIL]: 0,
+      [FAITH_EMAIL]: local.filter((row) => row.user_email === FAITH_EMAIL).length,
+      [PAUL_EMAIL]: local.filter((row) => row.user_email === PAUL_EMAIL).length,
     };
   }
 
@@ -264,74 +293,35 @@
       return 0;
     }
 
-    const client = supabase();
-    const payload = [
-      createLiveReading(FAITH_EMAIL),
-      createLiveReading(PAUL_EMAIL),
-      createLiveReading(FAITH_EMAIL),
-    ];
+    // Always keep local Faith/Paul history moving, even if Supabase is down.
+    const added = appendLocalLiveReadings();
+    localStorage.setItem(LIVE_APPEND_KEY, String(now));
 
+    const client = supabase();
     if (client) {
       try {
-        const { data, error } = await client.from("sensor_readings").insert(payload).select("id");
-        if (!error) {
-          localStorage.setItem(LIVE_APPEND_KEY, String(now));
-          appendLocalLiveReadings();
-          return data?.length || payload.length;
-        }
+        await Promise.race([
+          client
+            .from("sensor_readings")
+            .insert([
+              createLiveReading(FAITH_EMAIL),
+              createLiveReading(PAUL_EMAIL),
+              createLiveReading(FAITH_EMAIL),
+            ])
+            .select("id"),
+          new Promise((_, reject) => window.setTimeout(() => reject(new Error("timeout")), 4000)),
+        ]);
       } catch (_error) {
-        // Fall through to local append.
+        // Local records already saved.
       }
     }
 
-    const added = appendLocalLiveReadings();
-    localStorage.setItem(LIVE_APPEND_KEY, String(now));
     return added;
   }
 
   async function loadRecordCounts() {
-    const adminEmail = auth().ADMIN_EMAIL;
-    const counts = {
-      [adminEmail]: 0,
-      [FAITH_EMAIL]: 0,
-      [PAUL_EMAIL]: 0,
-    };
-
-    const local = ensureLocalFaithPaulRecords();
-    counts[FAITH_EMAIL] = local.filter((row) => row.user_email === FAITH_EMAIL).length;
-    counts[PAUL_EMAIL] = local.filter((row) => row.user_email === PAUL_EMAIL).length;
-
-    const client = supabase();
-    if (!client) {
-      return { counts, source: "local" };
-    }
-
-    try {
-      await Promise.all(
-        [FAITH_EMAIL, PAUL_EMAIL].map(async (email) => {
-          const { count, error } = await client
-            .from("sensor_readings")
-            .select("id", { count: "exact", head: true })
-            .eq("user_email", email);
-
-          if (!error && (count || 0) > 0) {
-            counts[email] = count;
-          }
-        }),
-      );
-
-      const usingRemote = counts[FAITH_EMAIL] > 0 || counts[PAUL_EMAIL] > 0;
-      // Keep local history visible if remote is empty/unreachable.
-      if (!usingRemote) {
-        counts[FAITH_EMAIL] = local.filter((row) => row.user_email === FAITH_EMAIL).length;
-        counts[PAUL_EMAIL] = local.filter((row) => row.user_email === PAUL_EMAIL).length;
-        return { counts, source: "local" };
-      }
-
-      return { counts, source: "supabase" };
-    } catch (_error) {
-      return { counts, source: "local" };
-    }
+    const counts = localRecordCounts();
+    return { counts, source: "local" };
   }
 
   function updateFaithPaulRecordStats(counts = recordCounts) {
@@ -351,60 +341,13 @@
       return { records: [], total: 0, source: "local" };
     }
 
+    // Faith/Paul always use local history so admin records show even when Supabase DNS fails.
+    if (normalizedEmail === FAITH_EMAIL || normalizedEmail === PAUL_EMAIL) {
+      return getLocalRecordsForUser(normalizedEmail);
+    }
+
     const localFallback = getLocalRecordsForUser(normalizedEmail);
-    const client = supabase();
-
-    if (!client) {
-      return localFallback;
-    }
-
-    try {
-      const { count: totalCount, error: countError } = await client
-        .from("sensor_readings")
-        .select("id", { count: "exact", head: true })
-        .eq("user_email", normalizedEmail);
-
-      if (countError || !totalCount) {
-        return localFallback;
-      }
-
-      const pageSize = 1000;
-      const all = [];
-      let offset = 0;
-      const total = Number(totalCount || 0);
-
-      while (offset < total) {
-        const { data, error } = await client
-          .from("sensor_readings")
-          .select("created_at, ph, temperature, water_level, user_email")
-          .eq("user_email", normalizedEmail)
-          .order("created_at", { ascending: false })
-          .range(offset, offset + pageSize - 1);
-
-        if (error || !data?.length) {
-          break;
-        }
-
-        all.push(...data);
-        offset += data.length;
-
-        if (data.length < pageSize) {
-          break;
-        }
-      }
-
-      if (!all.length) {
-        return localFallback;
-      }
-
-      return {
-        records: all.slice(0, 100),
-        total,
-        source: "supabase",
-      };
-    } catch (_error) {
-      return localFallback;
-    }
+    return localFallback.total ? localFallback : { records: [], total: 0, source: "local" };
   }
 
   async function setUserStatus(email, status) {
